@@ -1,0 +1,39 @@
+% 
+% schemaUri         : https://openminds.ebrains.eu/controlledTerms/BiologicalSex
+% schemaName        : BiologicalSex
+% schemaClassName   : openminds.controlledTerms.BiologicalSex
+
+% Constants
+% model             : core, SANDS, controlledTerms
+% extension         : .schema.tpl.json
+
+% _type (schema)    : "https://openminds.ebrains.eu/LABEL_OF_METADATA_MODEL/SCHEMA_NAME"
+% schema properties :
+% property.type     : data type
+
+UpperCamelCase
+lowerCamelCase
+
+
+% data types: "string", "number" (integer or float), "integer", "float", "boolean", "object" or "array"
+
+% stringProperty_lengthConstraints
+
+% stringProperty_formatConstraints:
+% formats: "email", "date", "time", "date-time", "iri"
+
+% stringProperty_patternConstraints
+% pattern:
+
+% integerProperty_rangeConstraints:
+% minimum
+% maximum
+
+% sizeConstraints
+
+
+
+% _linkedTypes, _embeddedTypes
+% Is the difference between these the way the a
+
+
