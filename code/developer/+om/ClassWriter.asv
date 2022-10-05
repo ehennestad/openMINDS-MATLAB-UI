@@ -10,6 +10,7 @@ classdef ClassWriter < handle
         SchemaName = ''
         SchemaCategory = ''
         SchemaModule = ''
+        SchemaList
     end
 
     properties (Dependent)
@@ -59,7 +60,9 @@ classdef ClassWriter < handle
 
             if obj.HasSuperclass  % Create superclass
                 [schemaCategory, schemaName] = om.strutil.splitSchemaPath(obj.Schema.x_extends);
-                om.createMatlabSchemaClass(schemaName, schemaCategory, obj.SchemaModule)
+                if ~om.existSchema(schemaName, schemaCategory, obj.SchemaModule) 
+                    om.createMatlabSchemaClass(schemaName, schemaCategory, obj.SchemaModule)
+                end
                 superclassName = om.strutil.buildClassName(schemaName, schemaCategory, obj.SchemaModule);
             else
                 superclassName = 'openminds.abstract.OpenMINDSSchema';
@@ -73,7 +76,9 @@ classdef ClassWriter < handle
                 for i = 1:numel(categories)
                     om.createMatlabCategoryClass(categories{i}, obj.SchemaModule)                   
                 end
-                superclassName = [superclassName, cellfun(@(str) sprintf('%s.category.%s', obj.SchemaModule, str), categories, 'UniformOutput', false)];
+                superclassName = [superclassName, cellfun(@(str) sprintf('openminds.%s.category.%s', obj.SchemaModule, om.strutil.pascalCase(str)), categories, 'UniformOutput', false)];
+                %superclassName = [superclassName, cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), categories, 'UniformOutput', false)];
+                
             end
 
             % Write class definition
@@ -95,7 +100,7 @@ classdef ClassWriter < handle
 
             if ~obj.IsAbstract
                 % Write constant and hidden class properties
-                obj.startPropertyBlock('SetAccess = immutable')
+                obj.startPropertyBlock('SetAccess = immutable', 'Hidden')
                 obj.addProperty('X_CATEGORIES', schemaCategories)
                 obj.endPropertyBlock()
             end
@@ -117,13 +122,17 @@ classdef ClassWriter < handle
             obj.endPropertyBlock()
 
             obj.startPropertyBlock()
-            propertyNames = fieldnames(obj.Schema.properties);
-            for i = 1:numel(propertyNames)
-                if i~=1
-                    obj.writeEmptyLine()
+            if isfield(obj.Schema, 'properties')
+                propertyNames = fieldnames(obj.Schema.properties);
+                for i = 1:numel(propertyNames)
+                    if i~=1
+                        obj.writeEmptyLine()
+                    end
+                    propertyAttr = obj.Schema.properties.(propertyNames{i});
+                    obj.addSchemaProperty(propertyNames{i}, propertyAttr);
                 end
-                propertyAttr = obj.Schema.properties.(propertyNames{i});
-                obj.addSchemaProperty(propertyNames{i}, propertyAttr);
+            else
+                
             end
             obj.endPropertyBlock()
 
@@ -152,6 +161,10 @@ classdef ClassWriter < handle
             obj.writeSchemaString()
             obj.updateSchemaClassFilePath()
             om.fileio.writeSchemaClass(obj.SchemaClassFilePath, obj.SchemaCodeStr)
+
+            className = om.strutil.buildClassName(obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
+
+            fprintf('Generated schema %s\n', className)
         end
     end
 
@@ -174,14 +187,8 @@ classdef ClassWriter < handle
 
 
         function updateSchemaClassFilePath(obj)
-            rootPath = om.Preferences.get('MSchemaDirectory');
-            folderPath = fullfile(rootPath, ['+', lower(obj.SchemaModule)],...
-                ['+', lower(obj.SchemaCategory)]);
-            obj.SchemaClassFilePath = fullfile(folderPath, [obj.SchemaClassName, '.m']);
-
-            if ~exist(folderPath, 'dir')
-                mkdir(folderPath)
-            end
+            obj.SchemaClassFilePath = om.strutil.buildClassPath(...
+                obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
         end
     end
 
@@ -241,7 +248,6 @@ classdef ClassWriter < handle
                 if strcmp(propertyAttributes.type, 'array')
                     sizeAttribute = '(1,:)';
                 else
-                    disp(['type', '-size set to 1,1-',propertyAttributes.type])
                     sizeAttribute = '(1,1)';
                 end
             else
@@ -263,9 +269,11 @@ classdef ClassWriter < handle
                 else
                     dataType = clsNames{1};
                 end
-
+            
             elseif isfield(propertyAttributes, 'x_linkedCategories')
-                clsNames = cellfun(@(str) sprintf('%s.category.%s', obj.SchemaModule, str), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
+                clsNames = cellfun(@(str) sprintf('openminds.%s.category.%s', obj.SchemaModule, om.strutil.pascalCase(str)), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
+                %clsNames = [superclassName, cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), categories, 'UniformOutput', false)];
+
                 dataType = sprintf('{%s}', strjoin(clsNames, ', '));
 
             elseif isfield(propertyAttributes, 'type')
@@ -275,7 +283,7 @@ classdef ClassWriter < handle
                         if isfield(itemDef, 'type')
                             dataType = itemDef.type;
                         else
-                            disp('a')
+                            
                         end
                     end
                 else
@@ -285,7 +293,13 @@ classdef ClassWriter < handle
 
                         case {'number'}
                             dataType = 'double';
-                            disp('b')
+
+                        case {'integer'}
+                            dataType = 'unit64';
+
+                        case 'float'
+                            dataType = 'double';
+
                         otherwise
                             disp(['datatype', propertyAttributes.type])
                     end

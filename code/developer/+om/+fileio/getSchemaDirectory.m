@@ -1,7 +1,11 @@
 function folderPath = getSchemaDirectory(moduleName, schemaCategory)
 
     initPath = om.fileio.getModuleDirectory(moduleName);
-    folderPath = fullfile(initPath, 'schemas', schemaCategory);
+    if strcmp(schemaCategory, 'schemas')
+        folderPath = fullfile(initPath, 'schemas');
+    else
+        folderPath = fullfile(initPath, 'schemas', schemaCategory);
+    end
 
     if ~isfolder(folderPath)
         error('OpenMINDS:SchemaCategoryNotFound', ...

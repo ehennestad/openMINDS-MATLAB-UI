@@ -6,7 +6,11 @@ function name = buildClassName(schemaName, schemaCategory, schemaModule)
         schemaModule char
     end
 
-    schemaName(1) = upper(schemaName(1));
+    schemaName = om.strutil.pascalCase(schemaName);
+    schemaModule = lower(schemaModule);
+    schemaCategory = lower(schemaCategory);
+
+    schemaCategory = strrep( schemaCategory, 'schemas', '');
     
     if isempty(schemaCategory) % This might be empty, i.e for controlled terms
         name = strjoin({'openminds', schemaModule, schemaName}, '.');

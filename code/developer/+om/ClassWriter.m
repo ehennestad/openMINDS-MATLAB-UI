@@ -10,6 +10,7 @@ classdef ClassWriter < handle
         SchemaName = ''
         SchemaCategory = ''
         SchemaModule = ''
+        SchemaList
     end
 
     properties (Dependent)
@@ -59,10 +60,12 @@ classdef ClassWriter < handle
 
             if obj.HasSuperclass  % Create superclass
                 [schemaCategory, schemaName] = om.strutil.splitSchemaPath(obj.Schema.x_extends);
-                om.createMatlabSchemaClass(schemaName, schemaCategory, obj.SchemaModule)
+                if ~om.existSchema(schemaName, schemaCategory, obj.SchemaModule) 
+                    om.createMatlabSchemaClass(schemaName, schemaCategory, obj.SchemaModule)
+                end
                 superclassName = om.strutil.buildClassName(schemaName, schemaCategory, obj.SchemaModule);
             else
-                superclassName = 'openminds.abstract.OpenMINDSSchema';
+                superclassName = 'openminds.abstract.Schema';
             end
 
             % Make cell array, because we might add more superclasses below.
@@ -73,7 +76,7 @@ classdef ClassWriter < handle
                 for i = 1:numel(categories)
                     om.createMatlabCategoryClass(categories{i}, obj.SchemaModule)                   
                 end
-                superclassName = [superclassName, cellfun(@(str) sprintf('%s.category.%s', obj.SchemaModule, PascalCase(str)), categories, 'UniformOutput', false)];
+                superclassName = [superclassName, cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), categories, 'UniformOutput', false)];
             end
 
             % Write class definition
@@ -95,7 +98,7 @@ classdef ClassWriter < handle
 
             if ~obj.IsAbstract
                 % Write constant and hidden class properties
-                obj.startPropertyBlock('SetAccess = immutable')
+                obj.startPropertyBlock('SetAccess = immutable', 'Hidden')
                 obj.addProperty('X_CATEGORIES', schemaCategories)
                 obj.endPropertyBlock()
             end
@@ -127,7 +130,7 @@ classdef ClassWriter < handle
                     obj.addSchemaProperty(propertyNames{i}, propertyAttr);
                 end
             else
-                disp('a')
+                
             end
             obj.endPropertyBlock()
 
@@ -156,6 +159,10 @@ classdef ClassWriter < handle
             obj.writeSchemaString()
             obj.updateSchemaClassFilePath()
             om.fileio.writeSchemaClass(obj.SchemaClassFilePath, obj.SchemaCodeStr)
+
+            className = om.strutil.buildClassName(obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
+
+            fprintf('Generated schema %s\n', className)
         end
     end
 
@@ -178,14 +185,8 @@ classdef ClassWriter < handle
 
 
         function updateSchemaClassFilePath(obj)
-            rootPath = om.Preferences.get('MSchemaDirectory');
-            folderPath = fullfile(rootPath, ['+', lower(obj.SchemaModule)],...
-                ['+', lower(obj.SchemaCategory)]);
-            obj.SchemaClassFilePath = fullfile(folderPath, [obj.SchemaClassName, '.m']);
-
-            if ~exist(folderPath, 'dir')
-                mkdir(folderPath)
-            end
+            obj.SchemaClassFilePath = om.strutil.buildClassPath(...
+                obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
         end
     end
 
@@ -245,7 +246,6 @@ classdef ClassWriter < handle
                 if strcmp(propertyAttributes.type, 'array')
                     sizeAttribute = '(1,:)';
                 else
-                    disp(['type', '-size set to 1,1-',propertyAttributes.type])
                     sizeAttribute = '(1,1)';
                 end
             else
@@ -269,7 +269,7 @@ classdef ClassWriter < handle
                 end
             
             elseif isfield(propertyAttributes, 'x_linkedCategories')
-                clsNames = cellfun(@(str) sprintf('%s.category.%s', obj.SchemaModule, PascalCase(str)), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
+                clsNames = cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
                 dataType = sprintf('{%s}', strjoin(clsNames, ', '));
 
             elseif isfield(propertyAttributes, 'type')
@@ -279,7 +279,7 @@ classdef ClassWriter < handle
                         if isfield(itemDef, 'type')
                             dataType = itemDef.type;
                         else
-                            disp('a')
+                            
                         end
                     end
                 else
@@ -289,7 +289,6 @@ classdef ClassWriter < handle
 
                         case {'number'}
                             dataType = 'double';
-                            disp('b')
 
                         case {'integer'}
                             dataType = 'unit64';
@@ -420,8 +419,4 @@ function mustBeSpecifiedLength(value, minLength, maxLength)
     if length(value) < minLength
         error('Must be an array of maximum %d items', maxLength)
     end
-end
-
-function str = PascalCase(str)
-    str(1) = upper(str(1));
 end
