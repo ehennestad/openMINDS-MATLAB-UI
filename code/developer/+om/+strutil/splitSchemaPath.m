@@ -7,6 +7,12 @@ function [schemaCategory, schemaName] = splitSchemaPath(schemaPathStr)
     else
         schemaCategory = '';
     end
-    schemaName = regexp(schemaPathList{end}, '^\w*(?=.)', 'match', 'once');
+    
+    filename = schemaPathList{end};
+    filenameSplit = strsplit(filename, '.');
+    schemaName = filenameSplit{1};
+
+    % Some instances have dashes and this does not work...
+    %schemaName = regexp(schemaPathList{end}, '^\w*(?=.)', 'match', 'once');
 
 end

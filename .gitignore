@@ -1,0 +1,43 @@
+# Matlab generated schemas
+code/schemas_matlab/+openminds/+controlledterms/
+code/schemas_matlab/+openminds/+core/
+
+*.mat
+
+# Autosave files
+*.asv
+*.m~
+*.autosave
+*.slx.r*
+*.mdl.r*
+
+# Derived content-obscured files
+*.p
+
+# Compiled MEX files
+*.mex*
+
+# Packaged app and toolbox files
+*.mlappinstall
+*.mltbx
+
+# Deployable archives
+*.ctf
+
+# Generated helpsearch folders
+helpsearch*/
+
+# Code generation folders
+slprj/
+sccprj/
+codegen/
+
+# Cache files
+*.slxc
+
+# Cloud based storage dotfile
+.MATLABDriveTag
+
+# Keep MATLAB projects local
+*.prj
+resources/

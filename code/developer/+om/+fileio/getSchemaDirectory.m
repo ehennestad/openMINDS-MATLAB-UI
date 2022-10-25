@@ -14,4 +14,3 @@ function folderPath = getSchemaDirectory(moduleName, schemaCategory)
     end
 
 end
-

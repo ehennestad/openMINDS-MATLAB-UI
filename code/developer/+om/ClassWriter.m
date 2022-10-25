@@ -24,6 +24,8 @@ classdef ClassWriter < handle
         SchemaClassFilePath
         SchemaClassFileID
         SchemaCodeStr = "";
+        IsControlledTerm = false
+
     end
 
     properties (Constant, Hidden)
@@ -71,6 +73,12 @@ classdef ClassWriter < handle
             % Make cell array, because we might add more superclasses below.
             superclassName = {superclassName};
 
+
+            if contains('openminds.controlledterms.ControlledTerm', superclassName)
+                obj.IsControlledTerm = true;
+                superclassName = [superclassName, 'openminds.abstract.Instance'];
+            end
+
             if obj.IsOfCategory
                 categories = obj.Schema.x_categories;
                 for i = 1:numel(categories)
@@ -111,16 +119,14 @@ classdef ClassWriter < handle
                 required = '{}';
             end
             
-            if obj.IsAbstract
-                obj.startPropertyBlock('Access = private')
-            else
-                obj.startPropertyBlock('SetAccess = immutable')
-            end
-            obj.addProperty('Required', required)
+            
+            obj.startPropertyBlock('Access = private')
+            obj.addProperty('Required_', required)
             obj.endPropertyBlock()
 
-            obj.startPropertyBlock()
+           
             if isfield(obj.Schema, 'properties')
+                obj.startPropertyBlock()
                 propertyNames = fieldnames(obj.Schema.properties);
                 for i = 1:numel(propertyNames)
                     if i~=1
@@ -129,11 +135,21 @@ classdef ClassWriter < handle
                     propertyAttr = obj.Schema.properties.(propertyNames{i});
                     obj.addSchemaProperty(propertyNames{i}, propertyAttr);
                 end
+                obj.endPropertyBlock()
             else
                 
             end
-            obj.endPropertyBlock()
 
+            if contains('openminds.controlledterms.ControlledTerm', superclassName)
+                instanceList = om.dir.instance('controlledTerms', obj.SchemaName);
+                % Write enumeration block
+                obj.startEnumBlock()
+                for i = 1:numel(instanceList)
+                    obj.addEnumValue(instanceList(i).Name)
+                end
+                obj.endPropertyBlock()
+            end
+            
             obj.startMethodsBlock()
             obj.startConstructor()
 
@@ -230,9 +246,14 @@ classdef ClassWriter < handle
         end
 
         function addSchemaProperty(obj, propertyName, propertyAttributes)
-
+            
+            % Store fieldnames of property attributes and use this to check
+            % that all attributes have been handled.
+            attributeNames = fieldnames(propertyAttributes);
+            
             if isfield(propertyAttributes, 'x_instruction')
                 description = propertyAttributes.x_instruction;
+                attributeNames = setdiff(attributeNames, 'x_instruction');
             else
                 description = 'N/A';
             end
@@ -240,7 +261,7 @@ classdef ClassWriter < handle
             newStr = sprintf('%% %s', description);
             newStr = obj.indentLine(newStr, 2);
             obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
-
+            
             % Get data size
             if isfield(propertyAttributes, 'type')
                 if strcmp(propertyAttributes.type, 'array')
@@ -248,6 +269,7 @@ classdef ClassWriter < handle
                 else
                     sizeAttribute = '(1,1)';
                 end
+                attributeNames = setdiff(attributeNames, 'type');
             else
                 sizeAttribute = '(1,1)';
             end
@@ -257,30 +279,53 @@ classdef ClassWriter < handle
             if isfield(propertyAttributes, 'x_linkedTypes') || isfield(propertyAttributes, 'x_embeddedTypes')
                 if isfield(propertyAttributes, 'x_linkedTypes')
                     schemaNames = propertyAttributes.x_linkedTypes;
+                    attributeNames = setdiff(attributeNames, 'x_linkedTypes');
                 elseif isfield(propertyAttributes, 'x_embeddedTypes')
                     schemaNames = propertyAttributes.x_embeddedTypes;
+                    attributeNames = setdiff(attributeNames, 'x_embeddedTypes');
                 end
-                clsNames = cellfun(@(uri) om.strutil.classNameFromUri(uri), schemaNames, 'UniformOutput', false);
                 
-                if numel(clsNames) > 1
-                    dataType = sprintf('{%s}', strjoin(clsNames, ', '));
-                else
-                    dataType = clsNames{1};
+                if strcmp(sizeAttribute, '(1,1)')
+                    sizeAttribute = '(1,:)';
+                    validationFcnStr = sprintf('{mustBeSpecifiedLength(%s, 0, 1)}', propertyName);
                 end
+
+                clsNames = cellfun(@(uri) om.strutil.classNameFromUri(uri), schemaNames, 'UniformOutput', false);
+                isEmptyNames = cellfun(@isempty, clsNames);
+                clsNames(isEmptyNames) = [];
+                
+                % Big todo: Figure out what to do here!
+%                 if numel(clsNames) > 1
+%                     dataType = sprintf('{%s}', strjoin(clsNames, ', '));
+%                 else
+%                     dataType = clsNames{1};
+%                 end
+
+                dataType = clsNames{1};
+
             
             elseif isfield(propertyAttributes, 'x_linkedCategories')
                 clsNames = cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
                 dataType = sprintf('{%s}', strjoin(clsNames, ', '));
+                attributeNames = setdiff(attributeNames, 'x_linkedCategories');
 
             elseif isfield(propertyAttributes, 'type')
                 if strcmp(propertyAttributes.type, 'array')
                     if isfield(propertyAttributes, 'items')
                         itemDef = propertyAttributes.items;
+                        itemFields = fieldnames(itemDef);
                         if isfield(itemDef, 'type')
                             dataType = itemDef.type;
+                            itemFields = setdiff(itemFields, 'type');
                         else
                             
                         end
+                        % Todo: note: item is a nested attribute field....
+                        if ~isempty(itemFields)
+                            disp(itemFields)
+                        end
+
+                        attributeNames = setdiff(attributeNames, 'items');
                     end
                 else
                     switch propertyAttributes.type
@@ -305,10 +350,42 @@ classdef ClassWriter < handle
             end
 
             % Todo: get validation function.
-            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems'}))
+            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength'}))
+                if exist('validationFcnStr', 'var') && ~isempty(validationFcnStr)
+                    disp('a')
+                end
                 validationFcnStr = obj.getValidationFunction(propertyName, propertyAttributes);
+                attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength'});
             else
                 validationFcnStr = '';
+            end
+
+            if isfield(propertyAttributes, 'x_formats')
+                assert( strcmp( dataType, 'string'), 'Format for non-string' )
+                if any( contains( propertyAttributes.x_formats, {'date', 'time', 'date-time'} ))
+                    dataType = 'datetime';
+                elseif any( contains( propertyAttributes.x_formats, 'email' ) )
+                    % Todo: mustBeValidEmail legges til validationFcnStr
+                elseif any( contains( propertyAttributes.x_formats, 'iri' ) )
+                    % Todo: mustBeValidIri. What does this mean???
+                elseif any( contains( propertyAttributes.x_formats, 'ECMA262' ) )
+                    % Todo: mustBeValidECMA. What does this mean???
+                else
+                    disp( propertyAttributes.x_formats)
+                end
+                attributeNames = setdiff(attributeNames, {'x_formats'});
+            end
+
+            if isfield(propertyAttributes, 'pattern')
+                fprintf('%s: %s: pattern: %s\n', obj.SchemaName, propertyName, propertyAttributes.pattern)
+                attributeNames = setdiff(attributeNames, 'pattern');
+            end
+
+            % Todo: Implement string length...
+
+
+            if ~isempty(attributeNames)
+                disp(attributeNames)
             end
             
             if isempty(validationFcnStr)
@@ -316,15 +393,31 @@ classdef ClassWriter < handle
             else
                 newStr = sprintf('%s %s %s %s', propertyName, sizeAttribute, dataType, validationFcnStr);
             end
-                newStr = obj.indentLine(newStr, 2);
+            
+            newStr = obj.indentLine(newStr, 2);
             obj.appendLine(newStr)
             %obj.appendLine('')
-
         end
 
         function endPropertyBlock(obj)
             newStr = obj.indentLine('end', 1);
             obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline + newline;
+        end
+
+
+        % function that starts writing an enumeration block
+        function startEnumBlock(obj)
+            newStr = sprintf("enumeration");
+            newStr = obj.indentLine(newStr, 1);
+            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+        end
+
+        % function that adds an enumeration value
+        function addEnumValue(obj, enumValue)
+            enumValue = replace(enumValue, '-', '_');
+            newStr = sprintf("%s('%s')", enumValue, enumValue);
+            newStr = obj.indentLine(newStr, 2);
+            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
         end
 
         function startMethodsBlock(obj, varargin)
@@ -343,13 +436,22 @@ classdef ClassWriter < handle
 
         function startConstructor(obj)
 
-            obj.writeLine(2, sprintf('function obj = %s()', obj.SchemaClassName))
+            if obj.IsControlledTerm
+                obj.writeLine(2, sprintf('function obj = %s(name)', obj.SchemaClassName))
+            else
+                obj.writeLine(2, sprintf('function obj = %s()', obj.SchemaClassName))
+            end
 
             if obj.HasSuperclass
                  obj.writeLine(3, 'required = obj.getSuperClassRequiredProperties();')
-                 obj.writeLine(3, 'obj.Required = [required, obj.Required];')
+                 obj.writeLine(3, 'obj.Required = [required, obj.Required_];')
                  obj.writeEmptyLine()
             end
+
+            if obj.IsControlledTerm
+                obj.writeEnumSwitchBlock()
+            end
+
         end
 
         function startFunctionBlock(obj)
@@ -373,10 +475,48 @@ classdef ClassWriter < handle
         function writeEmptyLine(obj)
             obj.SchemaCodeStr = obj.SchemaCodeStr + newline;
         end
+        
+        function writeEnumSwitchBlock(obj)
+            instanceList = om.dir.instance('controlledTerms', obj.SchemaName);
 
+            obj.writeLine(3, 'switch name')
+            for i = 1:numel(instanceList)
+
+                iName = replace(instanceList(i).Name, '-', '_');
+
+                obj.writeLine(4, sprintf('case ''%s''', iName))
+
+                jsonStr = om.fileio.readInstance(instanceList(i).Name, obj.SchemaName, 'controlledTerms');
+                jsonStr = strrep(jsonStr, '''', ''''''); %If character array contains ', need to replace with ''
+                data = om.json.decode(jsonStr);
+
+                propNames = {'at_id', 'at_type', 'definition', 'description', 'interlexIdentifier', 'knowledgeSpaceLink', 'preferredOntologyIdentifier', 'synonym'};
+                for j = 1:numel(propNames)
+                    if isfield(data, propNames{j})
+                        jName = propNames{j};
+                        jValue = data.(propNames{j});
+                        if isa(jValue, 'cell')
+                            jValue = cellfun(@(str) sprintf('''%s''', str), jValue, 'UniformOutput', false);
+                            jValue = strjoin(jValue, ', ');
+                            jValue = sprintf( '{%s}', jValue );
+                        elseif isa(jValue, 'char') || isa(jValue, 'string')
+                            jValue = sprintf('''%s''', jValue);
+                        elseif isempty(jValue)
+                            jValue = '''''';
+                        end
+
+                        obj.writeLine(5, sprintf('obj.%s = %s;', jName, jValue))
+                    end
+                end
+
+                obj.writeEmptyLine()
+            end
+            obj.writeLine(3, 'end')
+        end
     end
     
     methods (Access = private)
+        
         function str = getValidationFunction(obj, name, attr)
             
             str = '';
@@ -385,6 +525,11 @@ classdef ClassWriter < handle
             if isfield(attr, 'maxItems')
                 if isfield(attr, 'minItems')
                     minItems = attr.minItems;
+% %                     if isfield(obj.Schema, 'required')
+% %                         if ~any(strcmp(obj.Schema.required, name))
+% %                             minItems = 0;
+% %                         end
+% %                     end
                 else
                     minItems = 0;
                 end
@@ -392,7 +537,24 @@ classdef ClassWriter < handle
                 maxItems = attr.maxItems;
                 
                 str = sprintf('{mustBeSpecifiedLength(%s, %d, %d)}', name, minItems, maxItems);
+            
+            elseif isfield(attr, 'uniqueItems')
+                str = sprintf('{mustBeListOfUniqueItems(%s)}', name);
 
+            elseif isfield(attr, 'minLength') || isfield(attr, 'maxLength')
+                
+                if isfield(attr, 'minLength')
+                    minLength = attr.minLength;
+                else
+                    minLength = 0;
+                end
+
+                if isfield(attr, 'maxLength')
+                    maxLength = attr.maxLength;
+                else
+                    maxLength = inf;
+                end
+                str = sprintf('{mustBeValidStringLength(%s, %d, %d)}', name, minLength, maxLength);
             end
         end
     end
@@ -407,16 +569,4 @@ classdef ClassWriter < handle
 
     end
     
-end
-
-
-function mustBeSpecifiedLength(value, minLength, maxLength)
-    
-    if length(value) < minLength
-        error('Must be an array of minimum %d items', minLength)
-    end
-
-    if length(value) < minLength
-        error('Must be an array of maximum %d items', maxLength)
-    end
 end

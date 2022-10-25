@@ -17,7 +17,7 @@ function folderPath = getModuleDirectory(moduleName)
             folderName = 'openMINDS';
 
         otherwise
-            error('Module is not implemented yet')
+            error('Module "%s" is not implemented yet', moduleName)
     end
     
     folderPath = fullfile(rootDirectory, folderName);

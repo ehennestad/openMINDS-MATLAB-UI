@@ -7,8 +7,13 @@ function schemaClassName = classNameFromUri(schemaUri)
     uri = matlab.net.URI(schemaUri);
     schemaModule = uri.Path(2);
     schemaName = uri.Path(3);
-
-    s = om.dir.schema(schemaModule, schemaName);
+    
+    try
+        s = om.dir.schema(schemaModule, schemaName);
+    catch
+        warning('The schema "%s" is not available', schemaUri)
+        schemaClassName = ''; return
+    end
     if ~isempty(s.Category)
         schemaCategory = s.Category;
     else
