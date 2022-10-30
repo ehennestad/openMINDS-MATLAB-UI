@@ -1,4 +1,5 @@
-classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
+classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & nansen.metadata.tablevar.mixin.HasTableColumnFormatter
+    %& nansen.metadata.abstract.TableVariable 
 
 % Todo:
 %   [ ] Validate schema. I.e are all required variables filled out
@@ -6,6 +7,22 @@ classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
 %   [ ] Do some classes have to inherit from a mixin.Heterogeneous class?
 %   [ ] Should controlled term instances be coded as enumeration classes?
 %   [ ] Distinguish embedded from linked types.
+
+    properties (Constant, Hidden) % Implement abstract property from nansen.metadata.abstract.TableVariable
+        IS_EDITABLE = true;
+        DEFAULT_VALUE = 'Undefined'
+    end
+    properties (Constant, Hidden)
+        TableColumnFormatter = om.SchemaTableColumnFormatter
+    end
+
+    properties (Constant, Hidden)
+        VOCAB = "https://openminds.ebrains.eu/vocab/"
+    end
+
+    properties (SetAccess = immutable)
+        id char = ''
+    end
 
     properties (Abstract, Constant, Hidden)
         X_TYPE
@@ -16,9 +33,28 @@ classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
     end
 
     properties (Access = private)
+        Required_
+    end
+
+    properties (Access = protected)
         Required
     end
 
+    methods % Constructor
+        
+        function obj = Schema()
+            if ~isa(obj, 'openminds.abstract.Instance')
+                obj.id = om.strutil.getuuid;
+            end
+        end
+        
+    end
+
+    methods (Access = public)
+        
+        
+        
+    end
 
     methods
         function values = getSuperClassRequiredProperties(obj)
@@ -29,7 +65,19 @@ classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
     methods (Access = protected)
         function str = getHeader(obj)
             str = getHeader@matlab.mixin.CustomDisplay(obj);
-            str = replace(str, 'with properties:', sprintf('(%s) with properties:', obj.X_TYPE));
+            str = replace(str, 'with properties:', sprintf('(%s) with properties:', obj(1).X_TYPE));
+        end
+
+        function str = getFooter(obj)
+            str = '';
+
+            if isempty(obj)
+                return
+            end
+
+            if ~isempty(obj(1).Required)
+                str = sprintf('  Required Properties: <strong>%s</strong>', strjoin(obj(1).Required, ', '));
+            end
         end
     end
 
@@ -37,19 +85,20 @@ classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
         
         function values = getAllSuperClassRequiredProperties(className)
 
-            import openminds.abstract.OpenMINDSSchema.getAllSuperClassRequiredProperties
+            import openminds.abstract.Schema.getAllSuperClassRequiredProperties
 
             % recursively get required props from superclasses
             mc = meta.class.fromName(className);
             superClassList = mc.SuperclassList;
 
             % If there are more than one subclass, we reached the
-            % OpenMINDSSchema class and can safely return
+            % abstract Schema class and can safely return
+            % Todo: need to double check this
             if numel(superClassList) > 1 
                 values = {}; return
             end
 
-            isReq = strcmp( {superClassList.PropertyList.Name}, 'Required' );
+            isReq = strcmp( {superClassList.PropertyList.Name}, 'Required_' );
             if any(isReq)
                 values = superClassList.PropertyList(isReq).DefaultValue;
             else
@@ -63,6 +112,12 @@ classdef OpenMINDSSchema < handle & matlab.mixin.CustomDisplay
             end
         end
         
+    end
+
+    methods (Static)
+        function str = test()
+            str = 'hello world';
+        end
     end
 
 end
