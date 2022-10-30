@@ -2,6 +2,9 @@
 code/schemas_matlab/+openminds/+controlledterms/
 code/schemas_matlab/+openminds/+core/
 
+# openMINDS logo
+light_openMINDS-logo.png
+
 *.mat
 
 # Autosave files
