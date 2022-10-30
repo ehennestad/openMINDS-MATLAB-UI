@@ -1,8 +1,16 @@
 
 metadataSet = om.MetadataSet();
 
+
+
 sub1 = openminds.core.research.Subject();
+
+save('test.mat', 'sub1')
+
 sub2 = openminds.core.research.Subject();
+
+metadataSet.add(sub1)
+metadataSet.add(sub2)
 
 ss1 = openminds.core.research.SubjectState();
 ss2 = openminds.core.research.SubjectState();

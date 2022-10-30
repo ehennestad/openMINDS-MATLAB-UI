@@ -7,6 +7,11 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
 
     methods
         
+% %         function sObj = saveobj(obj)
+% % 
+% %             sObj=struct(obj);
+% %         end
+
         function add(obj, schemaInstance)
             
             schemaPathName = class(schemaInstance);
@@ -20,11 +25,8 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
             else
                 obj.SchemaInstances.(schemaName)(end+1:end+n) = schemaInstance;
             end
-                            
-
             
             % Todo: Autogenerate internalIdentifier and lookupLabel
-            
             
         end
 
@@ -54,4 +56,10 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
         end
 
     end
+
+% %     methods (Static)
+% %         function obj = loadobj(S)
+% %             obj = S;
+% %         end
+% %     end
 end

@@ -1,6 +1,10 @@
 classdef ListBox < handle
 
 
+    properties 
+        SelectionMode = 'multiple' % single | multiple
+    end
+
     properties
         Items
         SelectionChangedFcn
@@ -19,6 +23,10 @@ classdef ListBox < handle
         Panel
         Buttons uim.control.Button_
         ButtonCollection uim.widget.toolbar_
+    end
+
+    properties (Dependent)
+        SelectedItems
     end
 
     properties (Access = private)
@@ -89,6 +97,19 @@ classdef ListBox < handle
         end
     end
 
+    methods % Set/get
+        function set.SelectedItems(obj, newValue)
+            % Check selection mode, i.e single, multiple
+
+            obj.updateSelectedItems(newValue)
+            
+        end
+
+        function selectedItems = get.SelectedItems(obj)
+            selectedItems = {obj.SelectedButtons.Text};
+        end
+    end
+
 
     methods (Access = private)
 
@@ -144,12 +165,42 @@ classdef ListBox < handle
                 obj.SelectionChangedFcn(src, evt)
             end
 
-
-
             % Notify listeners.
             % - What listeners?
         end
 
+        function updateSelectedItems(obj, newSelection)
+        %updateSelectedItems Programmatic entry point for setting items
+            
+            buttonNames = {obj.Buttons.Text};
+            
+            obj.SelectedButtons(:) = [];
+
+            for i = 1:numel(obj.Buttons)
+                obj.Buttons(i).Value = false;
+            end
+
+            if isa(newSelection, 'char'); newSelection = {newSelection}; end
+            
+            newSelection = cellfun(@(c) utility.string.varname2label(c), newSelection, 'UniformOutput', false);
+
+            for i = 1:numel(newSelection)
+                isSelectedButton = strcmp(buttonNames, newSelection{i});
+                if any(isSelectedButton)
+                    hButton = obj.Buttons(isSelectedButton);
+                    hButton.Value = true;
+                    obj.SelectedButtons = [obj.SelectedButtons, hButton];
+                end
+            end
+
+            % Call the SelectionChangedFcn if preset...
+            if ~isempty(obj.SelectionChangedFcn)
+                disp('Selection Changed')
+                evt = event.EventData();
+                obj.SelectionChangedFcn(obj.SelectedButtons, evt)
+            end
+
+        end
 
     end
 end

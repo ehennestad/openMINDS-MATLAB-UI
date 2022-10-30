@@ -42,9 +42,9 @@ classdef GraphNodeTransporter < applify.gobjectTransporter
         %moveObject Execute when mouse is dragging a selected object    
 
             % Get current coordinates
-            newMousePointAx = obj.hAxes.CurrentPoint(1, 1:2);            
+            newMousePointAx = obj.hAxes.CurrentPoint(1, 1:2);
+                        
             shift = newMousePointAx - obj.previousMousePointAxes;
-
             h = obj.currentHandle;
             i = obj.CurrentNodeIndex;
 

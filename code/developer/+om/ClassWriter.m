@@ -306,8 +306,12 @@ classdef ClassWriter < handle
             
             elseif isfield(propertyAttributes, 'x_linkedCategories')
                 clsNames = cellfun(@(str) om.strutil.buildClassName(str, 'category', obj.SchemaModule), propertyAttributes.x_linkedCategories, 'UniformOutput', false);
-                dataType = sprintf('{%s}', strjoin(clsNames, ', '));
+                %dataType = sprintf('{%s}', strjoin(clsNames, ', '));
                 attributeNames = setdiff(attributeNames, 'x_linkedCategories');
+                dataType = clsNames{1};
+                if numel(clsNames) > 1
+                    warning('Multiple linked categories for property %s of schema %s', propertyName, obj.SchemaName)
+                end
 
             elseif isfield(propertyAttributes, 'type')
                 if strcmp(propertyAttributes.type, 'array')
@@ -328,22 +332,23 @@ classdef ClassWriter < handle
                         attributeNames = setdiff(attributeNames, 'items');
                     end
                 else
-                    switch propertyAttributes.type
-                        case {'string'}
-                            dataType = propertyAttributes.type;
+                    dataType = propertyAttributes.type;
+                end
 
-                        case {'number'}
-                            dataType = 'double';
+                % Convert some datatypes to matlab types.
+                switch dataType
 
-                        case {'integer'}
-                            dataType = 'unit64';
+                    case {'number'}
+                        dataType = 'double';
 
-                        case 'float'
-                            dataType = 'double';
+                    case {'integer'}
+                        dataType = 'uint64';
 
-                        otherwise
-                            disp(['datatype', propertyAttributes.type])
-                    end
+                    case 'float'
+                        dataType = 'double';
+
+                    otherwise
+                        disp(['datatype', propertyAttributes.type])
                 end
             else
                 disp('a')

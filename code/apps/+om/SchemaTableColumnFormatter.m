@@ -15,12 +15,12 @@ classdef SchemaTableColumnFormatter < nansen.metadata.abstract.TableVariable & n
 
         function str = getCellDisplayString(obj)
 
-%             if isenum(obj(1).Value)
-%                 str = obj.Value;
-%             else
+            if isenum(obj(1).Value)
+                str = cellfun(@(c) char(c), {obj(:).Value}, 'UniformOutput', false);
+            else
                 str = class(obj(1).Value);
                 str = repmat({str}, numel(obj), 1);
-%             end
+            end
         end
 
         function str = getCellTooltipString(obj)

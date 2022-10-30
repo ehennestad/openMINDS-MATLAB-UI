@@ -3,13 +3,13 @@ function mustBeValidStringLength(value, minLength, maxLength)
     if numel(value) > 1
         
     end
-
+    
     if minLength > 0
-        msg = sprintf('String must be between %s and %s characters', minLength, maxLength);
+        msg = sprintf('String must be between %d and %d characters', minLength, maxLength);
     else
-        msg = sprintf('String must be maximum %s characters', maxLength);
+        msg = sprintf('String must be maximum %d characters', maxLength);
     end
     
-    assert(strlength(value) > minLength && strlength(value) < minLength, msg)
+    assert(strlength(value) >= minLength && strlength(value) <= minLength, msg)
 end
 

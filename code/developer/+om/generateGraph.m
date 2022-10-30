@@ -1,4 +1,4 @@
-function G = generateGraph(moduleName, force)
+function [G, edgeLabels] = generateGraph(moduleName, force)
 
     % Save graph
     % Modify schemas to include incoming links/edges.
@@ -27,9 +27,12 @@ function G = generateGraph(moduleName, force)
             for j = 1:numel(propertyNames)
                 iValue = tempObj.(propertyNames{j});
 
-                if isa(iValue, 'openminds.abstract.OpenMINDSSchema') && ~isa(iValue, 'openminds.controlledterm.ControlledTerm')
-                    s{end+1} = class(tempObj); %#ok<AGROW> 
-                    t{end+1} = class(iValue); %#ok<AGROW> 
+                if isa(iValue, 'openminds.abstract.Schema') && ~isa(iValue, 'openminds.controlledterm.ControlledTerm')
+                    [~, ~, sourceName] = fileparts( class(tempObj) );
+                    [~, ~, targetName] = fileparts( class(iValue) );
+
+                    s{end+1} = sourceName(2:end); %#ok<AGROW> 
+                    t{end+1} = targetName(2:end); %#ok<AGROW> 
                     e{end+1} = propertyNames{j}; %#ok<AGROW> 
                 end
             end
@@ -37,4 +40,7 @@ function G = generateGraph(moduleName, force)
     end
 
     G = digraph(s,t);
+    if nargout == 2
+        edgeLabels = e;
+    end
 end
