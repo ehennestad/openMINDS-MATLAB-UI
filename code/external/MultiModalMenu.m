@@ -256,7 +256,6 @@ classdef MultiModalMenu < handle
             elseif isprop(hParent, 'Figure')
             
                 obj.ParentApp = hParent;
-
                 obj.Figure = obj.ParentApp.Figure;
             else
                 error('MultiModalMenu:InvalidInput', 'The first input must be a valid figure')

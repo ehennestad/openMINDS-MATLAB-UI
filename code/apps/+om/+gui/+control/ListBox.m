@@ -1,18 +1,22 @@
 classdef ListBox < handle
+%ListBox Listbox widget
 
+    % Todo:
+    %   [ ] Add facility for adding/removing items or replacing full list of items 
 
     properties 
-        SelectionMode = 'multiple' % single | multiple
+        % Whether single or multiple items in the list can be selected
+        SelectionMode char {mustBeMember(SelectionMode, {'single', 'multiple'})} = 'multiple'
     end
 
     properties
-        Items
-        SelectionChangedFcn
+        Items               % List (cell array) of items to display
+        SelectionChangedFcn % Function handle to invoke when selected item changes
     end
 
     properties (Access = private)
-        Name
-        Icon
+        Name % List of names for each list item
+        Icon % List of icons for each list item
     end
 
     properties % Appearance
@@ -21,7 +25,7 @@ classdef ListBox < handle
 
     properties (SetAccess = private)
         Panel
-        Buttons uim.control.Button_
+        Buttons (1,:) uim.control.Button_
         ButtonCollection uim.widget.toolbar_
     end
 
@@ -117,7 +121,7 @@ classdef ListBox < handle
 
             triggerCallback = false;
             
-            disp(evt.Source.SelectionType)
+            % disp(evt.Source.SelectionType)
             switch evt.Source.SelectionType
                 case 'normal'
                     % Clicked button which is already selected
@@ -151,17 +155,19 @@ classdef ListBox < handle
                     end
                     
                 case 'open'
-                
+                    if isequal(obj.SelectedButtons, src)
+                        src.Value = true;
+                        triggerCallback = true;
+                    end
                 
             end
 
-            buttonNames = {obj.SelectedButtons.Text};
-            fprintf('Selected buttons: %s\n', strjoin(buttonNames, ', '))
+            %buttonNames = {obj.SelectedButtons.Text};
+            %fprintf('Selected buttons: %s\n', strjoin(buttonNames, ', '))
 
-
-            % Call the SelectionChangedFcn if preset...
+            % Call the SelectionChangedFcn if present...
             if ~isempty(obj.SelectionChangedFcn) && triggerCallback
-                disp('Selection Changed')
+                %disp('Selection Changed')
                 obj.SelectionChangedFcn(src, evt)
             end
 
@@ -169,9 +175,13 @@ classdef ListBox < handle
             % - What listeners?
         end
 
-        function updateSelectedItems(obj, newSelection)
+        function updateSelectedItems(obj, newSelection, force)
         %updateSelectedItems Programmatic entry point for setting items
             
+            if nargin < 3
+                force = false;
+            end
+
             buttonNames = {obj.Buttons.Text};
             
             obj.SelectedButtons(:) = [];
@@ -195,11 +205,9 @@ classdef ListBox < handle
 
             % Call the SelectionChangedFcn if preset...
             if ~isempty(obj.SelectionChangedFcn)
-                disp('Selection Changed')
                 evt = event.EventData();
                 obj.SelectionChangedFcn(obj.SelectedButtons, evt)
             end
-
         end
 
     end

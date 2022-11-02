@@ -15,24 +15,37 @@ classdef ModelBuilder < handle
 %       [ ] Get label/id as method on Schema class
 %       [ ] In table view, show connected nodes, in graph view, show all
 %           available, or show predefined templates...
-%       [ ] Dynamic listbok on left side
+%       [ ] Dynamic listbox on left side panel
+%
+%       [ ] Treat embedded types and linked types differently. Embedded
+%           types are not added to the set, but only added to schema 
+%           instances. Should embedded types be value classes.
+%
+%       [ ] Linked types are just links...
+
 
     properties
         MetadataInstance
         MetadataSet
     end
 
-    properties
-        Pages = {'Table Viewer', 'Graph Viewer', 'Timeline Viewer'}%, 'Figures'}
+    properties (Constant)
+        Pages = {'Table Viewer', 'Graph Viewer', 'Timeline Viewer'} %, 'Figures'}
     end
 
-    properties % UI Properties
+    properties (SetAccess = private)
+        CurrentSchemaTableName char
+    end
+
+    properties (Access = public) % UI Components
         Figure
+    end
+
+    properties (Access = private) % UI Components
         UIPanel
         UIContainer
         UIMetaTableViewer
         UISideBar
-        UITabGroup
     end
 
     properties (Access = private)
@@ -51,74 +64,47 @@ classdef ModelBuilder < handle
             
             obj.loadMetadataSet()
             
-            if ispref('openMINDS', 'WindowSize')
-                windowPosition = getpref('openMINDS', 'WindowSize');
-            else
-                windowPosition = [100, 100, 1000, 600];
-            end
-
-            hFigure = figure('Position', windowPosition, 'MenuBar','none', 'ToolBar','none');
-            obj.Figure = hFigure;
-            obj.Figure.Name = 'openMINDS';
-            obj.Figure.NumberTitle = 'off';
-            
-            obj.UIPanel.Toolbar = uipanel(hFigure);
-            obj.UIPanel.SidebarL = uipanel(hFigure);
-            obj.UIPanel.Table = uipanel(hFigure);
-            obj.UIPanel.Logo = uipanel(hFigure);
-                        
-            panels = [obj.UIPanel.Toolbar, obj.UIPanel.SidebarL, obj.UIPanel.Table, obj.UIPanel.Logo];
-            set(panels, 'Units', 'pixels', 'BackgroundColor', 'w', 'BorderType','etchedin')
+            obj.createFigure()
+            obj.createPanels()
 
             obj.updateLayoutPositions()
 
-            obj.UIContainer.TabGroup = uitabgroup(obj.UIPanel.Table);
-            obj.UIContainer.TabGroup.Units = 'normalized';
-
             obj.createTabGroup()
 
-            % Plot logo:
-            ax = axes(obj.UIPanel.Logo, 'Position', [0,0,1,1]);
-            ax.Color = 'white';
-            [C, ~, A] = imread('light_openMINDS-logo.png');
-            hImage = image(ax, 'CData', C);
-            hImage.AlphaData = A;
-            ax.YDir = 'reverse';
-            ax.Visible = 'off';
+            obj.createSchemaSelectorSidebar()
+            obj.plotOpenMindsLogo()
 
-           % hImage.Parent = ax;
 
-            sideBar = om.gui.control.ListBox(obj.UIPanel.SidebarL, {'Subject', 'TissueSample', 'SubjectState', 'TissueSampleState'});
-            sideBar.SelectionChangedFcn = @obj.onSelectionChanged;
-            obj.UISideBar = sideBar;
-            %metaTable = [];
-            %pathStr = nansen.metadata.MetaTableCatalog.getDefaultMetaTablePath();
-            %metaTable = nansen.metadata.MetaTable.open(pathStr);
-            
-            columnSettings = obj.loadMetatableColumnSettings();
-            nvPairs = {'ColumnSettings', columnSettings};
-
-            h = nansen.MetaTableViewer( obj.UIContainer.UITab(1), [], nvPairs{:});
-            obj.UIMetaTableViewer = h;
-            %obj.UIMetaTableViewer.HTable.Units
-
-            % create graph plot
+            % % Create graph of the core module of openMINDS
             [G,e] = om.generateGraph('core');
+            
             hAxes = axes(obj.UIContainer.UITab(2));
             hAxes.Position = [0,0,0.999,1];
             InteractiveOpenMINDSPlot(G, hAxes, e);
 
-            % Add this callback after every component is made
-            obj.Figure.SizeChangedFcn = @(s, e) obj.onFigureSizeChanged;
-            obj.Figure.CloseRequestFcn = @obj.onExit;
+            % NB NB NB: Some weird bug occurs if this is created before the
+            % axes with the graph plot, where the axes current point seems
+            % to be reversed in the y-dimension.
+            columnSettings = obj.loadMetatableColumnSettings();
+            nvPairs = {'ColumnSettings', columnSettings};
+            h = nansen.MetaTableViewer( obj.UIContainer.UITab(1), [], nvPairs{:});
+            h.HTable.KeyPressFcn = @obj.onKeyPressed;
+            obj.UIMetaTableViewer = h;
+
+            %obj.UIMetaTableViewer.HTable.Units
             
-            obj.Figure.WindowKeyPressFcn = @obj.onKeyPressed;
-            
+
             obj.SchemaMenu = om.SchemaMenu(obj, {'openminds.core'});
             obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
-            
+
+            % Add these callbacks after every component is made
+            obj.Figure.SizeChangedFcn = @(s, e) obj.onFigureSizeChanged;
+            obj.Figure.CloseRequestFcn = @obj.onExit;
+
             obj.changeSelection('Subject')
-            
+                       
+            obj.configureFigureInteractionCallbacks()
+
             if ~nargout
                 clear obj
             end
@@ -144,6 +130,7 @@ classdef ModelBuilder < handle
 
         function onExit(obj, src, evt)
             obj.saveMetadataSet()
+            obj.saveGraphCoordinates() % Todo
 
             windowPosition = obj.Figure.Position;
             setpref('openMINDS', 'WindowSize', windowPosition)
@@ -166,29 +153,6 @@ classdef ModelBuilder < handle
             obj.UISideBar.SelectedItems = schemaName;
         end
         
-        function onKeyPressed(obj, src, evt)
-
-        end
-
-        function onSelectionChanged(obj, src, evt)
-            schemaName = src.Tag;
-
-            % check if schema has a table
-            metaTable = obj.MetadataSet.getTable(schemaName);
-
-            if ~isempty(metaTable)
-                %obj.UIMetaTableViewer.resetTable()
-                obj.UIMetaTableViewer.refreshTable(metaTable, true)
-            else
-                obj.UIMetaTableViewer.resetTable()
-                obj.UIMetaTableViewer.refreshTable(table.empty, true)
-            end
-        end
-
-        function onFigureSizeChanged(app)
-            app.updateLayoutPositions()
-        end
-
         function updateLayoutPositions(obj)
             
             figPosPix = getpixelposition(obj.Figure);
@@ -235,14 +199,55 @@ classdef ModelBuilder < handle
 
     end
 
-    methods (Access = private)
-        
-        function createTabGroup(obj)
+    methods (Access = private) % Internal utility methods
+        function exportToWorkspace(obj)
+            schemaName = obj.CurrentSchemaTableName;
+            idx = obj.UIMetaTableViewer.getSelectedEntries();
+            schemaInstance = obj.MetadataSet.getSchemaInstanceByIndex(schemaName, idx);
             
+            varName = matlab.lang.makeValidName( schemaInstance.DisplayString );
+            assignin('base', varName, schemaInstance)
+        end
+    end
+
+    methods (Access = private) % App initialization and update methods
+        
+        function windowPosition = getWindowPosition(~)
+            if ispref('openMINDS', 'WindowSize')
+                windowPosition = getpref('openMINDS', 'WindowSize');
+            else
+                windowPosition = [100, 100, 1000, 600];
+            end
+        end
+
+        function createFigure(obj)
+            windowPosition = obj.getWindowPosition();
+            obj.Figure = figure('Position', windowPosition);
+            obj.Figure.Name = 'openMINDS';
+            obj.Figure.NumberTitle = 'off';
+            obj.Figure.MenuBar = 'none';
+            obj.Figure.ToolBar = 'none';
+        end
+
+        function createPanels(obj)
+            obj.UIPanel.Toolbar = uipanel(obj.Figure);
+            obj.UIPanel.SidebarL = uipanel(obj.Figure);
+            obj.UIPanel.Table = uipanel(obj.Figure);
+            obj.UIPanel.Logo = uipanel(obj.Figure);
+            
+            panels = struct2cell(obj.UIPanel);
+            set([panels{:}], 'Units', 'pixels', 'BackgroundColor', 'w', 'BorderType','etchedin')
+        end
+
+        function createTabGroup(obj)
+        %createTabGroup Create the tabgroup container and add tabs
+
+            obj.UIContainer.TabGroup = uitabgroup(obj.UIPanel.Table);
+            obj.UIContainer.TabGroup.Units = 'normalized';
+
             obj.UIContainer.UITab = gobjects(0);
 
             for i = 1:numel(obj.Pages)
-                
                 pageName = obj.Pages{i};
                 
                 hTab = uitab(obj.UIContainer.TabGroup);
@@ -250,8 +255,54 @@ classdef ModelBuilder < handle
 
                 obj.UIContainer.UITab(i) = hTab;
             end
+        end
+        
+        function createSchemaSelectorSidebar(obj)
+        %createSchemaSelectorSidebar Create a selector widget in side panel    
+            
+            initSchemas = {'Subject', 'TissueSample', 'SubjectState', 'TissueSampleState'};
+            
+            sideBar = om.gui.control.ListBox(obj.UIPanel.SidebarL, initSchemas);
+            sideBar.SelectionChangedFcn = @obj.onSelectionChanged;
+            obj.UISideBar = sideBar;
+        end
+
+        function plotOpenMindsLogo(obj)
+        %plotLogo Plot openMINDS logo in the logo panel   
+            
+            % Load the logo from file
+            logoFilename = 'light_openMINDS-logo.png';
+            if ~exist(logoFilename, 'file')
+                error('Logo file is missing')
+                % Todo: Download from github
+            end
+            [C, ~, A] = imread(logoFilename);
+
+            % Create axes for plotting logo
+            ax = axes(obj.UIPanel.Logo, 'Position', [0,0,1,1]);
+
+            % Plot logo as image
+            hImage = image(ax, 'CData', C);
+            hImage.AlphaData = A;
+
+            % Customize axes
+            ax.Color = 'white';
+            ax.YDir = 'reverse';
+            ax.Visible = 'off';
+        end
 
 
+        function configureFigureInteractionCallbacks(obj)
+            
+            %obj.Figure.WindowButtonDownFcn = @obj.onMousePressed;
+            %obj.Figure.WindowButtonMotionFcn = @obj.onMouseMotion;
+            obj.Figure.WindowKeyPressFcn = @obj.onKeyPressed;
+            %obj.Figure.WindowKeyReleaseFcn = @obj.onKeyReleased;
+            
+            %[~, hJ] = evalc('findjobj(obj.Figure)');
+            %hJ(2).KeyPressedCallback = @obj.onKeyPressed;
+            %hJ(2).KeyReleasedCallback = @obj.onKeyReleased;
+            
         end
 
         function saveMetadataSet(obj)
@@ -269,6 +320,43 @@ classdef ModelBuilder < handle
             else
                 obj.MetadataSet = om.MetadataSet();
             end
+        end
+
+        function saveGraphCoordinates(obj)
+            % Todo.
+        end
+
+    end
+
+    methods (Access = private) % Internal callback methods
+                
+        function onKeyPressed(obj, src, evt)
+
+            switch evt.Key
+                case 'x'
+                    obj.exportToWorkspace()
+            end
+
+        end
+
+        function onSelectionChanged(obj, src, evt)
+            schemaName = src.Tag;
+            obj.CurrentSchemaTableName = schemaName;
+
+            % check if schema has a table
+            metaTable = obj.MetadataSet.getTable(schemaName);
+
+            if ~isempty(metaTable)
+                %obj.UIMetaTableViewer.resetTable()
+                obj.UIMetaTableViewer.refreshTable(metaTable, true)
+            else
+                obj.UIMetaTableViewer.resetTable()
+                obj.UIMetaTableViewer.refreshTable(table.empty, true)
+            end
+        end
+
+        function onFigureSizeChanged(app)
+            app.updateLayoutPositions()
         end
 
         function onSchemaMenuItemSelected(obj, functionName, selectionMode)
@@ -312,7 +400,21 @@ classdef ModelBuilder < handle
                     SNew.(iPropName_) = m;
                 elseif isstring(iValue)
                     SNew.(iPropName) = char(iValue);
+                elseif isa(iValue, 'openminds.abstract.Schema') && ...
+                        ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
+                    
+                    schemaLabels = obj.MetadataSet.getSchemaInstanceLabels(class(iValue));
+                    
+                    if isempty(schemaLabels)
+                        schemaShortName = om.MetadataSet.getSchemaShortName(class(iValue));
+                        options = {sprintf('No %s available', schemaShortName)};
+                    else
+                        options = schemaLabels;
+                    end
+                    SNew.(iPropName) = options{1};
+                    SNew.(iPropName_) = options;
                 else
+                    warning('Values of type %s is not dealt with', class(iValue))
 
                 end
 
@@ -336,8 +438,20 @@ classdef ModelBuilder < handle
                 if isenum(iValue)
                     enumFcn = str2func( class(iValue) );
                     SNew.(iPropName) = enumFcn(SNew.(iPropName));
+                
                 elseif isstring(iValue)
                     SNew.(iPropName) = char(SNew.(iPropName));
+               
+                elseif isa(iValue, 'openminds.abstract.Schema') && ...
+                        ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
+                    if obj.isSchemaInstanceUnavailable(SNew.(iPropName))
+                        SNew.(iPropName) = SOrig.(iPropName);
+                    else
+                        label = SNew.(iPropName);
+                        schemaName = class(SOrig.(iPropName));
+                        schemaInstance = obj.MetadataSet.getInstanceFromLabel(schemaName, label);
+                        SNew.(iPropName) = schemaInstance;
+                    end
                 end
             end
 
@@ -352,7 +466,7 @@ classdef ModelBuilder < handle
 
             obj.changeSelection(className)
         end
-
+        
     end
 
     methods (Static)
@@ -362,6 +476,10 @@ classdef ModelBuilder < handle
             if isfile(metadataSetPath)
                 delete(metadataSetPath)
             end
+        end
+    
+        function tf = isSchemaInstanceUnavailable(value)
+            tf = ~isempty(regexp(value, 'No \w* available', 'once'));
         end
     end
 end

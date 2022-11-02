@@ -24,6 +24,10 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & nansen.m
         id char = ''
     end
 
+    properties (Dependent, Transient)
+        DisplayString
+    end
+
     properties (Abstract, Constant, Hidden)
         X_TYPE
     end
@@ -52,11 +56,18 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & nansen.m
 
     methods (Access = public)
         
-        
-        
     end
 
     methods
+        function displayLabel = get.DisplayString(obj)
+            if isprop(obj, 'lookupLabel')
+                displayLabel = obj.lookupLabel;
+            else
+                schemaShortName = obj.getSchemaShortName(class(obj));
+                displayLabel = sprintf("%s-%s", schemaShortName, obj.id(1:8));
+            end
+        end
+
         function values = getSuperClassRequiredProperties(obj)
             values = obj.getAllSuperClassRequiredProperties(class(obj));
         end
@@ -117,6 +128,25 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & nansen.m
     methods (Static)
         function str = test()
             str = 'hello world';
+        end
+        
+        function shortSchemaName = getSchemaShortName(fullSchemaName)
+        %getSchemaShortName Get short schema name from full schema name
+        % 
+        %   shortSchemaName = getSchemaShortName(fullSchemaName)
+        %
+        %   Example:
+        %   fullSchemaName = 'openminds.core.research.Subject';
+        %   shortSchemaName = om.MetadataSet.getSchemaShortName(fullSchemaName)
+        %   shortSchemaName =
+        % 
+        %     'Subject'
+
+            expression = '(?<=\.)\w*$'; % Get every word after a . at the end of a string
+            shortSchemaName = regexp(fullSchemaName, expression, 'match', 'once');
+            if isempty(shortSchemaName)
+                shortSchemaName = fullSchemaName;
+            end
         end
     end
 
