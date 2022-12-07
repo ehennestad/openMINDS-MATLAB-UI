@@ -13,8 +13,7 @@ function filePath = buildClassPath(schemaClassName, schemaCategory, schemaModule
     schemaCategory = strrep( schemaCategory, 'schemas', '');
     schemaCategory = lower( schemaCategory );
     schemaModule = lower(schemaModule);
-
-    rootPath = om.Preferences.get('MSchemaDirectory');
+    rootPath = om.getPreferences('MSchemaDirectory');
     
     folderPath = fullfile( rootPath, '+openminds', ['+', schemaModule] );
 

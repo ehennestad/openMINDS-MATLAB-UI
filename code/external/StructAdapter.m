@@ -174,7 +174,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
 
     end
     
-    methods (Static)
+    methods (Static, Access = private)
         function propertyNames = getOwnPropertyNames()
         %getOwnPropertyNames Get list of property names for this superclass
             mc = meta.class.fromName('StructAdapter');

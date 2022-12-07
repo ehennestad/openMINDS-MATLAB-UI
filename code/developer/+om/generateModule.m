@@ -5,7 +5,6 @@ function generateModule(moduleName, force)
         force = false
     end
 
-
     schemaList = om.dir.schema(moduleName);
 
     numSchemas = numel(schemaList);

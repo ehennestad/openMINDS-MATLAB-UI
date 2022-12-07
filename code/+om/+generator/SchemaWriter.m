@@ -1,5 +1,9 @@
-classdef ClassWriter < handle % ClassWriter
-    
+classdef SchemaWriter < ClassWriter
+%SchemaWriter Translate openMINDS schemas to matlab classes    
+
+    properties (Constant)
+        DEBUG (1,1) matlab.lang.OnOffSwitchState = 'off'
+    end
     
     properties (SetAccess = private)
         Schema
@@ -9,52 +13,59 @@ classdef ClassWriter < handle % ClassWriter
         SchemaName = ''
         SchemaCategory = ''
         SchemaModule = ''
-        SchemaList
     end
 
     properties (Dependent)
-        IsAbstract
-        HasSuperclass
         IsOfCategory
         SchemaClassName
     end
 
     properties (Access = private)
         SchemaClassFilePath
-        SchemaClassFileID
+        SchemaClassFileID % ??
         SchemaCodeStr = "";
         IsControlledTerm = false
     end
 
-    properties (Constant, Hidden)
-        INDENTATION_WIDTH = 4;
-    end
 
-
-    methods 
-        function obj = ClassWriter(schemaName, schemaCategory, schemaModule)
+    methods
+        function obj = SchemaWriter(schemaFilepath)
 
             arguments
-                schemaName
-                schemaCategory
-                schemaModule char = 'core'
+                schemaFilepath 
             end
 
-            obj.SchemaName = schemaName;
-            obj.SchemaCategory = schemaCategory;
-            obj.SchemaModule = schemaModule;
-
-            schemaStr = om.fileio.readSchema(schemaName, schemaCategory, schemaModule);
-            obj.Schema = jsondecode(schemaStr);
+            obj.SchemaClassFilePath = schemaFilepath;
             
-            %obj.writeSchemaString()
-            obj.update()
+            obj.parseSchema()
+
+            obj.assignOutputFile()
+
+            obj.writeClassdef()
+            
+            obj.saveClassdef()
+            
+            clear obj
         end
 
     end
 
     methods
-        function writeSchemaString(obj)
+
+        function resolveSuperclasses(obj)
+            
+            % All schemas inherit from Schema.
+            obj.addSuperclass('openminds.abstract.Schema')
+
+            % Todo: Determine if it extends controlled term
+            hasMoreSuperclasses = isfield(obj.Schema, 'x_extends');
+
+            if hasMoreSuperclasses
+                disp('has more superclasses, %s', obj.SchemaName)
+            end
+        end
+
+        function writeSchemaClassdef(obj)
             
             obj.SchemaCodeStr = ''; % Reset
 
@@ -154,8 +165,6 @@ classdef ClassWriter < handle % ClassWriter
             % Todo:
             % Assign input variables to properties.
             
-
-
             obj.endFunctionBlock()
 
 
@@ -170,7 +179,7 @@ classdef ClassWriter < handle % ClassWriter
         end
 
         function update(obj)
-            obj.writeSchemaString()
+            obj.writeSchemaClassdef()
             obj.updateSchemaClassFilePath()
             om.fileio.writeSchemaClass(obj.SchemaClassFilePath, obj.SchemaCodeStr)
 
@@ -179,68 +188,146 @@ classdef ClassWriter < handle % ClassWriter
             fprintf('Generated schema %s\n', className)
         end
     end
-
-    methods
-        function schemaClassName = get.SchemaClassName(obj)
-            schemaClassName = obj.SchemaName; 
-            schemaClassName(1) = upper(schemaClassName(1));
-        end
-
-        function tf = get.IsAbstract(obj)
-            tf = ~isfield(obj.Schema, 'x_type');
-        end
-
-        function tf = get.HasSuperclass(obj)
-            tf = isfield(obj.Schema, 'x_extends');
-        end
-        function tf = get.IsOfCategory(obj)
-            tf = isfield(obj.Schema, 'x_categories');
-        end
-
-
-        function updateSchemaClassFilePath(obj)
-            obj.SchemaClassFilePath = om.strutil.buildClassPath(...
-                obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
-        end
-    end
-
+    
     methods (Access = private)
+        
+        function parseSchema(obj)
+            
+            schemaStr = fileread(obj.SchemaClassFilePath);
+            obj.Schema = jsondecode(schemaStr);
 
-        function startClassDef(obj, superclassName)
+            schemaTypeSplit = strsplit(obj.Schema.x_type, '/');
             
-            className = obj.SchemaName; className(1) = upper(className(1));
+            obj.SchemaName = schemaTypeSplit{end};
             
-            if ~exist("superclassName", "var") || isempty(superclassName)
-                superclassName = "handle";
+            % Get submodule from filepath.
+            splitFilePath = strsplit(obj.SchemaClassFilePath, filesep);
+            if isempty( regexp(splitFilePath{end-1}, 'v\d{1}', 'match') )
+                obj.SchemaCategory = matlab.lang.makeValidName(splitFilePath{end-1});
             end
 
-            newStr = "classdef " + className + " < " + strjoin( superclassName, ' & ' );
+            obj.SchemaModule = schemaTypeSplit{end-1};
+            obj.ClassName = obj.SchemaName;
 
-            if obj.IsAbstract
-                newStr = replace(newStr, "classdef ", "classdef (Abstract) ");
-            end
-
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline + newline;
-        end
-
-        function endClassDef(obj)
-            obj.SchemaCodeStr = obj.SchemaCodeStr + 'end';
+            % Add superclasses
+            obj.resolveSuperclasses();
+            
         end
         
-        function startPropertyBlock(obj, varargin)
-            if isempty(varargin)
-                newStr = sprintf("properties");
+        function assignOutputFile(obj)
+
+            openMindsFolderPath = om.Constants.getRootPath();
+            schemaFolderPath = fullfile( openMindsFolderPath, 'schemas', ...
+                                 'matlab');
+            
+            if isempty(obj.SchemaCategory)
+                schemaPackage = {'openminds', obj.SchemaModule};
             else
-                newStr = sprintf("properties (%s)", strjoin(varargin, ', '));
+                schemaPackage = {'openminds', obj.SchemaModule, obj.SchemaCategory};
             end
-            newStr = obj.indentLine(newStr, 1);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+
+            schemaPackage = strcat('+', schemaPackage);
+
+            filename = [obj.SchemaName, '.m'];
+            obj.Filepath = fullfile(schemaFolderPath, schemaPackage{:}, filename );
         end
 
-        function addProperty(obj, propertyName, propertyDefaultValue, sizeAttr, typeAttr, validationAttr)
-            newStr = propertyName + " = " + propertyDefaultValue; %(s)", strjoin(varargin, ', '));
-            newStr = obj.indentLine(newStr, 2);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+    end
+
+    methods (Access = protected) % Implement methods from superclass
+
+        function writePropertyBlocks(obj)
+
+            % Write constant and hidden class properties
+            if isfield(obj.Schema, 'x_type')
+                obj.writeXTypePropertyBlock()
+            else
+                % This is only the case for "abstract" schemas, and is not
+                % relevant after starting to use the schemas from the
+                % openMINDS documentation branch.
+            end
+
+            % Todo: remove?
+            obj.writeSchemaCategoryPropertyBlock()
+            
+            obj.writeRequiredPropertyBlock()
+
+            obj.writeSchemaProperties()
+        end
+    
+        function writeEnumerationBlock(obj)
+        end
+    
+        function writeEventBlocks(obj)
+        end
+            
+        function writeMethodBlocks(obj)
+            obj.startMethodsBlock()
+            obj.startConstructor()
+
+            % Todo:
+            % Assign input variables to properties.
+            
+            obj.endFunctionBlock()
+            obj.endMethodsBlock()
+        end
+
+    end
+
+    methods (Access = private) % Specific methods for writing class member blocks
+        
+        function writeXTypePropertyBlock(obj)
+            obj.startPropertyBlock('Constant', 'Hidden')
+            obj.addProperty('X_TYPE', 'DefaultValue', ['"',obj.Schema.x_type,'"'])
+            obj.endPropertyBlock()
+        end
+
+        function writeSchemaCategoryPropertyBlock(obj)
+
+            if isfield(obj.Schema, 'x_categories')
+                schemaCategories = obj.cellArrayToTextString(obj.Schema.x_categories);
+            else
+                schemaCategories = '{}';
+            end
+
+            if ~obj.IsAbstract
+                % Write constant and hidden class properties
+                obj.startPropertyBlock('SetAccess = immutable', 'Hidden')
+                obj.addProperty('X_CATEGORIES', 'DefaultValue', schemaCategories)
+                obj.endPropertyBlock()
+            end
+        end
+
+        function writeRequiredPropertyBlock(obj)
+
+            % Write required and constant properties
+            if isfield(obj.Schema, 'required')
+                required = obj.cellArrayToTextString(obj.Schema.required);
+            else
+                required = '{}';
+            end
+            
+            obj.startPropertyBlock('Access = protected')
+            obj.addProperty('Required_', 'DefaultValue', required)
+            obj.endPropertyBlock()
+        end
+
+        function writeSchemaProperties(obj)
+
+            if isfield(obj.Schema, 'properties')
+                obj.startPropertyBlock()
+                propertyNames = fieldnames(obj.Schema.properties);
+                for i = 1:numel(propertyNames)
+                    if i~=1
+                        obj.appendLine(2, "")
+                    end
+                    propertyAttr = obj.Schema.properties.(propertyNames{i});
+                    obj.addSchemaProperty(propertyNames{i}, propertyAttr);
+                end
+                obj.endPropertyBlock()
+            else
+                
+            end
         end
 
         function addSchemaProperty(obj, propertyName, propertyAttributes)
@@ -257,8 +344,7 @@ classdef ClassWriter < handle % ClassWriter
             end
 
             newStr = sprintf('%% %s', description);
-            newStr = obj.indentLine(newStr, 2);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+            obj.appendLine(2, newStr)
             
             % Get data size
             if isfield(propertyAttributes, 'type')
@@ -288,9 +374,16 @@ classdef ClassWriter < handle % ClassWriter
                     validationFcnStr = sprintf('{mustBeSpecifiedLength(%s, 0, 1)}', propertyName);
                 end
 
-                clsNames = cellfun(@(uri) om.strutil.classNameFromUri(uri), schemaNames, 'UniformOutput', false);
-                isEmptyNames = cellfun(@isempty, clsNames);
-                clsNames(isEmptyNames) = [];
+                if ~isempty(schemaNames)
+                    S = warning(char(obj.DEBUG), 'OPENMINDS:SchemaNotFound');
+                    clsNames = cellfun(@(uri) om.strutil.classNameFromUri(uri), schemaNames, 'UniformOutput', false);
+                    warning(S.state, 'OPENMINDS:SchemaNotFound')
+
+                    isEmptyNames = cellfun(@isempty, clsNames);
+                    clsNames(isEmptyNames) = [];
+                else
+                    clsNames = {};
+                end
                 
                 % Big todo: Figure out what to do here!
 %                 if numel(clsNames) > 1
@@ -299,7 +392,14 @@ classdef ClassWriter < handle % ClassWriter
 %                     dataType = clsNames{1};
 %                 end
 
-                dataType = clsNames{1};
+                if isempty(clsNames)
+                    dataType = '';
+                elseif numel(clsNames) == 1
+                    dataType = clsNames{1};
+                else
+                    dataType = clsNames{1};
+                    warning('Multiple schemas allowed for property %s of schema %s', propertyName, obj.SchemaName)
+                end
 
             
             elseif isfield(propertyAttributes, 'x_linkedCategories')
@@ -324,7 +424,15 @@ classdef ClassWriter < handle % ClassWriter
                         end
                         % Todo: note: item is a nested attribute field....
                         if ~isempty(itemFields)
-                            disp(itemFields)
+                            if ~strcmp(itemFields{1}, 'x_formats')
+                                disp(['array item attributes: ', strjoin(itemFields, ', ')])
+                            end
+
+                            if strcmp(dataType, 'string')
+                                % todo create validator
+                            else
+                                disp(['array item type: ', dataType])
+                            end
                         end
 
                         attributeNames = setdiff(attributeNames, 'items');
@@ -345,20 +453,23 @@ classdef ClassWriter < handle % ClassWriter
                     case 'float'
                         dataType = 'double';
 
+                    case 'string'
+                        % pass
+
                     otherwise
-                        disp(['datatype', propertyAttributes.type])
+                        disp(['datatype: ', propertyAttributes.type])
                 end
             else
                 disp('a')
             end
 
             % Todo: get validation function.
-            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength'}))
+            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'}))
                 if exist('validationFcnStr', 'var') && ~isempty(validationFcnStr)
                     disp('a')
                 end
                 validationFcnStr = obj.getValidationFunction(propertyName, propertyAttributes);
-                attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength'});
+                attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'});
             else
                 validationFcnStr = '';
             end
@@ -379,76 +490,77 @@ classdef ClassWriter < handle % ClassWriter
                 attributeNames = setdiff(attributeNames, {'x_formats'});
             end
 
-            if isfield(propertyAttributes, 'pattern')
-                fprintf('%s: %s: pattern: %s\n', obj.SchemaName, propertyName, propertyAttributes.pattern)
-                attributeNames = setdiff(attributeNames, 'pattern');
-            end
-
             % Todo: Implement string length...
-
-
             if ~isempty(attributeNames)
-                disp(attributeNames)
+                for k = 1:numel(attributeNames)
+                    switch attributeNames{k}
+                        case 'title'
+                            str = propertyAttributes.title;
+                            if strcmp(str, propertyName)
+                                % pass
+                            else
+                                disp(['title: ', str])
+                            end
+                        case 'description'
+                            str = propertyAttributes.description;
+                            %disp(['description: ', str])
+                        otherwise
+                            disp(['additional attributenames: ', attributeNames])
+                    end
+                end
             end
-            
+
             if isempty(validationFcnStr)
-                newStr = sprintf('%s %s %s', propertyName, sizeAttribute, dataType);
+                obj.addProperty(propertyName, 'Size', sizeAttribute, ...
+                    'Type', dataType)
+                %newStr = sprintf('%s %s %s', propertyName, sizeAttribute, dataType);
             else
-                newStr = sprintf('%s %s %s %s', propertyName, sizeAttribute, dataType, validationFcnStr);
+                obj.addProperty(propertyName, 'Size', sizeAttribute, ...
+                    'Type', dataType, 'Validator', validationFcnStr)
+                %newStr = sprintf('%s %s %s %s', propertyName, sizeAttribute, dataType, validationFcnStr);
             end
             
-            newStr = obj.indentLine(newStr, 2);
-            obj.appendLine(newStr)
+            %newStr = obj.indentLine(newStr, 2);
+            %obj.appendLine(newStr)
             %obj.appendLine('')
         end
 
-        function endPropertyBlock(obj)
-            newStr = obj.indentLine('end', 1);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline + newline;
+    end
+
+    methods
+        function schemaClassName = get.SchemaClassName(obj)
+            schemaClassName = obj.SchemaName; 
+            schemaClassName(1) = upper(schemaClassName(1));
         end
 
+%         function tf = get.HasSuperclass(obj)
+%             tf = isfield(obj.Schema, 'x_extends');
+%         end
 
-        % function that starts writing an enumeration block
-        function startEnumBlock(obj)
-            newStr = sprintf("enumeration");
-            newStr = obj.indentLine(newStr, 1);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
-        end
-
-        % function that adds an enumeration value
-        function addEnumValue(obj, enumValue)
-            enumValue = replace(enumValue, '-', '_');
-            newStr = sprintf("%s('%s')", enumValue, enumValue);
-            newStr = obj.indentLine(newStr, 2);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+        function tf = get.IsOfCategory(obj)
+            tf = isfield(obj.Schema, 'x_categories');
         end
 
-        function startMethodsBlock(obj, varargin)
-            if isempty(varargin)
-                newStr = sprintf("methods");
-            else
-                newStr = sprintf("methods (%s)", strjoin(varargin, ', '));
-            end
-            newStr = obj.indentLine(newStr, 1);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
+        function updateSchemaClassFilePath(obj)
+            obj.SchemaClassFilePath = om.strutil.buildClassPath(...
+                obj.SchemaName, obj.SchemaCategory, obj.SchemaModule);
         end
-        
-        function endMethodsBlock(obj)
-            obj.endPropertyBlock()
-        end
+    end
+
+    methods (Access = private)
 
         function startConstructor(obj)
 
             if obj.IsControlledTerm
-                obj.writeLine(2, sprintf('function obj = %s(name)', obj.SchemaClassName))
+                obj.appendLine(2, sprintf('function obj = %s(name)', obj.SchemaClassName))
             else
-                obj.writeLine(2, sprintf('function obj = %s()', obj.SchemaClassName))
+                obj.appendLine(2, sprintf('function obj = %s()', obj.SchemaClassName))
             end
 
             if obj.HasSuperclass
-                 obj.writeLine(3, 'required = obj.getSuperClassRequiredProperties();')
-                 obj.writeLine(3, 'obj.Required = [required, obj.Required_];')
-                 obj.writeEmptyLine()
+                 obj.appendLine(3, 'required = obj.getSuperClassRequiredProperties();')
+                 obj.appendLine(3, 'obj.Required = [required, obj.Required_];')
+                 obj.appendLine(3, "")
             end
 
             if obj.IsControlledTerm
@@ -457,28 +569,6 @@ classdef ClassWriter < handle % ClassWriter
 
         end
 
-        function startFunctionBlock(obj)
-
-        end
-
-        function endFunctionBlock(obj)
-            newStr = obj.indentLine('end', 2);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
-        end
-
-        function writeLine(obj, numIndent, str)
-            newStr = obj.indentLine(str, numIndent);
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
-        end
-
-        function appendLine(obj, newStr)
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newStr + newline;
-        end
-
-        function writeEmptyLine(obj)
-            obj.SchemaCodeStr = obj.SchemaCodeStr + newline;
-        end
-        
         function writeEnumSwitchBlock(obj)
             instanceList = om.dir.instance('controlledTerms', obj.SchemaName);
 
@@ -558,18 +648,13 @@ classdef ClassWriter < handle % ClassWriter
                     maxLength = inf;
                 end
                 str = sprintf('{mustBeValidStringLength(%s, %d, %d)}', name, minLength, maxLength);
+            
+            elseif isfield(attr, 'pattern')
+                str = sprintf('{mustMatchPattern(%s, ''%s'')}', name, attr.pattern);
+
             end
         end
-    end
-
-    methods (Static)
-
-        function str = indentLine(str, numIndents)
-            indentationWidth = numIndents * om.ClassWriter.INDENTATION_WIDTH;
-            indentationStr = repmat(' ', 1, indentationWidth);
-            str = sprintf('%s%s', indentationStr, str);
-        end
-
-    end
     
+    end
+
 end

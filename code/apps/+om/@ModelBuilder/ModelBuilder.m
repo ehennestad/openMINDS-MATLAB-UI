@@ -273,9 +273,11 @@ classdef ModelBuilder < handle
             % Load the logo from file
             logoFilename = 'light_openMINDS-logo.png';
             if ~exist(logoFilename, 'file')
-                error('Logo file is missing')
-                % Todo: Download from github
+                fprintf('Downloading openMINDS logo...'); fprintf(newline)
+                obj.downloadOpenMindsLogo()
+                fprintf('Download finished'); fprintf(newline)
             end
+
             [C, ~, A] = imread(logoFilename);
 
             % Create axes for plotting logo
@@ -480,6 +482,31 @@ classdef ModelBuilder < handle
     
         function tf = isSchemaInstanceUnavailable(value)
             tf = ~isempty(regexp(value, 'No \w* available', 'once'));
+        end
+
+        function [CData, AlphaData] = loadOpenMindsLogo()
+            
+            % Load the logo from file
+            logoFilename = 'light_openMINDS-logo.png';
+            
+            if ~exist(logoFilename, 'file')
+                fprintf('Downloading openMINDS logo...'); fprintf(newline)
+                obj.downloadOpenMindsLogo()
+                fprintf('Download finished'); fprintf(newline)
+            end
+
+            [CData, ~, AlphaData] = imread(logoFilename);
+        end
+
+        function downloadOpenMindsLogo()
+            logoUrl = om.Constants.LogoLightURL;
+            logoURI = matlab.net.URI(logoUrl);
+            
+            % Download logo
+            thisFullpathSplit = filesplit( mfilename("fullpath") );
+            fileName = logoURI.Path(end);
+            
+            websave(fullfile(thisFullpathSplit{1:end-2}, fileName), logoUrl)
         end
     end
 end

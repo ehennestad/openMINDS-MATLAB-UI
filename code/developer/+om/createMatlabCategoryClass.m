@@ -1,9 +1,9 @@
-function createMatlabCategoryClass(schemaName, schemaModule)
+function createMatlabCategoryClass(schemaName, ~)
 
     schemaName(1) = upper(schemaName(1));
     
-    rootPath = om.Preferences.get('MSchemaDirectory');
-    folderPath = fullfile(rootPath, '+openminds', ['+', lower(schemaModule)], '+category' );
+    rootPath = om.getPreferences('MSchemaDirectory');
+    folderPath = fullfile(rootPath, '+openminds', '+category' );
     if ~isfolder(folderPath); mkdir(folderPath); end
     schemaFilePath = fullfile(folderPath, [schemaName, '.m']);
     
@@ -11,7 +11,9 @@ function createMatlabCategoryClass(schemaName, schemaModule)
         return
     end
 
-    schemaCodeStr = sprintf('classdef %s < matlab.mixin.Heterogeneous & handle\n', schemaName);
+    schemaCodeStr = sprintf('classdef %s < handle\n', schemaName);
+    commentStr = sprintf('%% This is an "umbrella" for schemas that belong to the same category.\n');
+    schemaCodeStr = [schemaCodeStr, commentStr];
     schemaCodeStr = [schemaCodeStr, 'end'];
 
     om.fileio.writeSchemaClass(schemaFilePath, schemaCodeStr)

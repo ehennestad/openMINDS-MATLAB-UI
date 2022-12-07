@@ -1,9 +1,9 @@
 classdef MultiModalMenu < handle
 %MultiModalMenu Create a menu where each item can have multiple modes
 %
-%   These functions are then
-%   saved in a package hierarchy, and this hierarchy will be used here to
-%   create a uimenu using the same hierarchy.
+%   These functions are then saved in a package hierarchy, and this
+%   hierarchy will be used here to create a uimenu using the same 
+%   hierarchy.
 %
 %   Each menu item corresponding to a session method will be configured to
 %   trigger the event MethodSelected when the menu item is selected. The

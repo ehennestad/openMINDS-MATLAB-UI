@@ -6,7 +6,7 @@ function folderPath = getModuleDirectory(moduleName)
         moduleName = 'core'
     end
     
-    rootDirectory = om.Preferences.get('SourceDirectory');
+    rootDirectory = om.getPreferences('SourceDirectory');
 
     switch moduleName 
         case {'controlledTerms', 'controlledterms'}
