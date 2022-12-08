@@ -1,8 +1,6 @@
 
 metadataSet = om.MetadataSet();
 
-
-
 sub1 = openminds.core.research.Subject();
 
 save('test.mat', 'sub1')
@@ -35,7 +33,7 @@ tissueSampleArray = [ts1, ts2];
 
 
 tic
-metaTable = om.objectArrayToMetaTable(subjectArray);
+%metaTable = om.objectArrayToMetaTable(subjectArray);
 toc
 
-om.ModelBuilder(metadataSet, subjectArray)
+%om.ModelBuilder(metadataSet, subjectArray)
