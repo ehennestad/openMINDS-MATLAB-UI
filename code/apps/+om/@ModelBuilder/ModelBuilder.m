@@ -272,6 +272,8 @@ classdef ModelBuilder < handle
             
             % Load the logo from file
             logoFilename = 'light_openMINDS-logo.png';
+            logoFilename = om.ModelBuilder.getLogoFilepath();
+
             if ~exist(logoFilename, 'file')
                 fprintf('Downloading openMINDS logo...'); fprintf(newline)
                 obj.downloadOpenMindsLogo()
@@ -487,7 +489,7 @@ classdef ModelBuilder < handle
         function [CData, AlphaData] = loadOpenMindsLogo()
             
             % Load the logo from file
-            logoFilename = 'light_openMINDS-logo.png';
+            logoFilename = om.ModelBuilder.getLogoFilepath();
             
             if ~exist(logoFilename, 'file')
                 fprintf('Downloading openMINDS logo...'); fprintf(newline)
@@ -500,13 +502,18 @@ classdef ModelBuilder < handle
 
         function downloadOpenMindsLogo()
             logoUrl = om.Constants.LogoLightURL;
+            websave(om.ModelBuilder.getLogoFilepath(), logoUrl)
+        end
+
+        function logoFilepath = getLogoFilepath()
+            logoUrl = om.Constants.LogoLightURL;
             logoURI = matlab.net.URI(logoUrl);
             
             % Download logo
-            thisFullpathSplit = filesplit( mfilename("fullpath") );
+            thisFullpathSplit = splitfile( mfilename("fullpath") );
             fileName = logoURI.Path(end);
-            
-            websave(fullfile(thisFullpathSplit{1:end-2}, fileName), logoUrl)
+
+            logoFilepath = fullfile('/',thisFullpathSplit{1:end-2}, fileName);
         end
     end
 end
