@@ -10,12 +10,14 @@ function update()
     elseif isempty(previousCommitID)
         disp('Downloading openMINDS schemas.')
         om.internal.downloadSchemas()
+
         disp('Generating openMINDS schemas.')
         om.generateSchemas()
     
     else
         disp('Downloading openMINDS schemas.')
         om.internal.downloadSchemas()
+
         disp('Updating openMINDS schemas.')
         om.updateSchemas()
     end

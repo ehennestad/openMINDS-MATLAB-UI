@@ -510,7 +510,7 @@ classdef ModelBuilder < handle
             logoURI = matlab.net.URI(logoUrl);
             
             % Download logo
-            thisFullpathSplit = splitfile( mfilename("fullpath") );
+            thisFullpathSplit = pathsplit( mfilename("fullpath") );
             fileName = logoURI.Path(end);
 
             logoFilepath = fullfile('/',thisFullpathSplit{1:end-2}, fileName);
