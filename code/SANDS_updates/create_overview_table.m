@@ -5,6 +5,11 @@
 % Todo: Partial matching on synonyms
 %       Add PURL link to table columns
 
+% Experiences:
+%   Fuzzy search does not work very well.
+%   Does word matching, count matching words, ignoring word order...
+
+warning('off', 'MATLAB:table:ModifiedAndSavedVarnames')
 
 workDirectory = "/Users/eivinhen/Work/Nesys/openMINDS/Tasks/2023-02-07 - SANDS updates/";
 openMindsDirectory = "/Users/eivinhen/Downloads/openMINDS-v3";
@@ -30,7 +35,7 @@ excelTable = readtable( fullfile(workDirectory, excelFileName));
 
 % List property names to retrieve from parcellation
 PETableVariablePrefix = join( [ATLAS_ACRONYM, "PE"], "_" );
-PEPropertyNames = ["alternativeName", "relatedUBERONTerm"];
+PEPropertyNames = ["alternativeName", "relatedUBERONTerm", "UBERONMatch", "UBERONSynonymMatch", "UBERONPartialMatch"];
 
 strExpand = @(str) repmat(str, size(ATLAS_VERSIONS) );
 PEVTableVariablePrefix = join( [ strExpand(ATLAS_ACRONYM); ATLAS_VERSIONS; strExpand("PEV")], "_", 1 );
@@ -49,96 +54,99 @@ end
 for i = 3:size(newTable, 2)
     newTable{:, varNames{i}} = "";
 end
-
-
-% Fill out parcellation entity properties:
-    
+  
 % Get folder to load schema from:
 thisPEInstanceDirectory = fullfile(PEInstanceRootDirectory, ATLAS_ACRONYM);
 
-% Loop through property names
-for iPropName = 1:numel(PEPropertyNames)
-    thisPropName = PEPropertyNames(iPropName);
+% Initialize table columns for Parcellation Entities
+PEColumnTitles = PETableVariablePrefix + "_" + PEPropertyNames;
+newTable{:, PEColumnTitles} = deal("");
+
+% Fill out parcellation entity properties:
+
+numRows = size(newTable, 1);
+
+% Go through all rows in table
+for iRow = 1:numRows
+    thisEntityName = newTable{iRow, "WHSSD_PE_name"};
+    thisEntityNameCamelCase = nameToCamelCase(thisEntityName);
+
+    fprintf('Processing term %d/%d (%s)\n', iRow, numRows, thisEntityName)
     
-    for iRow = 1:size(newTable, 1)
-        thisEntityName = newTable{iRow, 2};
-        thisEntityNameCamelCase = nameToCamelCase(thisEntityName);
+    % Create filename for json instance:
+    thisFilename = ATLAS_ACRONYM + "_" + thisEntityNameCamelCase + ".jsonld";
+    thisFilepath = fullfile(thisPEInstanceDirectory, thisFilename);
         
-        % Create filename for json instance:
-        thisFilename = ATLAS_ACRONYM + "_" + thisEntityNameCamelCase + ".jsonld";
-        thisFilepath = fullfile(thisPEInstanceDirectory, thisFilename);
-            
-        if isfile(thisFilepath)
+    if isfile(thisFilepath)
+        thisJsonObject = jsondecode( fileread(thisFilepath) );
+        
+        % Loop through property names
+        for iPropName = 1:2%numel(PEPropertyNames)
+            thisName = PEPropertyNames(iPropName);
+            thisValue = getFormattedPropertyValue(thisJsonObject, thisName);
 
-            thisJsonObject = jsondecode( fileread(thisFilepath) );
-            thisPropertyValue = thisJsonObject.(thisPropName);
-            
-            if isfile(thisFilepath)
-
-                thisJsonObject = jsondecode( fileread(thisFilepath) );
-                thisPropertyValue = thisJsonObject.(thisPropName);
-
-                if isempty(thisPropertyValue); thisPropertyValue = ""; end
-                if numel(thisPropertyValue) > 1; thisPropertyValue = join(thisPropertyValue, "; "); end
-
-                thisTableVariableName = PETableVariablePrefix + "_" + thisPropName;
-
-                newTable{iRow, thisTableVariableName} = string(thisPropertyValue);
-            end
+            thisColumnTitle = PEColumnTitles(iPropName);
+            newTable{iRow, thisColumnTitle} = string(thisValue);
         end
 
         % Check if any UBERONParcellations match
         isMatch = strcmp({uberonInstances.Name}, thisEntityName );
         if any( isMatch )
-            thisTableVariableName = 'MatchedUberon';
-            newTable{iRow, thisTableVariableName} = string(uberonInstances(isMatch).UberonID);
+            thisColumnTitle = PEColumnTitles(3);
+            %newTable{iRow, thisColumnTitle} = string(uberonInstances(isMatch).Name);
+            newTable{iRow, thisColumnTitle} = getHyperlink(uberonInstances(isMatch));
         end
         
         for i = 1:numel(uberonInstances)
             isMatch = strcmp(uberonInstances(i).Synonym, thisEntityName );
             if any(isMatch)
-                fprintf('%s: %s\n', thisEntityName, uberonInstances(i).Synonym{isMatch})
-                newTable{iRow, 'MatchedUberonSynonym'} = string(uberonInstances(i).UberonID);
+                %fprintf('%s: %s\n', thisEntityName, uberonInstances(i).Synonym{isMatch})
+                newTable{iRow, PEColumnTitles(4)} = string(uberonInstances(i).Name);
             end
         end
-    end 
-end
 
+        %bestMatchedUberonName = countMatchedWords(thisEntityName, uberonInstances);
+
+% % %         % Check for partial matches for UBERONParcellations
+% % %         uberonNames = {uberonInstances.Name};
+% % %         [partialMatchedUberonNames, scores] = findPartialMatches(thisEntityName, uberonNames);
+% % %         partialMatchScore = arrayfun(@num2str, scores, 'uni', 0);
+% % %         partialMatchScore = strjoin(partialMatchScore, '; ');
+% % % 
+        %newTable{iRow, PEColumnTitles(5)} = string( bestMatchedUberonName );
+% % %         newTable{iRow, PEColumnTitles(6)} = string( partialMatchScore );
+    end
+end
 
 % Loop through versions
 for iVersion = 1:numel(ATLAS_VERSIONS)
 
+    % Initialize table columns for Parcellation Entity Versions
+    PEVColumnTitles = PEVTableVariablePrefix(iVersion) + "_" + PEVPropertyNames;
+    newTable{:, PEVColumnTitles} = deal("");
+
     % Get folder to load schema from:
     folderName = join( [ATLAS_ACRONYM, ATLAS_VERSIONS(iVersion) ], "_" );
     thisPEVInstanceDirectory = fullfile(PEVInstanceRootDirectory, folderName);
+    
+    for iRow = 1:numRows
+        thisEntityName = newTable{iRow, "WHSSD_PE_name"};
+        thisEntityNameCamelCase = nameToCamelCase(thisEntityName);
+        
+        % Create filename for json instance:
+        thisFilename = folderName + "_" + thisEntityNameCamelCase + ".jsonld";
+        thisFilepath = fullfile(thisPEVInstanceDirectory, thisFilename);
+    
+        if isfile(thisFilepath)
+            thisJsonObject = jsondecode( fileread(thisFilepath) );
 
-    % Loop through property names
-    for iPropName = 1:numel(PEVPropertyNames)
-        thisPropName = PEVPropertyNames(iPropName);
+            % Loop through property names
+            for iPropName = 1:numel(PEVPropertyNames)
+                thisName = PEVPropertyNames(iPropName);
+                thisValue = getFormattedPropertyValue(thisJsonObject, thisName);
 
-        % Add table column
-        thisTableVariableName = PEVTableVariablePrefix(iVersion) + "_" + thisPropName;
-        newTable(:, thisTableVariableName) = table("");
-
-        % Loop through ParcellationEntityNames
-        for iPEName = 1:size(newTable, 1)
-            thisEntityName = newTable{iPEName, 2};
-            
-            thisEntityNameCamelCase = nameToCamelCase(thisEntityName);
-
-            % Create filename for json instance:
-            thisFilename = folderName + "_" + thisEntityNameCamelCase + ".jsonld";
-            thisFilepath = fullfile(thisPEVInstanceDirectory, thisFilename);
-
-            if isfile(thisFilepath)
-
-                thisJsonObject = jsondecode( fileread(thisFilepath) );
-                thisPropertyValue = thisJsonObject.(thisPropName);
-
-                if isempty(thisPropertyValue); thisPropertyValue = ""; end
-                if numel(thisPropertyValue) > 1; thisPropertyValue = join(thisPropertyValue, "; "); end
-
-                newTable{iPEName, thisTableVariableName} = string(thisPropertyValue);
+                thisColumnTitle = PEVColumnTitles(iPropName);
+                newTable{iRow, thisColumnTitle} = string(thisPropertyValue);
             end
         end
     end
@@ -149,6 +157,24 @@ outputFilepath = fullfile(workDirectory, outputFileName);
     
 writetable(newTable, outputFilepath, "FileType", 'spreadsheet')
 
+warning('on', 'MATLAB:table:ModifiedAndSavedVarnames')
+
+
+
+
+function propertyValue = getFormattedPropertyValue(jsonObject, propertyName)
+%getFormattedPropertyValue Get formatted value from json property
+%
+%   If the value is an array, turn into a semicolon separated list
+
+    propertyValue = jsonObject.(propertyName);
+    
+    if isempty(propertyValue)
+        propertyValue = ""; 
+    elseif numel(propertyValue) > 1
+        propertyValue = join(propertyValue, "; "); 
+    end
+end
 
 function uberonInstances = readAllUBERONInstances(instanceDirectory)
     L = dir(instanceDirectory);
@@ -165,7 +191,98 @@ function uberonInstances = readAllUBERONInstances(instanceDirectory)
         S(i).Name = thisJsonObject.name;
         S(i).UberonID = uberonId;
         S(i).Synonym = thisJsonObject.synonym;
+        S(i).URL = thisJsonObject.preferredOntologyIdentifier;
     end
 
     uberonInstances = S;
+end
+
+function [partialMatchedUberonNames, scores] = findPartialMatches(thisEntityName, uberonNames)
+
+
+        scores = zeros(numel(uberonNames), 1);
+        for i = 1:numel(uberonNames)
+            d = fzsearch( lower(uberonNames{i}), lower(char(thisEntityName)) );
+            scores(i) = d(1);
+        end
+
+        minScore = min(scores);
+        minScoreInd = find( scores == minScore );
+        
+        if numel(minScoreInd) > 1
+            % Find best characterLengthMatch
+            numChars = numel(char(thisEntityName));
+            numCharsOthers = cellfun(@numel, uberonNames(minScoreInd));
+
+            ratio = numChars ./ numCharsOthers;
+            [~, bestRatioIdx] = min( abs( ratio-1 ) );
+
+            bestIdx = minScoreInd(bestRatioIdx);
+            partiallyMatchedUberon = uberonNames(bestIdx);
+            scores = scores(bestIdx);
+        else
+            partiallyMatchedUberon = uberonNames(minScoreInd);
+            scores = scores(minScoreInd);
+        end
+
+        partialMatchedUberonNames = strjoin(partiallyMatchedUberon, '; ');
+        partialMatchedUberonNames = string(partialMatchedUberonNames);
+       
+        %[sorted, idx] = sort(scores);
+        %table(sorted(1:30), uberonNames(idx(1:30))')
+
+end
+
+function bestMatchedUberonName = countMatchedWords(thisEntityName, uberonInstances)
+    
+    %matchedWordCountInstances = zeros(numel(uberonInstances), 1);
+    S = struct;
+
+    for i = 1:numel(uberonInstances)
+        % Fractional match
+
+        names = [{uberonInstances(i).Name}, uberonInstances(i).Synonym'];
+        
+        [fractionalMatchesA, fractionalMatchesB] = deal( zeros(1, numel(names)) );
+        wordsInEntityName = strsplit(lower(thisEntityName), ' ');
+
+        for j = 1:numel(names)
+            [wordsInName, wordsInNameTmp] = deal(strsplit(lower(names{j}), ' '));
+            count = 0;
+            for k = 1:numel(wordsInEntityName)
+                if any(strcmp(wordsInEntityName{k}, wordsInNameTmp))
+                    wordsInNameTmp = setdiff(wordsInNameTmp, wordsInEntityName{k});
+                    count = count+1;
+                end
+            end
+            fractionalMatch = count / numel(wordsInEntityName);
+            fractionalMatchesA(j) = count / numel(wordsInEntityName);
+            fractionalMatchesB(j) = count / numel(wordsInName);
+        end
+
+        [topWordCount, bestIdx] = max(fractionalMatchesA);
+        
+        S(i).FractionalMatchA = topWordCount;
+        S(i).FractionalMatchB = fractionalMatchesB(bestIdx);
+        S(i).Name = names{bestIdx};
+        S(i).IsSynonym = bestIdx ~= 1;
+        
+        % Find the highest count for this term. 
+        % Store the count, the name and whether it is a synonym or the name
+        
+    end
+    
+    % Find the highest count overall
+    [bestMatch, bestMatchIdx] = max([S.FractionalMatchA]);
+    
+    if bestMatch < 0.5 && S(bestMatchIdx).FractionalMatchB < 0.5
+        bestMatchedUberonName = '';
+    else 
+        bestMatchedUberonName = S(bestMatchIdx).Name;
+    end
+    
+end
+
+function str = getHyperlink(uberonInstance)
+    str = sprintf("=HYPERLINK(""%s""; ""%s"")", uberonInstance.URL, uberonInstance.Name);
 end
