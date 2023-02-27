@@ -167,11 +167,9 @@ classdef SchemaWriter < ClassWriter
             
             obj.endFunctionBlock()
 
-
             obj.endMethodsBlock()
 
             obj.endClassDef()
-
         end
 
         function show(obj)
@@ -336,6 +334,9 @@ classdef SchemaWriter < ClassWriter
             % that all attributes have been handled.
             attributeNames = fieldnames(propertyAttributes);
             
+            % Initialize poperty attribute variables.
+            validationFcnStr = ''; 
+
             if isfield(propertyAttributes, 'x_instruction')
                 description = propertyAttributes.x_instruction;
                 attributeNames = setdiff(attributeNames, 'x_instruction');
@@ -465,13 +466,11 @@ classdef SchemaWriter < ClassWriter
 
             % Todo: get validation function.
             if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'}))
-                if exist('validationFcnStr', 'var') && ~isempty(validationFcnStr)
-                    disp('a')
+                if ~isempty(validationFcnStr)
+                    warning('Property %s has multiple validation functions', propertyName)
                 end
                 validationFcnStr = obj.getValidationFunction(propertyName, propertyAttributes);
                 attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'});
-            else
-                validationFcnStr = '';
             end
 
             if isfield(propertyAttributes, 'x_formats')

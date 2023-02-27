@@ -19,6 +19,7 @@ function generateSchemas(action, options)
     end
 
     schemaTable = om.internal.dir.listSourceSchemas();
+    schemaTable.Properties.RowNames = arrayfun(@(i) num2str(i), 1:size(schemaTable,1), 'UniformOutput', false);
     numSchemas = size(schemaTable, 1);
 
     warning('off', 'backtrace')

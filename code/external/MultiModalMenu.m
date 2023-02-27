@@ -37,6 +37,8 @@ classdef MultiModalMenu < handle
     %   [ ] Create from folder.
     %   [ ] Add attributes. Maybe some modes are not valid for all items in
     %       the menu
+    %   [ ] Consider if tree data structure is useful:
+    %       https://www.mathworks.com/matlabcentral/fileexchange/35623-tree-data-structure-as-a-matlab-class?s_tid=srchtitle
 
     properties (Abstract, Constant, Hidden) % Todo: Abstract
         ValidModes % = {'Single', 'Multiple', 'Help'}                         % Available modes, use categoricals?
