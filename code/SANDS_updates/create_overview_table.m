@@ -11,6 +11,8 @@
 
 warning('off', 'MATLAB:table:ModifiedAndSavedVarnames')
 
+%% Define constants, required file paths and other configs
+
 workDirectory = "/Users/eivinhen/Work/Nesys/openMINDS/Tasks/2023-02-07 - SANDS updates/";
 openMindsDirectory = "/Users/eivinhen/Downloads/openMINDS-v3";
 
@@ -62,7 +64,18 @@ thisPEInstanceDirectory = fullfile(PEInstanceRootDirectory, ATLAS_ACRONYM);
 PEColumnTitles = PETableVariablePrefix + "_" + PEPropertyNames;
 newTable{:, PEColumnTitles} = deal("");
 
-% Fill out parcellation entity properties:
+% Initialize table columns for Parcellation Entity Versions
+for iVersion = 1:numel(ATLAS_VERSIONS)
+    PEVColumnTitles = PEVTableVariablePrefix(iVersion) + "_" + PEVPropertyNames;
+    newTable{:, PEVColumnTitles} = deal("");
+end
+
+% Appendix column names 
+appendixColumnNames = ["UBERONMatchName", "UBERONMatchURL", "UBERONSynonymMatchName", "UBERONSynonymMatchURL", "UBERONPartialMatchName", "UBERONPartialMatchURL"];
+newTable{:, appendixColumnNames} = deal("");
+
+
+%% Fill out parcellation entity properties:
 
 numRows = size(newTable, 1);
 
@@ -92,38 +105,42 @@ for iRow = 1:numRows
         % Check if any UBERONParcellations match
         isMatch = strcmp({uberonInstances.Name}, thisEntityName );
         if any( isMatch )
-            thisColumnTitle = PEColumnTitles(3);
             %newTable{iRow, thisColumnTitle} = string(uberonInstances(isMatch).Name);
-            newTable{iRow, thisColumnTitle} = getHyperlink(uberonInstances(isMatch));
+            newTable{iRow, appendixColumnNames(1)} = string(uberonInstances(isMatch).Name);
+            newTable{iRow, appendixColumnNames(2)} = string(uberonInstances(isMatch).URL);
         end
         
         for i = 1:numel(uberonInstances)
             isMatch = strcmp(uberonInstances(i).Synonym, thisEntityName );
             if any(isMatch)
                 %fprintf('%s: %s\n', thisEntityName, uberonInstances(i).Synonym{isMatch})
-                newTable{iRow, PEColumnTitles(4)} = string(uberonInstances(i).Name);
+                newTable{iRow, appendixColumnNames(3)} = string(uberonInstances(isMatch).Name);
+                newTable{iRow, appendixColumnNames(4)} = string(uberonInstances(isMatch).URL);
             end
         end
 
-        %bestMatchedUberonName = countMatchedWords(thisEntityName, uberonInstances);
+        matchIdx = countMatchedWords(thisEntityName, uberonInstances);
+        newTable{iRow, appendixColumnNames(5)} = string(uberonInstances(matchIdx).Name);
+        newTable{iRow, appendixColumnNames(6)} = string(uberonInstances(matchIdx).URL);
 
-% % %         % Check for partial matches for UBERONParcellations
-% % %         uberonNames = {uberonInstances.Name};
-% % %         [partialMatchedUberonNames, scores] = findPartialMatches(thisEntityName, uberonNames);
-% % %         partialMatchScore = arrayfun(@num2str, scores, 'uni', 0);
-% % %         partialMatchScore = strjoin(partialMatchScore, '; ');
-% % % 
+        % Check for partial matches for UBERONParcellations
+        %uberonNames = {uberonInstances.Name};
+        %[bestMatchedUberonName, scores] = findPartialMatches(thisEntityName, uberonNames);
+        
+        %partialMatchScore = arrayfun(@num2str, scores, 'uni', 0);
+        %partialMatchScore = strjoin(partialMatchScore, '; ');
         %newTable{iRow, PEColumnTitles(5)} = string( bestMatchedUberonName );
-% % %         newTable{iRow, PEColumnTitles(6)} = string( partialMatchScore );
+        %newTable{iRow, PEColumnTitles(6)} = string( partialMatchScore );
+
     end
 end
 
-% Loop through versions
+
+%% Fill out parcellation entity VERSION properties:
 for iVersion = 1:numel(ATLAS_VERSIONS)
 
     % Initialize table columns for Parcellation Entity Versions
     PEVColumnTitles = PEVTableVariablePrefix(iVersion) + "_" + PEVPropertyNames;
-    newTable{:, PEVColumnTitles} = deal("");
 
     % Get folder to load schema from:
     folderName = join( [ATLAS_ACRONYM, ATLAS_VERSIONS(iVersion) ], "_" );
@@ -146,12 +163,21 @@ for iVersion = 1:numel(ATLAS_VERSIONS)
                 thisValue = getFormattedPropertyValue(thisJsonObject, thisName);
 
                 thisColumnTitle = PEVColumnTitles(iPropName);
-                newTable{iRow, thisColumnTitle} = string(thisPropertyValue);
+                newTable{iRow, thisColumnTitle} = string(thisValue);
             end
         end
     end
 end
 
+numColumns = size(newTable, 2);
+
+% Ad hoc column hyperlinks...
+newTable{1, PEColumnTitles(3)} = sprintf( "=IF(NOT(ISBLANK(%s)); hyperlink(%s;%s); """")", getExcelCellName(numColumns-4, 2), getExcelCellName(numColumns-4, 2), getExcelCellName(numColumns-5, 2) );
+newTable{1, PEColumnTitles(4)} = sprintf( "=IF(NOT(ISBLANK(%s)); hyperlink(%s;%s); "")", getExcelCellName(numColumns-2, 2), getExcelCellName(numColumns-2, 2), getExcelCellName(numColumns-3, 2) );
+newTable{1, PEColumnTitles(5)} = sprintf( "=IF(NOT(ISBLANK(%s)); hyperlink(%s;%s); "")", getExcelCellName(numColumns, 2), getExcelCellName(numColumns, 2), getExcelCellName(numColumns-1, 2) );
+
+
+%% Save table to excel file
 outputFileName = sprintf( 'WHS_PE-PEV_update-%s.xlsx', datestr(now, 'yyyy_mm_dd_HHMMSS') );
 outputFilepath = fullfile(workDirectory, outputFileName);
     
@@ -160,7 +186,7 @@ writetable(newTable, outputFilepath, "FileType", 'spreadsheet')
 warning('on', 'MATLAB:table:ModifiedAndSavedVarnames')
 
 
-
+%% Local functions
 
 function propertyValue = getFormattedPropertyValue(jsonObject, propertyName)
 %getFormattedPropertyValue Get formatted value from json property
@@ -233,7 +259,7 @@ function [partialMatchedUberonNames, scores] = findPartialMatches(thisEntityName
 
 end
 
-function bestMatchedUberonName = countMatchedWords(thisEntityName, uberonInstances)
+function bestMatchIdx = countMatchedWords(thisEntityName, uberonInstances)
     
     %matchedWordCountInstances = zeros(numel(uberonInstances), 1);
     S = struct;
@@ -276,9 +302,10 @@ function bestMatchedUberonName = countMatchedWords(thisEntityName, uberonInstanc
     [bestMatch, bestMatchIdx] = max([S.FractionalMatchA]);
     
     if bestMatch < 0.5 && S(bestMatchIdx).FractionalMatchB < 0.5
-        bestMatchedUberonName = '';
-    else 
-        bestMatchedUberonName = S(bestMatchIdx).Name;
+        bestMatchIdx = [];
+        %bestMatchedUberonName = '';
+    else
+        %bestMatchedUberonName = S(bestMatchIdx).Name;
     end
     
 end
@@ -286,3 +313,24 @@ end
 function str = getHyperlink(uberonInstance)
     str = sprintf("=HYPERLINK(""%s""; ""%s"")", uberonInstance.URL, uberonInstance.Name);
 end
+
+function str = getExcelCellName(colNum, rowNum)
+    
+    letters = arrayfun( @(i) string(char(i)), 65:90 );
+
+    numRepeat = ceil(colNum ./ 26);
+    
+    if numRepeat == 2
+        firstLetter = letters( mod(numRepeat-1, 26) );
+        lastLetter = letters( mod(colNum+1, 26) - 1 );
+        columName = firstLetter + lastLetter;
+
+
+    elseif numRepeat == 1
+        columName = letters( mod(colNum+1, 26) - 1 );
+    end
+
+    str = columName + num2str(rowNum);
+
+end
+
