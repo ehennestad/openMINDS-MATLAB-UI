@@ -29,10 +29,11 @@ classdef SchemaWriter < ClassWriter
 
 
     methods
-        function obj = SchemaWriter(schemaFilepath)
+        function obj = SchemaWriter(schemaFilepath, action)
 
             arguments
-                schemaFilepath 
+                schemaFilepath
+                action
             end
 
             obj.SchemaClassFilePath = schemaFilepath;
@@ -40,6 +41,10 @@ classdef SchemaWriter < ClassWriter
             obj.parseSchema()
 
             obj.assignOutputFile()
+
+            if isfile(obj.Filepath) && strcmp(action, 'create')
+                clear obj; return
+            end
 
             obj.writeClassdef()
             
@@ -465,12 +470,12 @@ classdef SchemaWriter < ClassWriter
             end
 
             % Todo: get validation function.
-            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'}))
+            if any(isfield(propertyAttributes, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern', 'minimum', 'maximum'}))
                 if ~isempty(validationFcnStr)
                     warning('Property %s has multiple validation functions', propertyName)
                 end
                 validationFcnStr = obj.getValidationFunction(propertyName, propertyAttributes);
-                attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern'});
+                attributeNames = setdiff(attributeNames, {'minItems', 'maxItems', 'uniqueItems', 'maxLength', 'minLength', 'pattern', 'minimum', 'maximum'});
             end
 
             if isfield(propertyAttributes, 'x_formats')
@@ -553,7 +558,7 @@ classdef SchemaWriter < ClassWriter
             if obj.IsControlledTerm
                 obj.appendLine(2, sprintf('function obj = %s(name)', obj.SchemaClassName))
             else
-                obj.appendLine(2, sprintf('function obj = %s()', obj.SchemaClassName))
+                obj.appendLine(2, sprintf('function obj = %s(varargin)', obj.SchemaClassName))
             end
 
             if obj.HasSuperclass
@@ -561,6 +566,9 @@ classdef SchemaWriter < ClassWriter
                  obj.appendLine(3, 'obj.Required = [required, obj.Required_];')
                  obj.appendLine(3, "")
             end
+
+            obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
+
 
             if obj.IsControlledTerm
                 obj.writeEnumSwitchBlock()
@@ -649,7 +657,40 @@ classdef SchemaWriter < ClassWriter
                 str = sprintf('{mustBeValidStringLength(%s, %d, %d)}', name, minLength, maxLength);
             
             elseif isfield(attr, 'pattern')
-                str = sprintf('{mustMatchPattern(%s, ''%s'')}', name, attr.pattern);
+                
+                if contains(attr.pattern, 'archive.softwareheritage')
+                    warning('SWHID str pattern validation is hard-coded')
+                    escapedStrPattern = "^https://archive.softwareheritage.org/swh:1:(cnt|dir|rel|rev|snp):[0-9a-f]{40}(;(origin|visit|anchor|path|lines)=[^ \\t\\r\\n\\f]+)*$";
+                
+                else
+                    escapedStrPattern = attr.pattern;
+                end
+
+                str = sprintf('{mustMatchPattern(%s, ''%s'')}', name, escapedStrPattern);
+
+            elseif isfield(attr, 'minimum') || isfield(attr, 'maximum')
+
+                if isfield(attr, 'minimum')
+                    minValue = attr.minimum;
+                else
+                    minValue = nan;
+                end
+
+                if isfield(attr, 'maximum')
+                    maxValue = attr.maximum;
+                else
+                    maxValue = nan;
+                end
+
+                if ~isnan(minValue) && ~isnan(maxValue)
+                    valueCheckFcn = sprintf( 'mustBeInRange(%s, %d, %d)}', name, minValue, maxValue );
+                elseif isnan(minValue)
+                    valueCheckFcn = sprintf( 'mustBeLessThanOrEqual(%s, %d)}', name, maxValue );
+                elseif isnan(maxValue)
+                    valueCheckFcn = sprintf( 'mustBeGreaterThanOrEqual(%s, %d)', name, minValue );
+                end
+
+                str = sprintf('{mustBeInteger(%s), %s}', name, valueCheckFcn);
 
             end
         end

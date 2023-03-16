@@ -28,7 +28,7 @@ function generateSchemas(action, options)
         try
             switch schemaTable.ModuleName(i)
                 case {'SANDS', 'computation', 'core', 'publications'}
-                    om.generator.SchemaWriter( schemaTable.Filepath(i) )
+                    om.generator.SchemaWriter( schemaTable.Filepath(i), action )
                 case 'controlledTerms'
                     %om.generateControlledTermSchemas()
             end

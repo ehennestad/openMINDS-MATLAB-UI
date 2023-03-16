@@ -383,7 +383,7 @@ classdef ModelBuilder < handle
             end
 
             
-
+            % TODO: New method!
             % If we got this far, we are creating a new schema
             itemFactory = str2func(functionName);
             newItem = arrayfun(@(i)itemFactory(), 1:n);
@@ -431,7 +431,7 @@ classdef ModelBuilder < handle
 
             titleStr = sprintf('Create New %s', classNameLabel);
             promptStr = sprintf('Fill out properties for %s', classNameLabel);
-            [SNew, wasAborted] = tools.editStruct(SNew, [], titleStr, 'Prompt', promptStr);
+            [SNew, wasAborted] = tools.editStruct(SNew, [], titleStr, 'Prompt', promptStr, 'Theme', 'light');
 
             if wasAborted; return; end
                 
