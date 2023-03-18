@@ -1,6 +1,12 @@
 classdef ClassWriter < handle % ClassWriter
+
     
-    
+%     TODO:
+%     - [ ] Collect names of linked and embedded properties when parsing 
+%     - [ ] Add LinkedProperties and EmbeddedProperties as Constant
+%           property block
+
+
     properties (SetAccess = private)
         Schema
     end

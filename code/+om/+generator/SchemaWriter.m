@@ -1,6 +1,14 @@
 classdef SchemaWriter < ClassWriter
 %SchemaWriter Translate openMINDS schemas to matlab classes    
 
+
+    
+%     TODO:
+%     - [ ] Collect names of linked and embedded properties when parsing 
+%     - [ ] Add LinkedProperties and EmbeddedProperties as Constant
+%           property block
+%     - [ ] Assign name property for controlled terms
+
     properties (Constant)
         DEBUG (1,1) matlab.lang.OnOffSwitchState = 'off'
     end
