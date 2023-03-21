@@ -21,6 +21,13 @@ function update()
         disp('Updating openMINDS schemas.')
         om.updateSchemas()
     end
+
+    % Check that the schemafolder in on path
+    currentPathList = strsplit(path, pathsep);
+
+    if ~any(strcmp(currentPathList, om.Constants.SchemaFolder))
+        addpath(genpath(om.Constants.SchemaFolder))
+    end
     
 end
 
