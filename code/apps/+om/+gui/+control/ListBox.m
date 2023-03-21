@@ -120,7 +120,7 @@ classdef ListBox < handle
         function onListButtonPressed(obj, src, evt, idx)
 
             triggerCallback = false;
-            
+            oldSelection = {obj.SelectedButtons.Tag};
             % disp(evt.Source.SelectionType)
             switch evt.Source.SelectionType
                 case 'normal'
@@ -162,13 +162,17 @@ classdef ListBox < handle
                 
             end
 
+            newSelection = {obj.SelectedButtons.Tag};
+
             %buttonNames = {obj.SelectedButtons.Text};
             %fprintf('Selected buttons: %s\n', strjoin(buttonNames, ', '))
 
             % Call the SelectionChangedFcn if present...
             if ~isempty(obj.SelectionChangedFcn) && triggerCallback
                 %disp('Selection Changed')
-                obj.SelectionChangedFcn(src, evt)
+                
+                evt = om.gui.event.ItemSelectionEventData(oldSelection, newSelection);
+                obj.SelectionChangedFcn(obj, evt)
             end
 
             % Notify listeners.
@@ -184,6 +188,12 @@ classdef ListBox < handle
 
             buttonNames = {obj.Buttons.Text};
             
+            if isempty(obj.SelectedButtons)
+                oldSelection = {};
+            else
+                oldSelection = {obj.SelectedButtons.Tag};
+            end
+
             obj.SelectedButtons(:) = [];
 
             for i = 1:numel(obj.Buttons)
@@ -203,10 +213,12 @@ classdef ListBox < handle
                 end
             end
 
+
             % Call the SelectionChangedFcn if preset...
             if ~isempty(obj.SelectionChangedFcn)
-                evt = event.EventData();
-                obj.SelectionChangedFcn(obj.SelectedButtons, evt)
+                %evt = event.EventData();
+                evt = om.gui.event.ItemSelectionEventData(oldSelection, newSelection);
+                obj.SelectionChangedFcn(obj, evt)
             end
         end
 
