@@ -522,7 +522,7 @@ classdef ModelBuilder < handle
 
         function downloadOpenMindsLogo()
             logoUrl = om.Constants.LogoLightURL;
-            websave(om.ModelBuilder.getLogoFilepath(), logoUrl)
+            websave(om.ModelBuilder.getLogoFilepath(), logoUrl);
         end
 
         function logoFilepath = getLogoFilepath()
