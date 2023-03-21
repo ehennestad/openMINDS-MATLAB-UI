@@ -2,7 +2,7 @@
 schemas
 
 # Matlab generated schemas
-code/schemas_matlab/+openminds/+controlledterms/
+#code/schemas_matlab/+openminds/+controlledterms/
 code/schemas_matlab/+openminds/+core/
 
 # openMINDS logo
