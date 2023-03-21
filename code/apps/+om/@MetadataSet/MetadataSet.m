@@ -1,6 +1,7 @@
 classdef MetadataSet < handle & matlab.mixin.CustomDisplay
     
 %   Todo:
+%       - [ ] Rename to MetadataCollection
 %       - [ ] Make sure labels are not duplicated. Validation of new labels
 %             against the set of labels.
 %       - [ ] Make sure embedded types are not added to set??
@@ -55,17 +56,6 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
             
         end
 
-        function metaTable = getTable(obj, schemaName)
-
-            if isfield(obj.SchemaInstances, schemaName)
-                schemaInstanceList = obj.SchemaInstances.(schemaName);
-                metaTable = om.objectArrayToMetaTable(schemaInstanceList);
-            else
-                metaTable = [];
-            end
-
-        end
-        
         function labels = getSchemaInstanceLabels(obj, schemaName, schemaId)
             
             if nargin < 3; schemaId = ''; end
@@ -124,6 +114,127 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
 
     end
 
+    methods % Methods for getting instances in table representations
+        
+        function metaTable = getTable(obj, schemaName)
+
+            if isfield(obj.SchemaInstances, schemaName)
+                schemaInstanceList = obj.SchemaInstances.(schemaName);
+
+                instanceTable = schemaInstanceList.toTable();
+                instanceTable = obj.replaceLinkedInstancesWithCategoricals(instanceTable, schemaName);
+
+                metaTable = nansen.metadata.MetaTable(instanceTable, 'MetaTableClass', class(schemaInstanceList));
+            else
+                metaTable = [];
+            end
+        end
+
+        function metaTable = joinTables(obj, schemaNames, options)
+            
+            arguments
+                obj
+                schemaNames
+                options.JoinMethod = 'join' % innerjoin , join, outerjoin
+            end
+
+            instanceLinkee = schemaNames{1};
+            instanceLinked = schemaNames{2};
+
+            tableLinker = obj.getTable(instanceLinkee).entries;
+            tableLinker.id = {obj.SchemaInstances.(instanceLinked).id}';
+            tableLinked = obj.getTable(instanceLinked).entries;
+
+            tableLinked.id = {obj.SchemaInstances.(instanceLinked).id}';
+            
+            tableLinker = renamevars(tableLinker, 'lookupLabel', 'lookupLabel_Subject');
+            tableLinked = renamevars(tableLinked, 'lookupLabel', 'lookupLabel_SubjectState');
+
+            [leftKey, ~] = obj.getKeyPairsForJoin(instanceLinkee, instanceLinked);
+            leftKey = 'id';
+            rightKey = 'id';
+
+            joinFcn = str2func(options.JoinMethod);
+
+            joinedTable = joinFcn(tableLinker, tableLinked, 'LeftKeys', leftKey, 'RightKeys', rightKey);
+            joinedTable.id = []; % Remove the id column
+
+            joinedClassName = sprintf('%s * %s', instanceLinkee, instanceLinked);
+            
+            metaTable = nansen.metadata.MetaTable(joinedTable, 'MetaTableClass', joinedClassName);
+        end
+
+    end
+
+    methods (Access = protected) % Methods for getting instances in table representations
+        
+        function [leftKey, rightKey] = getKeyPairsForJoin(obj, schemaNameLinker, schemaNameLinkee)
+            
+            
+            disp('a')
+            leftKey = 'studiedState';
+            rightKey = 'id';
+
+            % Who is linked from who.
+            % Need to check the schema and find the name of the property
+            % who is linked... What if many properties can be linked to the
+            % same schema??
+
+            % For the linkee : Use property name 
+            %   Needed. List of linked properties and allowed link types
+
+            % For the linked : Get id
+        end
+        
+        function instanceTable = replaceLinkedInstancesWithCategoricals(obj, instanceTable, instanceType)
+
+            [numRows, numColumns] = size(instanceTable);
+            %tempStruct = table2struct(instanceTable(1,:));
+            
+            for i = 1:numColumns
+                thisColumnName = instanceTable.Properties.VariableNames{i};
+
+                % Todo: Check if columnName is an embedded type of
+                % instanceType: In which case we dont want to replace with
+                % categorical...
+
+
+                thisValue =  instanceTable{1,i};
+                if isa(thisValue, 'openminds.abstract.Schema') && ~isa(thisValue, 'openminds.controlledterms.ControlledTerm')
+                    className = openminds.abstract.Schema.getSchemaShortName(class(thisValue)); % Todo: get this in a better way
+                    % obj.getSchemaInstanceLabels(className)
+
+                    options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
+
+                    rowValues = cell(numRows, 1);
+                    for jRow = 1:numRows
+                        thisValue =  instanceTable{jRow,i};
+
+                        if isempty(thisValue)
+                            thisValue = options(1);
+                        else
+                            try
+                                % Todo: This need to be improved!!!
+                                thisValue = thisValue.getDisplayLabel;
+                                options(end+1) = thisValue;
+                            catch
+                                thisValue = options(1);
+                            end
+                        end
+
+                        rowValues{jRow} = categorical(thisValue, unique(options));
+                    end
+                    instanceTable.(thisColumnName) = cat(1,rowValues{:});
+                end
+            end            
+        end
+
+    end
+
+    methods % Methods for getting instances in graph representations
+
+    end
+
     methods % Set/get
         function schemaNames = get.SchemaNames(obj)
             schemaNames = fieldnames(obj.SchemaInstances);
@@ -136,6 +247,11 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
             propListing = obj.SchemaInstances;
             groups = matlab.mixin.util.PropertyGroup(propListing);
         end
+
+% %           function sobj = saveobj(obj)
+% %             % Call superclass saveobj method
+% %             sobj = saveobj@super(obj);
+% %           end
 
     end
 

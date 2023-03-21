@@ -33,7 +33,11 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
     % Public methods for converting object array to/from struct or table
     methods
 
-        function S = toStruct(obj)
+        function S = toStruct(obj, recursive)
+
+            if nargin < 2
+                recursive = false;
+            end
             
             % Todo: Does the following support arrays?
 
@@ -48,8 +52,12 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             for iProp = 1:numel(obj(1).PropertyNames)
                 thisProp = obj(1).PropertyNames{iProp};
                 for jInstance = 1:numel(S) % Account for arrays?
-                    if isa( S(jInstance).(thisProp), 'utility.class.structAdapter' )
-                        S(jInstance).(thisProp) = S(jInstance).(thisProp).toStruct();
+                    if isa( S(jInstance).(thisProp), 'StructAdapter' ) && recursive
+                        if numel( S(jInstance).(thisProp)) == 0
+                            S(jInstance).(thisProp) = struct.empty;
+                        else
+                            S(jInstance).(thisProp) = S(jInstance).(thisProp).toStruct();
+                        end
                     end
                 end
             end
@@ -69,7 +77,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
     
         function T = toTable(obj)
             S = obj.toStruct();
-            T = struct2table(S);
+            T = struct2table(S, 'AsArray', true);
         end
 
         function fromTable(obj, T)

@@ -91,8 +91,12 @@ classdef ModelBuilder < handle
             h.HTable.KeyPressFcn = @obj.onKeyPressed;
             obj.UIMetaTableViewer = h;
 
+            colSettings = h.ColumnSettings;
+            [colSettings(:).IsEditable] = deal(true);
+            h.ColumnSettings = colSettings;
             %obj.UIMetaTableViewer.HTable.Units
-            
+
+            h.CellEditCallback = @obj.onMetaTableDataChanged;
 
             obj.SchemaMenu = om.SchemaMenu(obj, {'openminds.core'});
             obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
@@ -150,7 +154,9 @@ classdef ModelBuilder < handle
     methods
 
         function changeSelection(obj, schemaName)
-            obj.UISideBar.SelectedItems = schemaName;
+            if any(strcmp(obj.UISideBar.Items, schemaName))
+                obj.UISideBar.SelectedItems = schemaName;
+            end
         end
         
         function updateLayoutPositions(obj)
@@ -312,15 +318,16 @@ classdef ModelBuilder < handle
         function saveMetadataSet(obj)
             metadataSetPath = fullfile(obj.SaveFolder, 'metadata_set.mat');
             S = struct;
-            S.metadataSet = obj.MetadataSet;
-            save(metadataSetPath, '-struct', 'S')
+            %S.metadataSet = obj.MetadataSet;
+            MetadataSet = obj.MetadataSet; %#ok<PROP> 
+            save(metadataSetPath, 'MetadataSet')
         end
 
         function loadMetadataSet(obj)
             metadataSetPath = fullfile(obj.SaveFolder, 'metadata_set.mat');
             if isfile(metadataSetPath)
-                S = load(metadataSetPath, 'metadataSet');
-                obj.MetadataSet = S.metadataSet;
+                S = load(metadataSetPath, 'MetadataSet');
+                obj.MetadataSet = S.MetadataSet;
             else
                 obj.MetadataSet = om.MetadataSet();
             end
@@ -343,12 +350,22 @@ classdef ModelBuilder < handle
 
         end
 
+        function onMetaTableDataChanged(obj, src, evt)
+
+
+        end
+
         function onSelectionChanged(obj, src, evt)
-            schemaName = src.Tag;
+            
+            schemaName = evt.NewSelection;
             obj.CurrentSchemaTableName = schemaName;
 
             % check if schema has a table
-            metaTable = obj.MetadataSet.getTable(schemaName);
+            if numel(schemaName) == 1
+                metaTable = obj.MetadataSet.getTable(schemaName{1});
+            else
+                metaTable = obj.MetadataSet.joinTables(schemaName);
+            end
 
             if ~isempty(metaTable)
                 %obj.UIMetaTableViewer.resetTable()
@@ -404,6 +421,8 @@ classdef ModelBuilder < handle
                     SNew.(iPropName_) = m;
                 elseif isstring(iValue)
                     SNew.(iPropName) = char(iValue);
+                elseif isnumeric(iValue)
+                    SNew.(iPropName) = double(iValue);
                 elseif isa(iValue, 'openminds.abstract.Schema') && ...
                         ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
                     
@@ -445,7 +464,8 @@ classdef ModelBuilder < handle
                 
                 elseif isstring(iValue)
                     SNew.(iPropName) = char(SNew.(iPropName));
-               
+                elseif isnumeric(iValue)
+                    SNew.(iPropName) = cast(SNew.(iPropName), class(newItem.(iPropName)));
                 elseif isa(iValue, 'openminds.abstract.Schema') && ...
                         ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
                     if obj.isSchemaInstanceUnavailable(SNew.(iPropName))

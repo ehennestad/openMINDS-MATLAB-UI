@@ -163,9 +163,8 @@ classdef SchemaConverter < ClassWriter
 
         function assignOutputFile(obj)
 
-            openMindsFolderPath = om.Constants.getRootPath();
-            schemaFolderPath = fullfile( openMindsFolderPath, 'schemas', ...
-                                 'matlab');
+            schemaDirectory = om.Constants.SchemaFolder;
+            mSchemaDirectory = fullfile( schemaDirectory, 'matlab');
             
             if isempty(obj.SchemaCategory)
                 schemaPackage = {'openminds', obj.MetadataModel};
@@ -176,7 +175,7 @@ classdef SchemaConverter < ClassWriter
             schemaPackage = lower( strcat('+', schemaPackage) );
 
             filename = [obj.SchemaName, '.m'];
-            obj.Filepath = fullfile(schemaFolderPath, schemaPackage{:}, filename );
+            obj.Filepath = fullfile(mSchemaDirectory, schemaPackage{:}, filename );
         end
         
     end
