@@ -1,4 +1,4 @@
-function schemaInfo = listSourceSchemas(schemaModule)
+function schemaInfo = listSourceSchemas(schemaModule, options)
 %listSourceSchemas List information about all available schemas.   
 %   
 %   schemaInfo = listSourceSchemas() returns a table with information
@@ -6,27 +6,33 @@ function schemaInfo = listSourceSchemas(schemaModule)
 
     arguments
         schemaModule = {}
+        options.SchemaType = 'schema.tpl.json';
+        options.SchemaFileExtension = '.json';
     end
     
-    options.SchemaType = 'schema.tpl.json';
+    %options.SchemaType = 'schema.tpl.json';
     
     % - Get path constant
     openMindsFolderPath = om.Constants.getRootPath();
     schemaFolderPath = fullfile( openMindsFolderPath, 'schemas', ...
                                  'source', options.SchemaType);
     
-    filePaths = listSchemaFiles(schemaFolderPath, schemaModule);
+    filePaths = listSchemaFiles(schemaFolderPath, schemaModule, options.SchemaFileExtension);
 
     S = collectInfoInStructArray(schemaFolderPath, filePaths);
 
     schemaInfo = convertStructToTable(S);
 end
 
-function [filePaths] = listSchemaFiles(schemaFolderPath, schemaModule)
+function [filePaths] = listSchemaFiles(schemaFolderPath, schemaModule, fileExtension)
 %listSchemaFiles List schema files given a root directory
 
     import om.internal.dir.listSubDir
     import om.internal.dir.listFiles 
+
+    if nargin < 3 || isempty(fileExtension)
+        fileExtension = '.json';
+    end
 
     % - Look through subfolders for all json files of specified modules
     [absPath, dirName] = listSubDir(schemaFolderPath, '', {}, 0);
@@ -37,7 +43,7 @@ function [filePaths] = listSchemaFiles(schemaFolderPath, schemaModule)
     end
 
     [absPath, ~] = listSubDir(absPath, '', {}, 2);
-    [filePaths, ~] = listFiles(absPath, '.json');
+    [filePaths, ~] = listFiles(absPath, fileExtension);
 end
 
 function S = collectInfoInStructArray(schemaFolderPath, filePaths)

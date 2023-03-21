@@ -8,8 +8,10 @@ function generateSchemas(action, options)
     % options
     %   SchemaType : Only supports schema.tpl.json ...
 
-    % Todo: Create switch block for different actions.
-
+    % Todo: 
+    %   - [ ] Create switch block for different actions.
+    %   - [ ] I.e should separate generator for schemas and instances.
+    
     arguments
         action (1,1) string ...
             {mustBeMember(action, ["create", "update", "reset"])} = "create" 
@@ -27,10 +29,9 @@ function generateSchemas(action, options)
     for i = 1:numSchemas
         try
             switch schemaTable.ModuleName(i)
-                case {'SANDS', 'computation', 'core', 'publications'}
+                case {'SANDS', 'computation', 'core', 'publications', 'controlledTerms'}
                     om.generator.SchemaWriter( schemaTable.Filepath(i), action )
-                case 'controlledTerms'
-                    %om.generateControlledTermSchemas()
+            
             end
         catch ME
             fprintf('Failed to create schema for %s\n', schemaTable.SchemaName(i))

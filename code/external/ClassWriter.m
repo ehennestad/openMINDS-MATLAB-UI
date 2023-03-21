@@ -179,7 +179,7 @@ classdef ClassWriter < handle
         function startPropertyBlock(obj, varargin)
             assert(obj.CurrentStep == "classdef" && ...
                     (obj.PreviousStep == "" || ...
-                     obj.PreviousStep == "properties") )
+                     obj.PreviousStep == "properties"), 'Can not start new property block here!' )
             
             %    "Can not start a new property block because the " + ...
             %    "current stage is set to %s", obj.CurrentStep)
@@ -270,6 +270,13 @@ classdef ClassWriter < handle
 
         % Method that adds an enumeration value
         function addEnumValue(obj, enumValue, varargin)
+    
+            enumValue = string(enumValue);
+            if enumValue.strlength > 63
+                warning("Skip %s of %s because name is too long for MATLAB", enumValue, obj.SchemaClassName)
+                return
+            end
+
             if isempty(varargin)
                 enumInput = enumValue;
             else

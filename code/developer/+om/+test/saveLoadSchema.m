@@ -1,27 +1,37 @@
 function T = saveLoadSchema()
     
-    moduleName = 'core';
-    schemaList = om.dir.schema(moduleName);
+    moduleName = "SANDS";
+    %schemaList = om.dir.schema(moduleName);
 
-    numSchemas = numel(schemaList);
+    schemaTable = om.internal.dir.listSourceSchemas();
+    schemaTable = schemaTable(schemaTable.ModuleName == moduleName, :);
+
+    numSchemas = size(schemaTable, 1);
 
     tempsavepath = tempname;
     tempsavepath = [tempsavepath, '.mat'];
-    disp(tempsavepath)
-    C = onCleanup(@(filepath)delete(tempsavepath));
+    
+    %disp(tempsavepath)
+    cleanupObj = onCleanup(@(filepath)delete(tempsavepath));
 
     numTestsFailed = 0;
+    numTestsTotal = 0;
 
     C = cell(0, 4);
 
     for i = 1:numSchemas
+
+        iSchemaName = schemaTable{i, "SchemaName"};
+        iModelName = schemaTable{i, "ModuleName"};
+        iSubmoduleName = schemaTable{i, "SubModuleName"};
+
         
-        schemaClassFunctionName = om.strutil.buildClassName(schemaList(i).Name, schemaList(i).Category, moduleName);
+        schemaClassFunctionName = om.strutil.buildClassName(iSchemaName, iSubmoduleName, iModelName);
         schemaFcn = str2func(schemaClassFunctionName);
         
         mc = meta.class.fromName(schemaClassFunctionName);
         if mc.Abstract; continue; end
-
+        
         try
             itemPreSave = schemaFcn();
         catch ME
@@ -52,6 +62,7 @@ function T = saveLoadSchema()
             continue
         end
 
+
         S = load(tempsavepath, 'itemPreSave');
 
         if isequal(S.itemPreSave, itemPreSave)
@@ -65,8 +76,11 @@ function T = saveLoadSchema()
             C{numTestsFailed, 3} = '';
             C{numTestsFailed, 4} = '';            
         end
+
+        numTestsTotal = numTestsTotal + 3;
+
     end
 
     T = cell2table(C, 'VariableNames', {'SchemaName', 'Failure point', 'Error Message', 'Extended Error'});
-    fprintf('Number of tests that failed: %d\n', numTestsFailed)
+    fprintf('Number of tests that failed: %d/%d\n', numTestsFailed, numTestsTotal)
 end
