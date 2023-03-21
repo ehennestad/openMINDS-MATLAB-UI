@@ -582,8 +582,8 @@ classdef SchemaConverter < ClassWriter
             if obj.IsControlledTerm
                 obj.writeEnumSwitchBlock()
             else
-                %obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
-                %obj.appendLine(3, "")
+                obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
+                obj.appendLine(3, "")
             end
 
         end
