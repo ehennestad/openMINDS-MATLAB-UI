@@ -1,8 +1,8 @@
 classdef ClassWriter < handle
 %ClassWriter A class that can be used for writing matlab class definitions
 %
-%   This class provides useful methods and templated for generating a
-%   nicely formatted matlab class.
+%   This class provides useful methods and templates for generating a
+%   formatted matlab class definition file.
 %
 %   Subclasses can use these methods in order to translate a collection of
 %   schemas or templates into matlab class definitions.
@@ -61,6 +61,12 @@ classdef ClassWriter < handle
                 warning('Classname should start with a capital letter. Changed name from "%s" to "%s"', newNameLowercase, newName) %#ok<PFCEL> 
             end
             obj.ClassName = newName;
+        end
+    end
+
+    methods 
+        function show(obj)
+            fprintf(obj.ClassDefText)
         end
     end
 
@@ -295,7 +301,8 @@ classdef ClassWriter < handle
                 options.Inputs (1,:) cell = {}
                 options.Outputs (1,:) cell = {}
             end
-            
+            % Todo
+            warning('Method "startFunctionBlock" is not implemented yet')
         end
 
         function endFunctionBlock(obj)

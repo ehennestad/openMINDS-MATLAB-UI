@@ -19,20 +19,25 @@ classdef Serializer < handle
     properties
         Vocab
         SchemaType string % i.e https://openminds.ebrains.eu/core/Person
-        SchemaName string % i.e Person
         MetadataModel string % i.e core
+    end
+    
+    properties (Dependent)
+        SchemaName string % i.e Person
     end
 
     properties 
+        Instance % openminds.abstract.Schema
         id % Todo: get from instance...
     end
 
     methods % Constructor
 
-        function obj = Serializer()
+        function obj = Serializer( instanceObject )
             
-            obj.SchemaType = "https://openminds.ebrains.eu/core/Subject";
-            obj.SchemaName = "Subject";
+            obj.Instance = instanceObject;
+
+            obj.SchemaType = instanceObject.X_TYPE;
 
             obj.id = om.strutil.getuuid(); % Todo: get from instance...
 
@@ -40,9 +45,25 @@ classdef Serializer < handle
                 obj.Vocab = obj.DEFAULT_VOCAB;
             end
 
+            if ~nargout
+                obj.serialize()
+                clear obj
+            end
 
         end
         
+    end
+
+    methods 
+        function name = get.SchemaName(obj)
+            
+            if isempty(obj.SchemaType)
+                name = '';
+            else
+                schemaTypeSplit = strsplit(obj.SchemaType, '/');
+                name = schemaTypeSplit{end};
+            end
+        end
     end
 
     methods 
@@ -59,13 +80,31 @@ classdef Serializer < handle
             
 
             % Get public properties
-
-            % Get names of linked properties from Schema.
-
-            % Get names of embedded properties from Schema.
-
-            % Add public properties. For linked types, add links...
+            propertyNames = properties(obj.Instance);
             
+            % Serialize each of the properties. For linked types, add links...
+
+
+            % Get names of linked properties from instance.
+            linkedPropertyStruct = obj.Instance.LINKED_PROPERTIES;
+
+            % Serialize with IDs for linked instances.
+
+            % Todo: 
+            %   [ ] Handle cell arrays where a property can be linked from
+            %       multiple different schema instances.
+            %
+            %   [ ] Handle arrays
+            %   [ ] Handle scalars
+            %   [ ] Skip property with empty values
+
+
+            % Get names of embedded properties from instance.
+            embeddedPropertyStruct = obj.Instance.EMBEDDED_PROPERTIES;
+
+            % Todo: Serialize embedded instance and add it to the embedded
+            % property key
+
             jsonStr = om.json.encode(S);
         end
 
@@ -73,11 +112,11 @@ classdef Serializer < handle
 
     methods (Access = private) % Note: Make protected if subclasses are created
         
-        function addLinkedType(obj)
+        function S = addLinkedType(obj, S, propName, propValue)
             
         end
 
-        function addEmbeddedType(obj)
+        function S = addEmbeddedType(obj, S, propName, propValue)
             
         end
 

@@ -11,7 +11,7 @@ function generateSchemas(action, options)
     % Todo: 
     %   - [ ] Create switch block for different actions.
     %   - [ ] I.e should separate generator for schemas and instances.
-    
+
     arguments
         action (1,1) string ...
             {mustBeMember(action, ["create", "update", "reset"])} = "create" 
@@ -30,7 +30,7 @@ function generateSchemas(action, options)
         try
             switch schemaTable.ModuleName(i)
                 case {'SANDS', 'computation', 'core', 'publications', 'controlledTerms'}
-                    om.generator.SchemaWriter( schemaTable.Filepath(i), action )
+                    om.generator.SchemaConverter( schemaTable.Filepath(i), action )
             
             end
         catch ME

@@ -1,46 +1,36 @@
-classdef SchemaWriter < ClassWriter
-%SchemaWriter Translate openMINDS schemas to matlab classes    
-
-
-    
-%     TODO:
-%     - [ ] Collect names of linked and embedded properties when parsing 
-%     - [ ] Add LinkedProperties and EmbeddedProperties as Constant
-%           property block
-%     - [ ] Assign name property for controlled terms
+classdef SchemaConverter < ClassWriter
+%SchemaConverter Translate openMINDS schemas to matlab classes    
 
     properties (Constant)
         DEBUG (1,1) matlab.lang.OnOffSwitchState = 'off'
     end
     
     properties (SetAccess = private)
-        Schema
+        Schema              % Holds the openMINDS schema as a struct
     end
 
     properties (Access = private)
-        SchemaName = ''
+        SchemaName = ''             % i.e subjectGroup
         SchemaCategory = ''         % i.e research / data  % todo: rename to submodule???
         MetadataModel = ''          % i.e core / SANDS
     end 
 
     properties (Dependent)
         IsOfCategory
-        SchemaClassName
+        SchemaClassName             % i.e SubjectGroup
     end
 
     properties (Access = private)
-        SchemaClassFilePath
-        SchemaClassFileID % ??
-        SchemaCodeStr = "";
+        SchemaClassFilePath % File path to the openMINDS source schema 
         IsControlledTerm = false
     end
 
 
     methods
-        function obj = SchemaWriter(schemaFilepath, action)
+        function obj = SchemaConverter(schemaFilepath, action)
 
             arguments
-                schemaFilepath
+                schemaFilepath string % Filepath for en openMINDS schema
                 action
             end
             
@@ -88,14 +78,10 @@ classdef SchemaWriter < ClassWriter
             end
         end
 
-        function show(obj)
-            fprintf(obj.SchemaCodeStr)
-        end
-
         function update(obj)
-            obj.writeSchemaClassdef()
+            obj.writeClassdef()
             obj.updateSchemaClassFilePath()
-            om.fileio.writeSchemaClass(obj.SchemaClassFilePath, obj.SchemaCodeStr)
+            obj.saveClassdef()
 
             className = om.strutil.buildClassName(obj.SchemaName, obj.SchemaCategory, obj.MetadataModel);
 
@@ -104,7 +90,7 @@ classdef SchemaWriter < ClassWriter
     end
     
     methods (Access = private)
-        
+
         function name = fixInvalidMatlabNames(obj, name, schemaName)
             
             name = replace(name, '-', '_');
@@ -123,7 +109,8 @@ classdef SchemaWriter < ClassWriter
         end
 
         function parseSchema(obj)
-            
+        %parseSchema Get some overview information from the schema
+
             schemaStr = fileread(obj.SchemaClassFilePath);
 
             obj.Schema = jsondecode(schemaStr);
@@ -150,7 +137,7 @@ classdef SchemaWriter < ClassWriter
         end
         
         function linkedPropertyInfo = detectLinkedPropertyInformation(obj, linkType)
-            
+        %detectLinkedPropertyInformation Detect information about linked properties    
             % INPUTS:
             %   obj
             %   linkType : 'x_linkedTypes' | 'x_embeddedTypes'
@@ -595,8 +582,8 @@ classdef SchemaWriter < ClassWriter
             if obj.IsControlledTerm
                 obj.writeEnumSwitchBlock()
             else
-                obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
-                obj.appendLine(3, "")
+                %obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
+                %obj.appendLine(3, "")
             end
 
         end
