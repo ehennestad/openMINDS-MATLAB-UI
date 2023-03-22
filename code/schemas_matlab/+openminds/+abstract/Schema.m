@@ -111,15 +111,11 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                 return
             end
 
-            if isprop(obj, 'lookupLabel')
-                displayLabel = obj.lookupLabel;
-            else
-                try
-                    displayLabel = obj.getDisplayLabel();
-                catch
-                    schemaShortName = obj.getSchemaShortName(class(obj));
-                    displayLabel = sprintf("%s-%s", schemaShortName, obj.id(1:8));
-                end
+            displayLabel = obj.getDisplayLabel();
+
+            if isempty(displayLabel)
+                schemaShortName = obj.getSchemaShortName(class(obj));
+                displayLabel = sprintf("%s-%s", schemaShortName, obj.id(1:8));
             end
         end
 
@@ -155,7 +151,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             elseif numObjects == 1
                 rep = fullDataRepresentation(obj, displayConfiguration, 'StringArray', obj.DisplayString, 'Annotation', annotation);
             else
-                rep = fullDataRepresentation(obj, displayConfiguration, 'StringArray', arrayfun(@(o) o.DisplayString, obj), 'Annotation', annotation);
+                rep = fullDataRepresentation(obj, displayConfiguration, 'StringArray', arrayfun(@(o) o.DisplayString, obj, 'UniformOutput', false), 'Annotation', annotation);
 
                 %rep = compactRepresentationForSingleLine@matlab.mixin.CustomCompactDisplayProvider(obj, displayConfiguration, width);
             end
@@ -224,6 +220,15 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
     end
 
     methods (Access = protected)
+
+        function str = getDisplayLabel(obj)
+            disp('here')
+
+            str = '';
+        end
+    end
+
+    methods (Access = protected)
         function str = getHeader(obj)
             
             if numel(obj)==0
@@ -249,7 +254,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             end
         end
     end
-
+    
     methods (Static, Access = private)
         
         function values = getAllSuperClassRequiredProperties(className)

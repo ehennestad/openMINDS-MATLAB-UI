@@ -308,7 +308,7 @@ classdef ClassWriter < handle
         function endFunctionBlock(obj)
             numIndent = 2;
             obj.appendLine(numIndent, "end");
-            obj.appendLine(numIndent, ""); % Add empty line 
+            %obj.appendLine(numIndent, ""); % Add empty line 
             obj.CurrentStep = "methods";
         end
         

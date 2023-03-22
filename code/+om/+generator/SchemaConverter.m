@@ -240,6 +240,10 @@ classdef SchemaConverter < ClassWriter
             
             obj.endFunctionBlock()
             obj.endMethodsBlock()
+
+            obj.startMethodsBlock('Access = protected')
+            obj.createGetDisplayMethod()
+            obj.endMethodsBlock()
         end
 
     end
@@ -582,9 +586,54 @@ classdef SchemaConverter < ClassWriter
                 obj.writeEnumSwitchBlock()
             else
                 obj.appendLine(3, sprintf('obj.assignPVPairs(varargin{:})'))
-                obj.appendLine(3, "")
+            end
+        end
+        
+        function createGetDisplayMethod(obj)
+            
+            displayConfigFilepath = fullfile( ...
+                fileparts(mfilename('fullpath')), 'instanceDisplayConfig.json' );
+            
+            configStr = fileread(displayConfigFilepath);
+            configJson = jsondecode(configStr);
+            
+            if isfield(configJson, om.strutil.camelCase(obj.SchemaClassName))
+                thisConfig = configJson.(om.strutil.camelCase(obj.SchemaClassName));
+
+                propNames = thisConfig.propertyName;
+                strFormatter = thisConfig.stringFormat;
+
+                if isempty(propNames)
+                    return
+                end
+
+                obj.appendLine(2, "function str = getDisplayLabel(obj)")
+
+                if ~iscell(propNames)
+                    propNames = {propNames};
+                end
+
+                if ~iscell(strFormatter)
+                    strFormatter = {strFormatter};
+                end
+
+                for i = 1:numel(propNames)
+                    strFormatter = strrep(strFormatter, propNames{i}, ['obj.', propNames{i}]);
+                end
+
+                for i = 1:numel(strFormatter)
+                    thisLine = strFormatter{i};
+                    if contains(thisLine, 'sprintf')
+                        thisLine = strrep(thisLine, 'sprintf', 'str = sprintf');
+                        thisLine = sprintf('%s;', thisLine);
+                    end
+                    obj.appendLine(3, thisLine)
+                end
+
+                obj.endFunctionBlock()
             end
 
+            
         end
 
         function writeEnumSwitchBlock(obj)
