@@ -26,6 +26,11 @@ classdef (Abstract) ControlledTerm < openminds.abstract.Schema & openminds.categ
         % Enter one or several synonyms (inlcuding abbreviations) for this controlled term.
         synonym (1,:) string {mustBeListOfUniqueItems(synonym)}
     end
+       
+    properties (Constant, Hidden)
+        LINKED_PROPERTIES = struct()
+        EMBEDDED_PROPERTIES = struct()
+    end
 
     methods
         function obj = ControlledTerm()

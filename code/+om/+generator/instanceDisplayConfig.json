@@ -21,11 +21,11 @@
   },
   "organization": {
     "propertyName": "fullName",
-    "stringFormat": "sprintf('%s', contributor)"
+    "stringFormat": "sprintf('%s', fullName)"
   },
   "person": {
-    "propertyName": ["firstName", "lastName"],
-    "stringFormat": "sprintf('%s, %s', lastName, firstName)"
+    "propertyName": ["givenName", "familyName"],
+    "stringFormat": "sprintf('%s, %s', familyName, givenName)"
   },
   "contentTypePattern": {
     "propertyName": "lookupLabel",

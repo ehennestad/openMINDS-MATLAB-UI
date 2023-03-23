@@ -49,7 +49,9 @@ classdef SchemaConverter < ClassWriter
             
             obj.saveClassdef()
             
-            clear obj
+            if ~nargout
+                clear obj
+            end
         end
 
     end
@@ -114,6 +116,7 @@ classdef SchemaConverter < ClassWriter
             schemaStr = fileread(obj.SchemaClassFilePath);
 
             obj.Schema = jsondecode(schemaStr);
+            obj.Schema.properties = orderfields(obj.Schema.properties);
 
             schemaTypeSplit = strsplit(obj.Schema.x_type, '/');
             
@@ -166,12 +169,13 @@ classdef SchemaConverter < ClassWriter
             schemaDirectory = om.Constants.SchemaFolder;
             mSchemaDirectory = fullfile( schemaDirectory, 'matlab');
             
-            if isempty(obj.SchemaCategory)
-                schemaPackage = {'openminds', obj.MetadataModel};
-            else
-                schemaPackage = {'openminds', obj.MetadataModel, obj.SchemaCategory};
-            end
-
+%             if isempty(obj.SchemaCategory)
+%                 schemaPackage = {'openminds', obj.MetadataModel};
+%             else
+%                 schemaPackage = {'openminds', obj.MetadataModel, obj.SchemaCategory};
+%             end
+                
+            schemaPackage = {'openminds', obj.MetadataModel};
             schemaPackage = lower( strcat('+', schemaPackage) );
 
             filename = [obj.SchemaName, '.m'];
@@ -181,6 +185,12 @@ classdef SchemaConverter < ClassWriter
     end
 
     methods (Access = protected) % Implement methods from superclass
+
+        function writeDocString(obj)
+            obj.writeClassDescription()
+            
+            obj.writeSchemaPropertyDocumentation()
+        end
 
         function writePropertyBlocks(obj)
 
@@ -250,6 +260,99 @@ classdef SchemaConverter < ClassWriter
 
     methods (Access = private) % Specific methods for writing class member blocks
         
+        function writeClassDescription(obj)
+            typeFilepath = fullfile(om.Constants.SchemaFolder, 'source', 'types.json');
+            typeStr = fileread(typeFilepath);
+            typeStr = strrep(typeStr, 'https://openminds.ebrains.eu/', '');
+            typeStruct = jsondecode(typeStr);
+        
+            fieldName = obj.MetadataModel + "_" + obj.SchemaName;
+            if isfield(typeStruct, fieldName)
+                description = typeStruct.(fieldName).description;
+                if ~isempty(description)
+                    label = typeStruct.(fieldName).label;
+                    obj.appendLine(0, sprintf('%%%s - %s', label, description))
+                    obj.appendLine(0, "%")
+                else
+                    obj.appendLine(0, "")
+                end
+            else
+                obj.appendLine(0, "")
+            end
+        end
+
+        function writeSchemaPropertyDocumentation(obj)
+            
+            obj.appendDocString(1, "PROPERTIES:")
+            obj.appendDocString(1, "")
+
+            propNames = fieldnames( obj.Schema.properties );
+            numProperties = numel(propNames);
+
+            C = cell(numProperties, 4);
+            
+            for i = 1:numProperties
+
+                thisProp = obj.Schema.properties.(propNames{i});
+
+                C{i, 1} = propNames{i};
+                if isfield(thisProp, 'type')
+                    if strcmp(thisProp.type, 'array')
+                        C{i, 2} = '(1,:)';
+                        if isfield(thisProp, 'x_linkedTypes')
+                            C{i, 3} = thisProp.x_linkedTypes;
+                        elseif isfield(thisProp, 'x_embeddedTypes')
+                            C{i, 3} = thisProp.x_embeddedTypes;
+                        else
+                            if isfield(thisProp, 'items')
+                                if isfield(thisProp.items, 'type')
+                                    C{i, 3} = thisProp.items.type;
+                                end
+                            end
+                        end
+
+                    else
+                        C{i, 2} = '(1,1)';
+                        C{i, 3} = thisProp.type;
+                    end
+                else
+                    C{i, 2} = '(1,1)';
+                    if isfield(thisProp, 'x_linkedTypes')
+                        C{i, 3} = thisProp.x_linkedTypes;
+                    elseif isfield(thisProp, 'x_embeddedTypes')
+                        C{i, 3} = thisProp.x_embeddedTypes;
+                    end
+                end
+
+                C{i, 4} = thisProp.x_instruction;
+            end
+
+            T = cell2table(C, 'VariableNames', {'Name', 'Size', 'Type', 'Description'});
+
+
+            maxPropertyNameLength = max(cellfun(@(ch) numel(ch), propNames));
+            
+            for i = 1:numProperties
+                paddedPropName = pad( propNames{i}, maxPropertyNameLength+1 );
+                
+                types = T.Type{i};
+                
+                if ~iscell(types)
+                    types = {types};
+                end
+            
+                types = cellfun(@(t) getSchemaDocLink(t, 'Command window help'), types, 'Uni', 0);
+                types = strjoin(types, ', ');
+
+                newStr = sprintf("%s: %s %s", paddedPropName, T.Size{i}, types);
+                description = string(repmat(' ', 1, maxPropertyNameLength+3)) + T.Description{i};
+                obj.appendDocString(1, newStr)
+                obj.appendDocString(1, description)
+                obj.appendDocString(1, "")
+            end
+            
+        end
+
         function writeXTypePropertyBlock(obj)
             obj.startPropertyBlock('Constant', 'Hidden')
             obj.addProperty('X_TYPE', 'DefaultValue', ['"',obj.Schema.x_type,'"'])
@@ -347,7 +450,6 @@ classdef SchemaConverter < ClassWriter
             attributeNames = fieldnames(propertyAttributes);
             
             % Initialize poperty attribute variables.
-            validationFcnStr = '';
             validationFcnStr = string.empty;
 
             if isfield(propertyAttributes, 'x_instruction')
@@ -417,7 +519,9 @@ classdef SchemaConverter < ClassWriter
                     %dataType = 'cell';
                     %validationFcnStr(end+1) = obj.getMultiTypeValidationFunctionString(propertyName, clsNames);
 
-                    dataType = clsNames{1};
+                    dataType = createPropertyLinksetClass(propertyName, clsNames);
+                    
+                    %dataType = clsNames{1};
                     %warning('Multiple schemas allowed for property %s of schema %s', propertyName, obj.SchemaName)
                 end
 

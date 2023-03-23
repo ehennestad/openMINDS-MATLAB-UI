@@ -20,7 +20,8 @@ function schemaClassName = classNameFromUri(schemaUri)
         warning('OPENMINDS:SchemaNotFound', 'Schema %s.%s was not found', schemaModule, schemaName)
     else
         t = schemaList(isMatch, :);
-        schemaClassName = om.strutil.buildClassName(t.SchemaName, t.SubModuleName, t.ModuleName);
+        %schemaClassName = om.strutil.buildClassName(t.SchemaName, t.SubModuleName, t.ModuleName);
+        schemaClassName = om.strutil.buildClassName(t.SchemaName, '', t.ModuleName);
     end
 
     %     try

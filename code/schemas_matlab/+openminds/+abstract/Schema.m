@@ -140,6 +140,10 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                 annotation = 'Controlled Term';
             else
                 annotation = schemaName;
+
+                annotation = getSchemaDocLink(  class(obj) );
+                %helpLink = sprintf('<a href="matlab:helpPopup %s" style="font-weight:bold">%s</a>', class(obj), schemaName);
+                %annotation = helpLink;
             end
 
             if numObjects == 0
@@ -193,30 +197,101 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 
     end
 
-    methods (Sealed, Hidden) % Overrides subsref
+    
 
-% % %         function varargout = subsasgn(obj, s, value)
-% % %         %subsasgn Override subsasgn to save preferences when they change
-% % % 
-% % %             numOutputs = nargout;
-% % %             varargout = cell(1, numOutputs);
-% % %             
-% % %             isPropertyAssigned = strcmp(s(1).type, '.') && ...
-% % %                 any( strcmp(properties(obj), s(1).subs) );
-% % %             
-% % %             if isPropertyAssigned && isa(obj.(s(1).subs), 'openminds.controlledterms.ControlledTerm')
-% % %                 
-% % %                 disp('a')
-% % % 
-% % %             end
-% % % 
-% % %             % Use the builtin subsref with appropriate number of outputs
-% % %             if numOutputs > 0
-% % %                 [varargout{:}] = builtin('subsasgn', obj, s, value);
-% % %             else
-% % %                 builtin('subsasgn', obj, s)
-% % %             end
-% % %         end
+    methods ( Hidden) % Overrides subsref
+
+        function obj = subsasgn(obj, subs, value)
+            
+            if isequal(obj, [])
+                %classFcn = str2func(class(value));
+                obj = eval(sprintf('%s.empty', class(value)));
+            end
+
+            if obj.isSubsForLinkedPropertyValue(subs)
+                propName = subs(1).subs;
+                className = class(obj.(propName));
+                classFcn = str2func(className);
+                try
+                    value = classFcn(value);
+                    obj = builtin('subsasgn', obj, subs, value);
+                catch ME
+                    msg = sprintf("Error setting property '%s' of class '%s'. ", propName, class(obj));
+                    errorStruct.identifier = 'LinkedProperty:InvalidType';
+                    errorStruct.message = msg + ME.message;
+                    errorStruct.stack = struct('file', '', 'name', 'openminds.core.DatasetVersion', 'line', 0);
+                    error(errorStruct)
+                end
+            else
+                obj = builtin('subsasgn', obj, subs, value);
+            end
+
+            if ~nargout
+                clear obj
+            end
+        end
+
+
+        function varargout = subsref(obj, subs)
+            
+            numOutputs = nargout;
+            varargout = cell(1, numOutputs);
+            
+
+            if obj.isSubsForLinkedPropertyValue(subs)
+                  
+                linkedTypeValues = builtin('subsref', obj, subs(1));
+                values = {linkedTypeValues.Instance};
+                
+                if numel(subs) > 1
+                    if strcmp( subs(2).type, '()' )
+                        subs(2).type = '{}';
+                    end
+
+                    if numOutputs > 0
+                        [varargout{:}] = builtin('subsref', values, subs(2:end));
+                    else
+                        builtin('subsref', values, subs(2:end))
+                    end
+                else
+                    if numOutputs > 0
+                        [varargout{:}] = values;
+                    else
+                        varargout = values;
+                    end
+                end
+            else
+                if numOutputs > 0
+                    [varargout{:}] = builtin('subsref', obj, subs);
+                else
+                    builtin('subsref', obj, subs)
+                end
+            end
+        end
+
+        function n = numArgumentsFromSubscript(obj, s, indexingContext)
+            if obj.isSubsForLinkedPropertyValue(s) && numel(s) > 1
+                linkedTypeValues = builtin('subsref', obj, s(1));
+                values = {linkedTypeValues.Instance};
+
+                if strcmp( s(2).type, '()' )
+                    s(2).type = '{}';
+                end
+                n = builtin('numArgumentsFromSubscript', values, s(2:end), indexingContext);
+            else
+                n = builtin('numArgumentsFromSubscript', obj, s, indexingContext);
+            end
+        end
+
+        function tf = isSubsForLinkedPropertyValue(obj, subs)
+        % Return true if subs represent dot-indexing on a linked property
+            tf = strcmp( subs(1).type, '.' ) && isfield(obj.LINKED_PROPERTIES, subs(1).subs);
+        end
+
+        function getLinkedPropertyInstance(obj, subs)
+
+        end
+
     end
 
     methods (Access = protected)
@@ -237,9 +312,10 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                 openMindsType = obj(1).X_TYPE;
             end
 
-            str = getHeader@matlab.mixin.CustomDisplay(obj);
-            str = replace(str, 'with properties:', sprintf('(%s) with properties:', openMindsType));
-            str = [newline, str];
+            docLinkStr = getSchemaDocLink(class(obj));
+
+            str = sprintf('  %s (%s) with properties:\n', docLinkStr, openMindsType);
+            %str = [newline, str];
         end
 
         function str = getFooter(obj)
@@ -251,6 +327,9 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 
             if ~isempty(obj(1).Required)
                 str = sprintf('  Required Properties: <strong>%s</strong>', strjoin(obj(1).Required, ', '));
+                str = om.strutil.strfold(str, 100);
+                str = strjoin(str, '\n    ');
+                str = sprintf('  %s', str);
             end
         end
     end
@@ -289,7 +368,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                     getAllSuperClassRequiredProperties(greatSuperclassName)];
             end
         end
-        
+
     end
 
     methods (Static, Access = public, Hidden)

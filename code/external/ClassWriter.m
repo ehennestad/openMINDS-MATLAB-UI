@@ -79,6 +79,9 @@ classdef ClassWriter < handle
 
     methods (Access = protected) % Methods which subclasses should implement
 
+        function writeDocString(obj)
+        end
+
         function writePropertyBlocks(obj)
         end
     
@@ -107,6 +110,10 @@ classdef ClassWriter < handle
 
             obj.initClassDef()
             
+            obj.writeDocString()
+
+            obj.appendLine(0, "")
+
             obj.writePropertyBlocks()
             
             obj.writeEnumerationBlock()
@@ -148,6 +155,12 @@ classdef ClassWriter < handle
             newStr = obj.indentLine(str, numIndent);
             obj.ClassDefText = obj.ClassDefText + newStr + newline;
         end
+
+        function appendDocString(obj, numIndent, str)
+            newStr = obj.indentLine(str, numIndent);
+            newStr{1}(1) = "%";
+            obj.ClassDefText = obj.ClassDefText + newStr + newline;
+        end
     
     end
 
@@ -170,7 +183,7 @@ classdef ClassWriter < handle
                 newStr = replace(newStr, "classdef", "classdef (Abstract)");
             end
 
-            obj.ClassDefText = obj.ClassDefText + newStr + newline + newline;
+            obj.ClassDefText = obj.ClassDefText + newStr + newline;
         
             obj.CurrentStep = "classdef";
         end
@@ -363,7 +376,7 @@ classdef ClassWriter < handle
         function str = indentLine(str, numIndents)
         %indentLine Add intentation to a str representing a line of code
             indentationStr = ClassWriter.LineIndenter(numIndents);
-            str = sprintf('%s%s', indentationStr, str);
+            str = sprintf("%s%s", indentationStr, str);
         end
 
         function indentationStr = getLineIndent(numIndents)
