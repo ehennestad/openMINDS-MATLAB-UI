@@ -38,8 +38,8 @@ classdef (Abstract) ControlledTerm < openminds.abstract.Schema & openminds.categ
     end
 
     methods (Static)
-        function members = list()
-            filename = mfilename('class');
+        function members = getMembers()
+            className = mfilename('class');
             [~, members] = enumeration(className);
         end
     end

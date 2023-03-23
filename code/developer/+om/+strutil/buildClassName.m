@@ -6,6 +6,8 @@ function name = buildClassName(schemaName, schemaCategory, schemaModule)
         schemaModule char
     end
 
+    schemaCategory = '';
+
     schemaName = om.strutil.pascalCase(schemaName);
     schemaModule = lower(schemaModule);
     schemaCategory = lower(schemaCategory);
