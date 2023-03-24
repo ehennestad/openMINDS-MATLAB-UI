@@ -96,6 +96,7 @@ classdef SchemaConverter < ClassWriter
         function name = fixInvalidMatlabNames(obj, name, schemaName)
             
             name = replace(name, '-', '_');
+            name = replace(name, '.', '_');
 
             if obj.IsControlledTerm
                 fcnName = strjoin({'om', 'generator', 'translations', schemaName}, '.');
@@ -226,15 +227,17 @@ classdef SchemaConverter < ClassWriter
                 instanceTable = obj.getInstancesForSchema(obj.SchemaName, 'controlledTerms');
                 numInstances = size(instanceTable, 1);
                 
-                % Write enumeration block
-                obj.startEnumerationBlock()
-                for i = 1:numInstances
-                    name = instanceTable.SchemaName(i);
-                    name = obj.fixInvalidMatlabNames(name, obj.SchemaName);
-
-                    obj.addEnumValue(name)
+                if numInstances > 0
+                    % Write enumeration block
+                    obj.startEnumerationBlock()
+                    for i = 1:numInstances
+                        name = instanceTable.SchemaName(i);
+                        name = obj.fixInvalidMatlabNames(name, obj.SchemaName);
+    
+                        obj.addEnumValue(name)
+                    end
+                    obj.endEnumerationBlock()
                 end
-                obj.endEnumerationBlock()
             end
         end
     
