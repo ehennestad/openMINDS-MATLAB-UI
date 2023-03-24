@@ -26,8 +26,9 @@ classdef SchemaMenu < MultiModalMenu
 
 
     methods
-        function obj = SchemaMenu(hParent, moduleSet)
-            obj@MultiModalMenu(hParent, moduleSet)
+        function obj = SchemaMenu(hParent, moduleSet, useModuleAsRoot)
+            if nargin < 3; useModuleAsRoot = false; end
+            obj@MultiModalMenu(hParent, moduleSet, useModuleAsRoot)
         end
     end
     

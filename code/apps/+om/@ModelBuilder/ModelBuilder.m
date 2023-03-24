@@ -24,6 +24,11 @@ classdef ModelBuilder < handle
 %       [ ] Linked types are just links...
 
 
+% ABBREVIATIONS:
+%       
+%       OM : openMinds
+%
+
     properties
         MetadataInstance
         MetadataSet
@@ -97,8 +102,13 @@ classdef ModelBuilder < handle
             %obj.UIMetaTableViewer.HTable.Units
 
             h.CellEditCallback = @obj.onMetaTableDataChanged;
+            
+            modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
+            ignoreList = {'+category', '+linkset', '+controlledterms'};
+            omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
 
-            obj.SchemaMenu = om.SchemaMenu(obj, {'openminds.core'});
+            %omModels = {'openminds.core', 'openminds.sands'};
+            obj.SchemaMenu = om.SchemaMenu(obj, omModels, true);
             obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
 
             % Add these callbacks after every component is made

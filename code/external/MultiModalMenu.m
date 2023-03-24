@@ -61,6 +61,10 @@ classdef MultiModalMenu < handle
     properties
         MenuSelectedFcn % Function handle to run when menu is selected.
     end
+
+    properties (SetAccess = immutable)
+        UseModuleAsRoot = false;
+    end
     
     properties (SetAccess = private)
         ParentApp = [] % todo: should be specific app instance. % Handle of the app for the session task menu
@@ -94,7 +98,7 @@ classdef MultiModalMenu < handle
 
     methods % Constructor
         
-        function obj = MultiModalMenu(hParent, modules)
+        function obj = MultiModalMenu(hParent, modules, useModuleAsRoot)
         %MultiModalMenu Create a MultiModalMenu object 
         %
         %   obj = MultiModalMenu(appHandle, modules) creates a
@@ -111,7 +115,12 @@ classdef MultiModalMenu < handle
                 modules = {''};
             end
 
+            if nargin < 3 || isempty(useModuleAsRoot)
+                useModuleAsRoot = false;
+            end
+
             obj.PackageModules = modules;
+            obj.UseModuleAsRoot = useModuleAsRoot;
 
             % Todo: These should be set when current project is set...
             obj.assignDefaultMethodsPath()
@@ -283,15 +292,23 @@ classdef MultiModalMenu < handle
 
             for iModule = 1:numModules
                 iModuleName = obj.PackageModules{iModule};
-                iModuleName = replace(iModuleName, '.', filesep);
 
-                s = what(iModuleName);
-                
-                if numel(s) > 1
-                    warning('Multiple matches where found for the module "%s", selecting the first match', iModuleName)
+                % If the path of a package was given
+                if isfolder(iModuleName)
+                    obj.DefaultMethodsPath{iModule} = iModuleName;
+
+                % Else: The name of a package was given, resolve path
+                else
+                    iModuleName = replace(iModuleName, '.', filesep);
+    
+                    s = what(iModuleName);
+                    
+                    if numel(s) > 1
+                        warning('Multiple matches where found for the module "%s", selecting the first match', iModuleName)
+                    end
+    
+                    obj.DefaultMethodsPath{iModule} = s(1).path;
                 end
-
-                obj.DefaultMethodsPath{iModule} = s(1).path;
             end
         end
         
@@ -325,8 +342,14 @@ classdef MultiModalMenu < handle
                 isRootDirectory = false;
             end
         
-            % List contents of directory given as input
-            L = localMultiDir(dirPath);
+            if isRootDirectory && obj.UseModuleAsRoot
+                [folders, names] = fileparts(dirPath);
+                L = struct('folder', folders, 'name', names, 'isdir', true);
+               
+            else
+                % List contents of directory given as input
+                L = localMultiDir(dirPath);
+            end
             
             if isRootDirectory % Sort listing by names
                 % Sort names to come in a specified order...
