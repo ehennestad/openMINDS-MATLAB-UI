@@ -54,7 +54,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
         
         function obj = Schema()
             if ~isa(obj, 'openminds.abstract.Instance')
-                obj.id = om.strutil.getuuid;
+                obj.id = sprintf('%s-%s', obj.getSchemaShortName(class(obj)), om.strutil.getuuid);
             end
         end
         
@@ -179,7 +179,8 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 
             if numObjects == 0
                 % str = 'None';
-                str = sprintf('No %ss available', schemaName);
+                % Todo: Make plural labels.
+                str = sprintf('No %s available', schemaName);
                 rep = matlab.display.PlainTextRepresentation(obj, repmat({str}, numRows, 1), displayConfiguration);
             elseif numObjects >= 1 
                 %str = obj.DisplayString;
@@ -199,30 +200,46 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 
     
 
-    methods ( Hidden) % Overrides subsref
+    methods (Hidden) % Overrides subsref
 
         function obj = subsasgn(obj, subs, value)
             
             if isequal(obj, [])
-                %classFcn = str2func(class(value));
+                % As far as I understand, this only occurs during property
+                % initialization of properties with a defined class.
                 obj = eval(sprintf('%s.empty', class(value)));
             end
 
             if obj.isSubsForLinkedPropertyValue(subs)
                 propName = subs(1).subs;
                 className = class(obj.(propName));
-                classFcn = str2func(className);
+            
+                % Get the actual instance from a linkset subclass.
+                if contains(className, 'openminds.linkset')
+                    try
+                        classFcn = str2func(className);
+                        value = classFcn(value);
+                    catch ME
+                        msg = sprintf("Error getting instance of linked type '%s' of class '%s'. ", propName, class(obj));
+                        errorStruct.identifier = 'LinkedProperty:CouldNotRetrieveInstance';
+                        errorStruct.message = msg + ME.message;
+                        errorStruct.stack = struct('file', '', 'name', class(obj), 'line', 0);
+                        error(errorStruct)
+                    end
+                end
+
                 try
-                    value = classFcn(value);
                     obj = builtin('subsasgn', obj, subs, value);
+                    %obj.notify('LinkedPropertyChanged', event.EventData)
                 catch ME
                     msg = sprintf("Error setting property '%s' of class '%s'. ", propName, class(obj));
                     errorStruct.identifier = 'LinkedProperty:InvalidType';
                     errorStruct.message = msg + ME.message;
-                    errorStruct.stack = struct('file', '', 'name', 'openminds.core.DatasetVersion', 'line', 0);
+                    errorStruct.stack = struct('file', '', 'name', class(obj), 'line', 0);
                     error(errorStruct)
                 end
             else
+                
                 obj = builtin('subsasgn', obj, subs, value);
             end
 
@@ -238,10 +255,15 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             varargout = cell(1, numOutputs);
             
 
-            if obj.isSubsForLinkedPropertyValue(subs)
+            if obj(1).isSubsForLinkedPropertyValue(subs)
                   
                 linkedTypeValues = builtin('subsref', obj, subs(1));
-                values = {linkedTypeValues.Instance};
+
+                if isa(linkedTypeValues, 'openminds.abstract.LinkedCategory')
+                    values = {linkedTypeValues.Instance};
+                else
+                    values = linkedTypeValues;
+                end
                 
                 if numel(subs) > 1
                     if strcmp( subs(2).type, '()' )
@@ -270,7 +292,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
         end
 
         function n = numArgumentsFromSubscript(obj, s, indexingContext)
-            if obj.isSubsForLinkedPropertyValue(s) && numel(s) > 1
+            if obj(1).isSubsForLinkedPropertyValue(s) && numel(s) > 1
                 linkedTypeValues = builtin('subsref', obj, s(1));
                 values = {linkedTypeValues.Instance};
 

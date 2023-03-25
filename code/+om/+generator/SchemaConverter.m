@@ -230,10 +230,14 @@ classdef SchemaConverter < ClassWriter
                 if numInstances > 0
                     % Write enumeration block
                     obj.startEnumerationBlock()
+
+                    % Add null as an enumeration
+                    obj.addEnumValue('null')
+
                     for i = 1:numInstances
                         name = instanceTable.SchemaName(i);
                         name = obj.fixInvalidMatlabNames(name, obj.SchemaName);
-    
+                        
                         obj.addEnumValue(name)
                     end
                     obj.endEnumerationBlock()
@@ -752,6 +756,11 @@ classdef SchemaConverter < ClassWriter
             numInstances = size(instances, 1);
 
             obj.appendLine(3, 'switch name')
+
+            % Add null as an enumeration
+            obj.appendLine(4, sprintf('case ''%s''', 'null'))
+            obj.appendLine(4, "")
+
             for i = 1:numInstances
 
                 iName = instances.SchemaName(i);
@@ -768,6 +777,8 @@ classdef SchemaConverter < ClassWriter
 
                 propNames = {'at_id', 'at_type', 'name', 'definition', 'description', 'interlexIdentifier', 'knowledgeSpaceLink', 'preferredOntologyIdentifier', 'synonym'};
                 for j = 1:numel(propNames)
+
+                    
                     if isfield(data, propNames{j})
                         jName = propNames{j};
                         jValue = data.(propNames{j});

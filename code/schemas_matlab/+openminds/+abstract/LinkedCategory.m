@@ -1,6 +1,11 @@
 classdef LinkedCategory < matlab.mixin.CustomCompactDisplayProvider & matlab.mixin.CustomDisplay & handle
 %LinkedTypeSet Abstract class representing a set of linked types
     
+
+
+%   TODO:
+%       [ ] Clean up and improve Compact Displays
+
     properties (Abstract, Constant)
         ALLOWED_TYPES
     end
@@ -8,11 +13,6 @@ classdef LinkedCategory < matlab.mixin.CustomCompactDisplayProvider & matlab.mix
     properties 
         Instance
     end
-    
-    % Todo: 
-    % Redefine custom displays...
-    % Redefine subsref and subsasgn??
-
 
     methods 
         function obj = LinkedCategory(instance)

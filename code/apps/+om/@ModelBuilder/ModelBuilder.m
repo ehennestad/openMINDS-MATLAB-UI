@@ -31,6 +31,7 @@ classdef ModelBuilder < handle
 
     properties
         MetadataInstance
+        MetadataCollection openminds.MetadataCollection
         MetadataSet
     end
 
@@ -51,6 +52,7 @@ classdef ModelBuilder < handle
         UIContainer
         UIMetaTableViewer
         UISideBar
+        UIGraphViewer
     end
 
     properties (Access = private)
@@ -68,7 +70,8 @@ classdef ModelBuilder < handle
         function obj = ModelBuilder()
             
             obj.loadMetadataSet()
-            
+            obj.MetadataCollection = openminds.MetadataCollection();
+
             obj.createFigure()
             obj.createPanels()
 
@@ -85,7 +88,12 @@ classdef ModelBuilder < handle
             
             hAxes = axes(obj.UIContainer.UITab(2));
             hAxes.Position = [0,0,0.999,1];
-            InteractiveOpenMINDSPlot(G, hAxes, e);
+
+            G = obj.MetadataCollection.graph;
+            addlistener(obj.MetadataCollection, 'CollectionChanged', @obj.onMetadataCollectionChanged);
+
+            h = InteractiveOpenMINDSPlot(G, hAxes, e);
+            obj.UIGraphViewer = h;
 
             % NB NB NB: Some weird bug occurs if this is created before the
             % axes with the graph plot, where the axes current point seems
@@ -372,9 +380,9 @@ classdef ModelBuilder < handle
 
             % check if schema has a table
             if numel(schemaName) == 1
-                metaTable = obj.MetadataSet.getTable(schemaName{1});
+                metaTable = obj.MetadataCollection.getTable(schemaName{1});
             else
-                metaTable = obj.MetadataSet.joinTables(schemaName);
+                metaTable = obj.MetadataCollection.joinTables(schemaName);
             end
 
             if ~isempty(metaTable)
@@ -494,13 +502,22 @@ classdef ModelBuilder < handle
                 newItem(i).fromStruct(SNew)
             end
             
-            obj.MetadataSet.add(newItem)
+            obj.MetadataCollection.add(newItem)
 
             % Todo: update tables...!
 
             obj.changeSelection(className)
         end
         
+        function onMetadataCollectionChanged(obj, src, evt)
+            
+            G = obj.MetadataCollection.graph;
+            obj.UIGraphViewer.updateGraph(G);
+
+
+            
+
+        end
     end
 
     methods (Static)
