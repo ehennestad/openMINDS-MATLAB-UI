@@ -71,10 +71,14 @@ classdef ModelBuilder < handle
 
     methods
 
-        function obj = ModelBuilder()
-            
-            obj.loadMetadataCollection()
+        function obj = ModelBuilder(metadataCollection)
 
+            if nargin < 1            
+                obj.loadMetadataCollection()
+            else
+                obj.MetadataCollection = metadataCollection;
+                obj.MetadataCollection.createListenersForAllInstances()
+            end
 
             obj.createFigure()
             obj.createPanels()
