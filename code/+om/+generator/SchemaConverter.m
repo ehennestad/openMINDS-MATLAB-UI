@@ -795,11 +795,14 @@ classdef SchemaConverter < ClassWriter
                         obj.appendLine(5, sprintf('obj.%s = %s;', jName, jValue))
                     end
                 end
-                
+
                 obj.appendLine(4, "")
                 %obj.writeEmptyLine()
             end
             obj.appendLine(3, 'end')
+
+            obj.appendLine(3, 'obj.id = obj.at_id;')
+            obj.appendLine(3, '')
         end
     end
     

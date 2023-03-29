@@ -14,6 +14,10 @@ classdef LinkedCategory < matlab.mixin.CustomCompactDisplayProvider & matlab.mix
         Instance
     end
 
+    properties
+        DisplayString = ''
+    end
+
     methods 
         function obj = LinkedCategory(instance)
             
@@ -142,7 +146,7 @@ classdef LinkedCategory < matlab.mixin.CustomCompactDisplayProvider & matlab.mix
 
             if numObjects == 0
                 % str = 'None';
-                str = sprintf('No %ss available', schemaName);
+                str = sprintf('No %s available', schemaName);
                 rep = matlab.display.PlainTextRepresentation(obj, repmat({str}, numRows, 1), displayConfiguration);
             elseif numObjects >= 1 
                 %str = obj.DisplayString;
