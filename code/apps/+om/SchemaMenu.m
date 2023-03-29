@@ -59,7 +59,7 @@ function functionName = abspath2funcname(pathStr)
     
     assert(strcmp(ext, '.m'), 'pathStr must point to a .m (function) file')
     
-    packageName = utility.path.pathstr2packagename(folderPath);
+    packageName = om.strutil.pathstr2packagename(folderPath);
     functionName = strcat(packageName, '.', functionName);
     
     

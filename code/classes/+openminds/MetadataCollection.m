@@ -23,7 +23,7 @@ classdef MetadataCollection < handle
     end
 
     properties (Access = public)
-        metadata container.Map
+        metadata containers.Map
         graph digraph = digraph
     end
 
@@ -69,38 +69,16 @@ classdef MetadataCollection < handle
 
                 if foundNode == 0
                     obj.graph = addnode(obj.graph, thisInstance.id);
+                    obj.createInstanceListeners(thisInstance)
                 end
-            
-            
-                % Search through all public properties of the metadata value
-                propertyNames = properties(thisInstance);
-    
-                for j = 1:length(propertyNames)
-                    propValue = thisInstance.(propertyNames{j});
-                    
-                    if isempty(propValue); continue; end
 
-                    if isa(propValue, 'openminds.abstract.Schema')
-                        
-                        if ~iscell(propValue)
-                            % Recursively add the new type to the metadata property and the new node to the graph
-                            for k = 1:length(propValue)
-                                obj.add(propValue(k));
-    
-                                % Add the new node to the graph and an edge to the instance it is a property value of
-                                obj.graph = addedge(obj.graph, thisInstance.id, propValue(k).id);
-                            end
-                        else
-                            % Recursively add the new type to the metadata property and the new node to the graph
-                            for k = 1:length(propValue)
-                                obj.add(propValue{k});
-    
-                                % Add the new node to the graph and an edge to the instance it is a property value of
-                                obj.graph = addedge(obj.graph, thisInstance.id, propValue{k}.id);
-                            end
-                        end
-                    end
+                % Don't loop through controlled terms properties
+
+                if isa(thisInstance, 'openminds.controlledterms.ControlledTerm')
+                    continue
                 end
+
+                obj.addInstanceProperties(thisInstance)
             end
 
             evtData = CollectionChangedEventData('INSTANCE_ADDED', metadataInstance);
@@ -115,10 +93,151 @@ classdef MetadataCollection < handle
         function updateMetadata(obj)
             % Update all metadata
         end
+
+        function createListenersForAllInstances(obj)
+        
+            keyNames = obj.metadata.keys();
+
+            for i = 1:numel(keyNames)
+                instances = obj.metadata(keyNames{i});
+                for j = 1:numel(instances)
+                    if isa(instances(j), 'openminds.controlledterms.ControlledTerm')
+                        continue
+                    else
+                        obj.createInstanceListeners(instances(j))
+                    end
+                end
+            end
+        end
+
+        function createInstanceListeners(obj, instance)
+            addlistener(instance, 'InstanceChanged', @obj.onInstanceChanged);
+            addlistener(instance, 'PropertyWithLinkedInstanceChanged', ...
+                @obj.onPropertyWithLinkedInstanceChanged);
+        end
+
+        function labels = getSchemaInstanceLabels(obj, schemaName, schemaId)
+            
+            if nargin < 3; schemaId = ''; end
+
+            schemaName = obj.getSchemaShortName(schemaName);
+            schemaInstances = obj.getSchemaInstances(schemaName);
+            
+            numSchemas = numel(schemaInstances);
+
+            labels = arrayfun(@(i) sprintf('%s-%d', schemaName, i), 1:numSchemas, 'UniformOutput', false);
+            if ~isempty(schemaId)
+                isMatchedInstance = strcmp({schemaInstances.id}, schemaId);
+                labels = labels(isMatchedInstance);
+            end
+            
+        end
+
+        function schemaInstance = getInstanceFromLabel(obj, schemaName, label)
+            labels = obj.getSchemaInstanceLabels(schemaName);
+            isMatch = strcmp(labels, label);
+            
+            schemaInstances = obj.getSchemaInstances(schemaName);
+            schemaInstance = schemaInstances(isMatch);
+        end
+
+        function schemaInstances = getSchemaInstances(obj, schemaName)
+            
+            if contains(schemaName, '.')
+                schemaName = obj.getSchemaShortName(schemaName);
+            end
+
+            if isKey(obj.metadata, schemaName)
+                schemaInstances = obj.metadata(schemaName);
+            else
+                schemaInstances = [];
+            end
+        end
+        
+        function schemaInstance = getSchemaInstanceByIndex(obj, schemaName, index)
+            schemaInstances = obj.getSchemaInstances(schemaName);
+            schemaInstance = schemaInstances(index);
+        end
+
+        function autoAssignLabels(obj, schemaName)
+            % Update labels if they are empty...
+            if isKey(obj.metadata, schemaName)
+                labels = obj.getSchemaInstanceLabels(schemaName);
+                instances = obj.SchemaInstances(schemaName);
+                if isprop(instances, 'lookupLabel')
+                    for i = 1:numel(instances)
+                        if isempty(instances(i).lookupLabel) || strlength(instances(i).lookupLabel)==0
+                            instances(i).lookupLabel = labels{i};
+                        end
+                    end
+                end
+            end
+        end
+
+    end
+
+    methods (Access = private)
+
+        function addInstanceProperties(obj, thisInstance)
+
+            % Search through public properties of the metadata instance
+            % for linked properties
+            propertyNames = properties(thisInstance);
+
+            for j = 1:length(propertyNames)
+                propValue = thisInstance.(propertyNames{j});
+                
+                if isempty(propValue); continue; end
+
+                if isa(propValue, 'openminds.abstract.Schema')
+                    
+                    if ~iscell(propValue)
+                        % Recursively add the new type to the metadata property and the new node to the graph
+                        for k = 1:length(propValue)
+                            obj.add(propValue(k));
+
+                            % Add the new node to the graph and an edge to the instance it is a property value of
+                            obj.graph = addedge(obj.graph, thisInstance.id, propValue(k).id);
+                        end
+                    else
+                        % Recursively add the new type to the metadata property and the new node to the graph
+                        for k = 1:length(propValue)
+                            obj.add(propValue{k});
+
+                            % Add the new node to the graph and an edge to the instance it is a property value of
+                            obj.graph = addedge(obj.graph, thisInstance.id, propValue{k}.id);
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    methods (Access = private)
+
+        function onPropertyWithLinkedInstanceChanged(obj, src, evt)
+            
+            % Todo: collect instance in evtdata
+            obj.notify('InstanceModified', evt)
+            fprintf('Linked instance of type %s was changed\n', class(src))
+
+            removeIdx = find( strcmp(obj.graph.Edges.EndNodes(:,1), src.id) );
+
+            obj.graph = rmedge(obj.graph, removeIdx);
+            
+            obj.addInstanceProperties(src)
+        end
+
+        function onInstanceChanged(obj, src, evt)
+            
+            obj.notify('InstanceModified', evt)
+            fprintf('Instance of type %s was changed\n', class(src))
+        end
+
     end
 
 
-        methods % Methods for getting instances in table representations
+    methods % Methods for getting instances in table representations
         
         function metaTable = getTable(obj, schemaName)
 
@@ -233,7 +352,7 @@ classdef MetadataCollection < handle
                 end
             end            
         end
-
+        
     end
 
     methods 
@@ -242,7 +361,6 @@ classdef MetadataCollection < handle
         end
     end
 
-        
     methods (Static)
         function shortSchemaName = getSchemaShortName(fullSchemaName)
         %getSchemaShortName Get short schema name from full schema name
