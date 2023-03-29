@@ -1,9 +1,14 @@
+# openMINDS schemas
+schemas
 
-# Downloaded and generated schemas
-schemas/
+# Matlab generated schemas
+#code/schemas_matlab/+openminds/+controlledterms/
+code/schemas_matlab/+openminds/+core/
 
-# Other
-*openMINDS-logo.png
+# openMINDS logo
+light_openMINDS-logo.png
+
+*.mat
 
 # Autosave files
 *.asv

@@ -1,0 +1,2 @@
+classdef StudyTarget < handle
+end
