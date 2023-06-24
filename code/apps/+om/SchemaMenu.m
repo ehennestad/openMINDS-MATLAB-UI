@@ -16,7 +16,7 @@ classdef SchemaMenu < MultiModalMenu
 
     properties % Todo: Inherit from a superclass (folder to menu?)
         RootDirectory = '';
-        DirectoryIgnore = {'+category'}
+        DirectoryIgnore = {'+category', '+linkedcategory'}
     end
     
 
