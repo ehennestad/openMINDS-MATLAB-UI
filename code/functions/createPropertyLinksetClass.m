@@ -1,4 +1,4 @@
-function className = createPropertyLinksetClass(propertyName, linkedTypes)
+function className = createPropertyLinksetClass(schemaName, propertyName, linkedTypes)
 % createPropertyLinksetClass Create a new linkset class for a given property
 %
 % Syntax:
@@ -23,9 +23,12 @@ function className = createPropertyLinksetClass(propertyName, linkedTypes)
     % array
     linkedTypes = om.generator.utility.cellArrayToTextStringArray(linkedTypes);
 
+    packageNames = ["openminds", "linkedcategory", lower(schemaName)];
+    packageFolderNames = strcat("+", packageNames);
+    
     % Define directory and file paths
     rootSourceDirectory = fullfile(om.Constants.getRootPath, 'code', 'schemas_matlab', '+openminds', '+linkset');
-    rootTargetDirectory = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds', '+linkset');
+    rootTargetDirectory = fullfile(om.Constants.SchemaFolder, 'matlab', packageFolderNames{:});
     templateFilepath = fullfile(rootSourceDirectory, 'Template.m');
     saveFilepath = fullfile(rootTargetDirectory, sprintf('%s.m', propertyName));
 
@@ -43,5 +46,5 @@ function className = createPropertyLinksetClass(propertyName, linkedTypes)
     end
     om.internal.fileio.filewrite(saveFilepath, str)
     
-    className = sprintf('openminds.linkset.%s', propertyName);
+    className = strjoin([packageNames, propertyName], '.');
 end

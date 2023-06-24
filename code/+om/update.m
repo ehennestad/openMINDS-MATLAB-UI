@@ -13,13 +13,21 @@ function update()
 
         disp('Generating openMINDS schemas.')
         om.generateSchemas()
-    
+           
+        disp('Finished!')
     else
         disp('Downloading openMINDS schemas.')
         om.internal.downloadSchemas()
-
+        
         disp('Updating openMINDS schemas.')
-        om.updateSchemas()
+        %om.updateSchemas()
+
+        % Temporary (om.updateSchemas is not implemented yet)
+        schemaFolderPath = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
+        rmdir(schemaFolderPath, 's' )
+        om.generateSchemas()
+
+        disp('Finished!')
     end
 
     % Check that the schemafolder in on path

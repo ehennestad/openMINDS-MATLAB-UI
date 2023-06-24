@@ -1,10 +1,10 @@
 function T = saveLoadSchema()
     
-    moduleName = "SANDS";
+    %moduleName = "SANDS";
     %schemaList = om.dir.schema(moduleName);
 
     schemaTable = om.internal.dir.listSourceSchemas();
-    schemaTable = schemaTable(schemaTable.ModuleName == moduleName, :);
+    %schemaTable = schemaTable(schemaTable.ModuleName == moduleName, :);
 
     numSchemas = size(schemaTable, 1);
 
@@ -29,8 +29,18 @@ function T = saveLoadSchema()
         schemaClassFunctionName = om.strutil.buildClassName(iSchemaName, iSubmoduleName, iModelName);
         schemaFcn = str2func(schemaClassFunctionName);
         
-        mc = meta.class.fromName(schemaClassFunctionName);
-        if mc.Abstract; continue; end
+        try
+            mc = meta.class.fromName(schemaClassFunctionName);
+            if isempty(mc); continue; end
+            if mc.Abstract; continue; end
+        catch ME
+            %C{numTestsFailed, 1} = schemaList(i).Name;
+            C{numTestsFailed, 1} = schemaClassFunctionName;
+            C{numTestsFailed, 2} = 'Get class meta info';
+            C{numTestsFailed, 3} = ME.message;
+            C{numTestsFailed, 4} = getReport(ME);
+            continue
+        end
         
         try
             itemPreSave = schemaFcn();

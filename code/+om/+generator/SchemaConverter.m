@@ -230,10 +230,14 @@ classdef SchemaConverter < ClassWriter
                 if numInstances > 0
                     % Write enumeration block
                     obj.startEnumerationBlock()
+
+                    % Add null as an enumeration
+                    obj.addEnumValue('null')
+
                     for i = 1:numInstances
                         name = instanceTable.SchemaName(i);
                         name = obj.fixInvalidMatlabNames(name, obj.SchemaName);
-    
+                        
                         obj.addEnumValue(name)
                     end
                     obj.endEnumerationBlock()
@@ -522,7 +526,7 @@ classdef SchemaConverter < ClassWriter
                     %dataType = 'cell';
                     %validationFcnStr(end+1) = obj.getMultiTypeValidationFunctionString(propertyName, clsNames);
 
-                    dataType = createPropertyLinksetClass(propertyName, clsNames);
+                    dataType = createPropertyLinksetClass(obj.SchemaName, propertyName, clsNames);
                     
                     %dataType = clsNames{1};
                     %warning('Multiple schemas allowed for property %s of schema %s', propertyName, obj.SchemaName)
@@ -701,11 +705,24 @@ classdef SchemaConverter < ClassWriter
             displayConfigFilepath = fullfile( ...
                 fileparts(mfilename('fullpath')), 'instanceDisplayConfig.json' );
             
+            % Todo: The json keys should match the schema name exactly, i.e
+            % capitalized
+
             configStr = fileread(displayConfigFilepath);
             configJson = jsondecode(configStr);
             
-            if isfield(configJson, om.strutil.camelCase(obj.SchemaClassName))
-                thisConfig = configJson.(om.strutil.camelCase(obj.SchemaClassName));
+            isCamelCaseMatch = isfield(configJson, om.strutil.camelCase(obj.SchemaClassName));
+            isUpperCaseMatch = isfield(configJson, upper(obj.SchemaClassName) ); % Some schemas like DOI etc. are all uppercase
+
+            if isCamelCaseMatch || isUpperCaseMatch
+                
+                if isCamelCaseMatch
+                    schemaFileName = om.strutil.camelCase(obj.SchemaClassName);
+                elseif isUpperCaseMatch
+                    schemaFileName = upper(obj.SchemaClassName);
+                end
+
+                thisConfig = configJson.(schemaFileName);
 
                 propNames = thisConfig.propertyName;
                 strFormatter = thisConfig.stringFormat;
@@ -752,6 +769,11 @@ classdef SchemaConverter < ClassWriter
             numInstances = size(instances, 1);
 
             obj.appendLine(3, 'switch name')
+
+            % Add null as an enumeration
+            obj.appendLine(4, sprintf('case ''%s''', 'null'))
+            obj.appendLine(4, "")
+
             for i = 1:numInstances
 
                 iName = instances.SchemaName(i);
@@ -768,6 +790,8 @@ classdef SchemaConverter < ClassWriter
 
                 propNames = {'at_id', 'at_type', 'name', 'definition', 'description', 'interlexIdentifier', 'knowledgeSpaceLink', 'preferredOntologyIdentifier', 'synonym'};
                 for j = 1:numel(propNames)
+
+                    
                     if isfield(data, propNames{j})
                         jName = propNames{j};
                         jValue = data.(propNames{j});
@@ -784,11 +808,14 @@ classdef SchemaConverter < ClassWriter
                         obj.appendLine(5, sprintf('obj.%s = %s;', jName, jValue))
                     end
                 end
-                
+
                 obj.appendLine(4, "")
                 %obj.writeEmptyLine()
             end
             obj.appendLine(3, 'end')
+
+            obj.appendLine(3, 'obj.id = obj.at_id;')
+            obj.appendLine(3, '')
         end
     end
     

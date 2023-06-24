@@ -34,6 +34,7 @@ classdef (Abstract) ControlledTerm < openminds.abstract.Schema & openminds.categ
 
     methods
         function obj = ControlledTerm()
+
         end
     end
 

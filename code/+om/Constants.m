@@ -10,11 +10,10 @@ classdef Constants < handle
     end
 
     methods (Static)
-        function thisPath = getRootPath()
+        function rootPath = getRootPath()
             thisPath = fileparts(mfilename("fullpath"));
-            splitIdx = regexp(thisPath, 'openMINDS-MATLAB', 'end');
-
-            thisPath = thisPath(1:splitIdx(end));
+            thisPathSplit = strsplit(thisPath, filesep);
+            rootPath = strjoin(thisPathSplit(1:end-2), filesep);
         end
     end
 end

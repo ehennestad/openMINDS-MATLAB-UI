@@ -35,6 +35,27 @@ classdef InteractiveOpenMINDSPlot < handle
                 obj.Axes = axes();
             end
 
+            obj.updateGraph(graphObj)
+
+            obj.GraphPlot.ButtonDownFcn = @(s,e) obj.NodeTransporter.startDrag(s,e);
+
+            %obj.GraphPlot.EdgeLabel = e;
+    
+            obj.Axes.YDir = 'normal';
+            hFigure = ancestor(hAxes, 'figure');
+            obj.PointerManager = uim.interface.pointerManager(hFigure, ...
+                obj.Axes, {'zoomIn', 'zoomOut', 'pan'});
+            addlistener(hFigure, 'WindowKeyPress', @obj.keyPress);
+            
+            %obj.Axes.YDir = 'reverse';
+        end 
+        
+        function updateGraph(obj, graphObj)
+            obj.DirectedGraph = graphObj;
+
+            delete( obj.GraphPlot )        
+            hold(obj.Axes, 'off')
+
             obj.GraphPlot = plot(obj.Axes, graphObj, 'Layout', 'force');
 
             numNodes = graphObj.numnodes;
@@ -58,21 +79,12 @@ classdef InteractiveOpenMINDSPlot < handle
             obj.NodeTransporter = GraphNodeTransporter(obj.Axes);
             obj.GraphPlot.ButtonDownFcn = @(s,e) obj.NodeTransporter.startDrag(s,e);
 
-            %obj.GraphPlot.EdgeLabel = e;
-    
-            obj.Axes.YDir = 'normal';
-            hFigure = ancestor(hAxes, 'figure');
-            obj.PointerManager = uim.interface.pointerManager(hFigure, ...
-                obj.Axes, {'zoomIn', 'zoomOut', 'pan'});
-            addlistener(hFigure, 'WindowKeyPress', @obj.keyPress);
-            
-            %obj.Axes.YDir = 'reverse';
-        end 
-
+        end
 
         function keyPress(obj, src, event)
             wasCaptured = obj.PointerManager.onKeyPress([], event);
         end
+
 
     end
 

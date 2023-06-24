@@ -1,5 +1,7 @@
 function downloadSchemas()
     
+    % Todo: Specify version
+
     import om.external.fex.filedownload.downloadFile
 
     % - Get some path/uri constants
@@ -24,7 +26,7 @@ function downloadSchemas()
 
     unzip(savePath, schemaFolderPath)
     delete(savePath)
-
+    
     % Save the current commit ID
     om.internal.git.saveCurrentSchemaCommitID()
 end

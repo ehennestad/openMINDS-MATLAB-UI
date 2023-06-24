@@ -31,6 +31,7 @@ classdef ModelBuilder < handle
 
     properties
         MetadataInstance
+        MetadataCollection openminds.MetadataCollection
         MetadataSet
     end
 
@@ -51,6 +52,7 @@ classdef ModelBuilder < handle
         UIContainer
         UIMetaTableViewer
         UISideBar
+        UIGraphViewer
     end
 
     properties (Access = private)
@@ -60,15 +62,24 @@ classdef ModelBuilder < handle
     properties (Access = private, Dependent)
         SaveFolder
     end
+
+    properties (Constant)
+        METADATA_COLLECTION_FILENAME = 'metadata_collection.mat'
+    end
     
 % Create figure
 
     methods
 
-        function obj = ModelBuilder()
-            
-            obj.loadMetadataSet()
-            
+        function obj = ModelBuilder(metadataCollection)
+
+            if nargin < 1            
+                obj.loadMetadataCollection()
+            else
+                obj.MetadataCollection = metadataCollection;
+                obj.MetadataCollection.createListenersForAllInstances()
+            end
+
             obj.createFigure()
             obj.createPanels()
 
@@ -85,7 +96,15 @@ classdef ModelBuilder < handle
             
             hAxes = axes(obj.UIContainer.UITab(2));
             hAxes.Position = [0,0,0.999,1];
-            InteractiveOpenMINDSPlot(G, hAxes, e);
+
+            G = obj.MetadataCollection.graph;
+            addlistener(obj.MetadataCollection, 'CollectionChanged', @obj.onMetadataCollectionChanged);
+
+            obj.addMetadataCollectionListeners()
+
+
+            h = InteractiveOpenMINDSPlot(G, hAxes, e);
+            obj.UIGraphViewer = h;
 
             % NB NB NB: Some weird bug occurs if this is created before the
             % axes with the graph plot, where the axes current point seems
@@ -143,7 +162,7 @@ classdef ModelBuilder < handle
         end
 
         function onExit(obj, src, evt)
-            obj.saveMetadataSet()
+            obj.saveMetadataCollection()
             obj.saveGraphCoordinates() % Todo
 
             windowPosition = obj.Figure.Position;
@@ -156,6 +175,7 @@ classdef ModelBuilder < handle
 
     methods %Set / get 
         function saveFolder = get.SaveFolder(~)
+            % Todo: Get from preferences
             saveFolder = fullfile(userpath, 'openMINDS', 'userdata');
             if ~isfolder(saveFolder); mkdir(saveFolder); end
         end
@@ -219,7 +239,7 @@ classdef ModelBuilder < handle
         function exportToWorkspace(obj)
             schemaName = obj.CurrentSchemaTableName;
             idx = obj.UIMetaTableViewer.getSelectedEntries();
-            schemaInstance = obj.MetadataSet.getSchemaInstanceByIndex(schemaName, idx);
+            schemaInstance = obj.MetadataCollection.getSchemaInstanceByIndex(schemaName, idx);
             
             varName = matlab.lang.makeValidName( schemaInstance.DisplayString );
             assignin('base', varName, schemaInstance)
@@ -311,7 +331,6 @@ classdef ModelBuilder < handle
             ax.Visible = 'off';
         end
 
-
         function configureFigureInteractionCallbacks(obj)
             
             %obj.Figure.WindowButtonDownFcn = @obj.onMousePressed;
@@ -325,22 +344,47 @@ classdef ModelBuilder < handle
             
         end
 
-        function saveMetadataSet(obj)
-            metadataSetPath = fullfile(obj.SaveFolder, 'metadata_set.mat');
-            S = struct;
-            %S.metadataSet = obj.MetadataSet;
-            MetadataSet = obj.MetadataSet; %#ok<PROP> 
-            save(metadataSetPath, 'MetadataSet')
+    end
+
+    methods (Access = private) % Metadata Collection configuration methods
+
+        function addMetadataCollectionListeners(obj)
+
+            addlistener(obj.MetadataCollection, 'CollectionChanged', @obj.onMetadataCollectionChanged);
+            addlistener(obj.MetadataCollection, 'InstanceModified', @obj.onMetadataInstanceModified);
+
         end
 
-        function loadMetadataSet(obj)
-            metadataSetPath = fullfile(obj.SaveFolder, 'metadata_set.mat');
-            if isfile(metadataSetPath)
-                S = load(metadataSetPath, 'MetadataSet');
-                obj.MetadataSet = S.MetadataSet;
+        function filepath = getMetadataCollectionFilepath(obj)
+            filepath = fullfile(obj.SaveFolder, obj.METADATA_COLLECTION_FILENAME);
+        end
+        
+        function saveMetadataCollection(obj)
+            metadataFilepath = obj.getMetadataCollectionFilepath();
+            
+            % Todo: Serialize
+            %S = struct;
+
+            MetadataCollection = obj.MetadataCollection; %#ok<PROP> 
+            save(metadataFilepath, 'MetadataCollection')
+            % Todo: Are listeners saved???
+        end
+
+        function loadMetadataCollection(obj)
+            metadataFilepath = obj.getMetadataCollectionFilepath();
+            if isfile(metadataFilepath)
+                S = load(metadataFilepath, 'MetadataCollection');
+                obj.MetadataCollection = S.MetadataCollection;
+                obj.MetadataCollection.createListenersForAllInstances()
             else
-                obj.MetadataSet = om.MetadataSet();
+                obj.MetadataCollection = openminds.MetadataCollection();
             end
+
+
+% % %             % Reattach listeners
+% % %             addlistener(obj.MetadataCollection, 'CollectionChanged', ...
+% % %                 @obj.onMetadataCollectionChanged)
+
         end
 
         function saveGraphCoordinates(obj)
@@ -350,7 +394,7 @@ classdef ModelBuilder < handle
     end
 
     methods (Access = private) % Internal callback methods
-                
+        
         function onKeyPressed(obj, src, evt)
 
             switch evt.Key
@@ -372,18 +416,12 @@ classdef ModelBuilder < handle
 
             % check if schema has a table
             if numel(schemaName) == 1
-                metaTable = obj.MetadataSet.getTable(schemaName{1});
+                metaTable = obj.MetadataCollection.getTable(schemaName{1});
             else
-                metaTable = obj.MetadataSet.joinTables(schemaName);
+                metaTable = obj.MetadataCollection.joinTables(schemaName);
             end
 
-            if ~isempty(metaTable)
-                %obj.UIMetaTableViewer.resetTable()
-                obj.UIMetaTableViewer.refreshTable(metaTable, true)
-            else
-                obj.UIMetaTableViewer.resetTable()
-                obj.UIMetaTableViewer.refreshTable(table.empty, true)
-            end
+            obj.updateUITable(metaTable)
         end
 
         function onFigureSizeChanged(app)
@@ -494,21 +532,55 @@ classdef ModelBuilder < handle
                 newItem(i).fromStruct(SNew)
             end
             
-            obj.MetadataSet.add(newItem)
+            obj.MetadataCollection.add(newItem)
 
             % Todo: update tables...!
 
             obj.changeSelection(className)
         end
         
+        function onMetadataCollectionChanged(obj, src, evt)
+            
+            G = obj.MetadataCollection.graph;
+            obj.UIGraphViewer.updateGraph(G);
+            
+            T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            obj.updateUITable(T)
+
+        end
+
+        function onMetadataInstanceModified(obj, src, evt)
+
+            G = obj.MetadataCollection.graph;
+            obj.UIGraphViewer.updateGraph(G);
+
+            T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            obj.updateUITable(T)
+        end
+    end
+
+    methods (Access = private) % Internal updating
+
+        function updateUITable(obj, metaTable)
+
+            if ~isempty(metaTable)
+                %obj.UIMetaTableViewer.resetTable()
+                obj.UIMetaTableViewer.refreshTable(metaTable, true)
+            else
+                obj.UIMetaTableViewer.resetTable()
+                obj.UIMetaTableViewer.refreshTable(table.empty, true)
+            end
+        end
+
     end
 
     methods (Static)
-        function clearMetadataSet()
+        function deleteMetadataCollection()
             saveFolder = fullfile(userpath, 'openMINDS', 'userdata');
-            metadataSetPath = fullfile(saveFolder, 'metadata_set.mat');
-            if isfile(metadataSetPath)
-                delete(metadataSetPath)
+            metadataFilepath = fullfile(saveFolder, om.ModelBuilder.METADATA_COLLECTION_FILENAME);
+            
+            if isfile(metadataFilepath)
+                delete(metadataFilepath)
             end
         end
     
