@@ -474,13 +474,13 @@ classdef ModelBuilder < handle
                 elseif isa(iValue, 'openminds.abstract.Schema') && ...
                         ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
                     
-                    schemaLabels = obj.MetadataSet.getSchemaInstanceLabels(class(iValue));
-                    
+                    schemaLabels = obj.MetadataCollection.getSchemaInstanceLabels(class(iValue));
+                    schemaShortName = openminds.MetadataCollection.getSchemaShortName(class(iValue));
+
                     if isempty(schemaLabels)
-                        schemaShortName = om.MetadataSet.getSchemaShortName(class(iValue));
                         options = {sprintf('No %s available', schemaShortName)};
                     else
-                        options = schemaLabels;
+                        options = [sprintf('Select a %s', schemaShortName), schemaLabels];
                     end
                     SNew.(iPropName) = options{1};
                     SNew.(iPropName_) = options;
@@ -521,7 +521,7 @@ classdef ModelBuilder < handle
                     else
                         label = SNew.(iPropName);
                         schemaName = class(SOrig.(iPropName));
-                        schemaInstance = obj.MetadataSet.getInstanceFromLabel(schemaName, label);
+                        schemaInstance = obj.MetadataCollection.getInstanceFromLabel(schemaName, label);
                         SNew.(iPropName) = schemaInstance;
                     end
                 end
