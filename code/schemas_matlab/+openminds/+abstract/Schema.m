@@ -466,7 +466,6 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
     methods (Access = protected)
 
         function str = getDisplayLabel(obj)
-            disp('here')
             str = '';
         end
     end
@@ -502,7 +501,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                 str = sprintf('  Required Properties: <strong>%s</strong>', strjoin(obj(1).Required, ', '));
                 str = om.strutil.strfold(str, 100);
                 str = strjoin(str, '\n    ');
-                str = sprintf('  %s', str);
+                str = sprintf('  %s\n', str);
             end
         end
     end
