@@ -526,7 +526,7 @@ classdef SchemaConverter < ClassWriter
                     %dataType = 'cell';
                     %validationFcnStr(end+1) = obj.getMultiTypeValidationFunctionString(propertyName, clsNames);
 
-                    dataType = createPropertyLinksetClass(propertyName, clsNames);
+                    dataType = createPropertyLinksetClass(obj.SchemaName, propertyName, clsNames);
                     
                     %dataType = clsNames{1};
                     %warning('Multiple schemas allowed for property %s of schema %s', propertyName, obj.SchemaName)
@@ -705,11 +705,24 @@ classdef SchemaConverter < ClassWriter
             displayConfigFilepath = fullfile( ...
                 fileparts(mfilename('fullpath')), 'instanceDisplayConfig.json' );
             
+            % Todo: The json keys should match the schema name exactly, i.e
+            % capitalized
+
             configStr = fileread(displayConfigFilepath);
             configJson = jsondecode(configStr);
             
-            if isfield(configJson, om.strutil.camelCase(obj.SchemaClassName))
-                thisConfig = configJson.(om.strutil.camelCase(obj.SchemaClassName));
+            isCamelCaseMatch = isfield(configJson, om.strutil.camelCase(obj.SchemaClassName));
+            isUpperCaseMatch = isfield(configJson, upper(obj.SchemaClassName) ); % Some schemas like DOI etc. are all uppercase
+
+            if isCamelCaseMatch || isUpperCaseMatch
+                
+                if isCamelCaseMatch
+                    schemaFileName = om.strutil.camelCase(obj.SchemaClassName);
+                elseif isUpperCaseMatch
+                    schemaFileName = upper(obj.SchemaClassName);
+                end
+
+                thisConfig = configJson.(schemaFileName);
 
                 propNames = thisConfig.propertyName;
                 strFormatter = thisConfig.stringFormat;
