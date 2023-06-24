@@ -83,7 +83,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
         function tf = isLinkedTypeOfProperty(obj, type)
             
             tf = false;
-
+            
             propertyNames = fieldnames( obj.LINKED_PROPERTIES );
 
             for i = 1:numel(propertyNames)
@@ -221,6 +221,8 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             end
 
             if obj.isSubsForLinkedPropertyValue(subs)
+                propName = subs(1).subs;
+
                 if numel(subs) == 1
                     propName = subs(1).subs;
                     className = class(obj.(propName));
@@ -294,9 +296,16 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                                     % empty values default to empty double,
                                     % but should be empty object of correct
                                     % instance type.
-                                  
-                                    obj = builtin('subsasgn', obj, subs, value);
-                                    
+                                    try
+                                        obj = builtin('subsasgn', obj, subs, value);
+                                    catch ME
+                                        errorStruct.identifier = ME.identifier;
+                                        errorStruct.message = ME.message;
+                                        errorStruct.stack = struct('file', '', 'name', class(obj), 'line', 0);
+                                        error(errorStruct)
+                                    end
+
+
                                     %obj.subsasgn(subs, value);
                                 otherwise
                                     ME = MException('OPENMINDS_MATLAB:UnhandledIndexAssignment', ...
