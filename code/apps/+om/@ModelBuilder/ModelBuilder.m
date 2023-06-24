@@ -453,7 +453,7 @@ classdef ModelBuilder < handle
             itemFactory = str2func(functionName);
             newItem = arrayfun(@(i)itemFactory(), 1:n);
 
-            [SOrig, SNew] = deal( newItem(1).toStruct );
+            [SOrig, SNew] = deal( newItem(1).toStruct() );
             
             % Fill out options for each property
             propNames = fieldnames(SOrig);
