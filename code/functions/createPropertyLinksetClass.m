@@ -5,14 +5,15 @@ function className = createPropertyLinksetClass(schemaName, propertyName, linked
 %   className = createPropertyLinksetClass(propertyName, linkedTypes)
 %
 % Inputs:
-%   propertyName - The name of the property to create a linkset class for
+%   schemaName - The name of the schema the property belongs to
+%   propertyName - The name of the property to create a linkedcategory class for
 %   linkedTypes - A string array of the types that the property links to
 %
 % Outputs:
 %   className - The name of the newly created linkset class
 %
 % Example:
-%   className = createPropertyLinksetClass('MyProperty', ["Type1", "Type2"])
+%   className = createPropertyLinksetClass('MySchema', 'MyProperty', ["Type1", "Type2"])
 %
 % See also: openminds.abstract.LinkedCategory
 
