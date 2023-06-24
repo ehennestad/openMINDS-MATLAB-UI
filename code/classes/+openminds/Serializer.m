@@ -39,7 +39,7 @@ classdef Serializer < handle
 
             obj.SchemaType = instanceObject.X_TYPE;
 
-            obj.id = om.strutil.getuuid(); % Todo: get from instance...
+            obj.id = obj.Instance.id;
 
             if isempty(obj.Vocab)
                 obj.Vocab = obj.DEFAULT_VOCAB;
@@ -75,37 +75,65 @@ classdef Serializer < handle
             S.at_context = struct();
             S.at_context.at_vocab = sprintf("%s/vocab", obj.Vocab);
 
-            S.at_type = obj.SchemaType;
-            S.at_id = sprintf("%s/%s/%s", obj.LOCAL_IRI, obj.SchemaName, obj.id);
+            S.at_type = {obj.SchemaType};
+            S.at_id = obj.getIdentifier(obj.Instance.id);
             
-
             % Get public properties
             propertyNames = properties(obj.Instance);
-            
-            % Serialize each of the properties. For linked types, add links...
 
-
-            % Get names of linked properties from instance.
+            % Get names of linked & embedded properties from instance.
             linkedPropertyStruct = obj.Instance.LINKED_PROPERTIES;
+            embeddedPropertyStruct = obj.Instance.EMBEDDED_PROPERTIES;
 
-            % Serialize with IDs for linked instances.
+            % Serialize each of the properties. For linked types, add links...
+            for i = 1:numel(propertyNames)
+                
+                iPropertyName = propertyNames{i};
+                iPropertyValue = obj.Instance.(iPropertyName);
+
+                if isempty(iPropertyValue); continue; end
+                if isstring(iPropertyValue) && iPropertyValue==""; continue; end
+
+                if any(strcmp(fieldnames(linkedPropertyStruct), iPropertyName))
+                    S.(iPropertyName) = obj.serializeLinkedProperty(iPropertyValue);
+
+                elseif any(strcmp(fieldnames(embeddedPropertyStruct), iPropertyName))
+                    %S.(iPropertyName) = obj.serializeEmbeddedProperty(iPropertyValue);
+                    warning('Serialization of embedded properties is not implemented yet')
+                else
+                    S.(iPropertyName) = iPropertyValue;
+                end
+            end
 
             % Todo: 
-            %   [ ] Handle cell arrays where a property can be linked from
+            %   [ ] Test cell arrays where a property can be linked from
             %       multiple different schema instances.
             %
-            %   [ ] Handle arrays
-            %   [ ] Handle scalars
-            %   [ ] Skip property with empty values
-
-
-            % Get names of embedded properties from instance.
-            embeddedPropertyStruct = obj.Instance.EMBEDDED_PROPERTIES;
+            %   [ ] Test arrays
+            %   [ ] Test scalars
 
             % Todo: Serialize embedded instance and add it to the embedded
             % property key
 
+            % Expand the property names with the vobab url/iri.
             jsonStr = om.json.encode(S);
+
+            for i = 1:numel(propertyNames)
+                iPropertyNameStr = sprintf('"%s"',  propertyNames{i});
+                iPropertyNameVocabStr = sprintf('"%s/vocab/%s"', obj.DEFAULT_VOCAB, propertyNames{i});
+                
+                jsonStr = strrep(jsonStr, [iPropertyNameStr, ':'], [iPropertyNameVocabStr, ':'] );
+            end
+        end
+
+        function s = serializeLinkedProperty(obj, linkedPropertyValues)
+            s = struct('at_id', {});
+
+            for i = 1:numel(linkedPropertyValues)
+                iValue = linkedPropertyValues(i);
+                s(i).at_id = obj.getIdentifier(iValue.id);
+            end
+
         end
 
     end
@@ -118,6 +146,14 @@ classdef Serializer < handle
 
         function S = addEmbeddedType(obj, S, propName, propValue)
             
+        end
+
+    end
+
+    methods (Static)
+
+        function id = getIdentifier(instanceID)
+            id = sprintf("%s/%s", openminds.Serializer.LOCAL_IRI, instanceID);
         end
 
     end
