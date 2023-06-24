@@ -228,14 +228,14 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                     className = class(obj.(propName));
                 
                     % Get the actual instance from a linkset subclass.
-                    if contains(className, 'openminds.linkset')
+                    if contains(className, 'openminds.linkedcategory')
                         try
                             % Place the openMINDS instance object in a linkset
                             % wrapper class
                             classFcn = str2func(className);
                             value = classFcn(value);
                         catch MECause
-                            msg = sprintf("Error getting instance of linked type '%s' of class '%s'. ", propName, class(obj));
+                            msg = sprintf("Error setting instance of linked type '%s' of class '%s'. ", propName, class(obj));
                             errorStruct.identifier = 'LinkedProperty:CouldNotRetrieveInstance';
                             errorStruct.message = msg + MECause.message;
                             errorStruct.stack = struct('file', '', 'name', class(obj), 'line', 0);
@@ -265,7 +265,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                         linkedObj = obj.subsref(subs(1));
                         if isa(linkedObj, 'cell')
                             className = class(obj.(subs(1).subs));
-                            if contains(className, 'openminds.linkset')
+                            if contains(className, 'openminds.linkedcategory')
                                 % Todo: Check if instances in cell array
                                 % are of different types.
                                 error('Can not use indexing assignment for instances of different types')
