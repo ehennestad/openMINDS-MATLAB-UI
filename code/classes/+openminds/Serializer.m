@@ -35,6 +35,19 @@ classdef Serializer < handle
 
         function obj = Serializer( instanceObject )
             
+            if isa( instanceObject, 'openminds.abstract.LinkedCategory' )
+                instanceObject = instanceObject.Instance;
+                warning('Please report if you see this warning!')
+            end
+
+            if numel(instanceObject) > 1
+                error('Serialization of non-scalar objects is not supported yet')
+            end
+
+            if ~isa(instanceObject, 'openminds.abstract.Schema')
+                error('Serializer input must be an openMINDS instance. The provided instance is of type "%s"', class(instanceObject))
+            end
+
             obj.Instance = instanceObject;
 
             obj.SchemaType = instanceObject.X_TYPE;
@@ -99,7 +112,7 @@ classdef Serializer < handle
 
                 elseif any(strcmp(fieldnames(embeddedPropertyStruct), iPropertyName))
                     %S.(iPropertyName) = obj.serializeEmbeddedProperty(iPropertyValue);
-                    warning('Serialization of embedded properties is not implemented yet')
+                    warning('Serialization of embedded properties ("%s") is not implemented yet', iPropertyName)
                 else
                     S.(iPropertyName) = iPropertyValue;
                 end

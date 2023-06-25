@@ -224,7 +224,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
                 obj = eval(sprintf('%s.empty', class(value)));
             end
 
-            if obj.isSubsForLinkedPropertyValue(subs)
+            if obj.isSubsForLinkedPropertyValue(subs) || obj.isSubsForEmbeddedPropertyValue(subs)
                 propName = subs(1).subs;
 
                 if numel(subs) == 1
@@ -361,7 +361,7 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             varargout = cell(1, numOutputs);
             
 
-            if obj.isSubsForLinkedPropertyValue(subs)
+            if obj.isSubsForLinkedPropertyValue(subs) || obj.isSubsForEmbeddedPropertyValue(subs)
                   
                 linkedTypeValues = builtin('subsref', obj, subs(1));
 
@@ -391,8 +391,13 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 % % %                                 [varargout{:}] = builtin('subsref', values, subs(2:end));
 % % %                             end
 % % %                         else
-                            [varargout{:}] = builtin('subsref', values, subs(2:end));
+
 % % %                         end
+                        if isa(values, 'openminds.abstract.Schema')
+                            [varargout{:}] = values.subsref(subs(2:end));
+                        else
+                            [varargout{:}] = builtin('subsref', values, subs(2:end));
+                        end
                     else
                         builtin('subsref', values, subs(2:end))
                     end
@@ -413,14 +418,16 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
         end
 
         function n = numArgumentsFromSubscript(obj, s, indexingContext)
-            if obj(1).isSubsForLinkedPropertyValue(s) && numel(s) > 1
+            if (obj(1).isSubsForLinkedPropertyValue(s) || obj(1).isSubsForEmbeddedPropertyValue(s)) && numel(s) > 1
                 linkedTypeValues = builtin('subsref', obj, s(1));
-                values = {linkedTypeValues.Instance};
+                if isa(linkedTypeValues, 'openminds.abstract.LinkedCategory')
+                    linkedTypeValues = {linkedTypeValues.Instance};
+                end
 
                 if strcmp( s(2).type, '()' )
                     s(2).type = '{}';
                 end
-                n = builtin('numArgumentsFromSubscript', values, s(2:end), indexingContext);
+                n = builtin('numArgumentsFromSubscript', linkedTypeValues, s(2:end), indexingContext);
             else
                 n = builtin('numArgumentsFromSubscript', obj, s, indexingContext);
             end
@@ -434,6 +441,17 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
             else
                 linkedProps = eval( sprintf( '%s.LINKED_PROPERTIES', class(obj) ));
                 tf = strcmp( subs(1).type, '.' ) && isfield(linkedProps, subs(1).subs);
+            end
+        end
+
+        function tf = isSubsForEmbeddedPropertyValue(obj, subs)
+        % Return true if subs represent dot-indexing on a linked property
+            
+            if numel(obj)>=1
+                tf = strcmp( subs(1).type, '.' ) && isfield(obj(1).EMBEDDED_PROPERTIES, subs(1).subs);
+            else
+                embeddedProps = eval( sprintf( '%s.EMBEDDED_PROPERTIES', class(obj) ));
+                tf = strcmp( subs(1).type, '.' ) && isfield(embeddedProps, subs(1).subs);
             end
         end
 
