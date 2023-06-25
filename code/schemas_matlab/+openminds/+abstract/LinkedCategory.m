@@ -55,6 +55,16 @@ classdef LinkedCategory < matlab.mixin.CustomCompactDisplayProvider & matlab.mix
         end
     end
     
+    methods
+        function str = getDisplayLabel(obj)
+            str = obj.Instance.getDisplayLabel();
+        end
+        
+        function str = char(obj)
+            str = obj.getDisplayLabel();
+        end
+    end
+
     %CustomDisplay
     methods (Access = protected)
         function str = getHeader(obj)
