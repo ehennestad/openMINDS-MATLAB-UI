@@ -6,8 +6,10 @@ classdef Serializer < handle
 %     - [ ] Add handling for public properties, and add links for all linked types.
 %     - [ ] Handle embedded types.
 %     - [ ] Consider whether it is enough to have a mixin, or we should use the strategy pattern and have Serializer as a property of Instance in order to flexibly change between different serialization techniques
-%     - [ ] How to resolve whether something is a linked or embedded type.
+%     - [x] How to resolve whether something is a linked or embedded type.
 %           - Save on the schema class...
+%     - [ ] If linked type property can be non-scalar, the @id field must
+%     be a lists
 
 
 
@@ -81,7 +83,11 @@ classdef Serializer < handle
 
     methods 
 
-        function jsonStr = serialize(obj)
+        function jsonStr = serialize(obj, convertToJson)
+
+            if nargin < 2 || isempty(convertToJson)
+                convertToJson = true;
+            end
 
             S = struct;
 
@@ -111,11 +117,15 @@ classdef Serializer < handle
                     S.(iPropertyName) = obj.serializeLinkedProperty(iPropertyValue);
 
                 elseif any(strcmp(fieldnames(embeddedPropertyStruct), iPropertyName))
-                    %S.(iPropertyName) = obj.serializeEmbeddedProperty(iPropertyValue);
-                    warning('Serialization of embedded properties ("%s") is not implemented yet', iPropertyName)
+                    S.(iPropertyName) = obj.serializeEmbeddedProperty(iPropertyValue);
+                    warning('Serialization of embedded properties ("%s") is in pilot mode', iPropertyName)
                 else
                     S.(iPropertyName) = iPropertyValue;
                 end
+            end
+
+            if ~convertToJson
+                jsonStr = S; return
             end
 
             % Todo: 
@@ -132,6 +142,19 @@ classdef Serializer < handle
             jsonStr = om.json.encode(S);
 
             for i = 1:numel(propertyNames)
+                iPropertyName = propertyNames{i};
+
+                if any(strcmp(fieldnames(embeddedPropertyStruct), propertyNames{i}))
+                    for field = fieldnames( S.(iPropertyName) )'
+                        embeddedPropertyName = field{1};
+                        if ~strncmp(field, 'at_', 3)
+                            embeddedPropertyNameStr = sprintf('"%s"',  embeddedPropertyName);
+                            embeddedPropertyNameVocabStr = sprintf('"%s/vocab/%s"', obj.DEFAULT_VOCAB, embeddedPropertyName);
+                            jsonStr = strrep(jsonStr, [embeddedPropertyNameStr, ':'], [embeddedPropertyNameVocabStr, ':'] );
+                        end
+                    end
+                end
+
                 iPropertyNameStr = sprintf('"%s"',  propertyNames{i});
                 iPropertyNameVocabStr = sprintf('"%s/vocab/%s"', obj.DEFAULT_VOCAB, propertyNames{i});
                 
@@ -147,6 +170,12 @@ classdef Serializer < handle
                 s(i).at_id = obj.getIdentifier(iValue.id);
             end
 
+        end
+
+        function S = serializeEmbeddedProperty(~, instance)
+
+            serializer = openminds.Serializer(instance);
+            S = serializer.serialize(false);
         end
 
     end
