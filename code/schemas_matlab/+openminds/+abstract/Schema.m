@@ -115,7 +115,8 @@ classdef Schema < handle & StructAdapter & matlab.mixin.CustomDisplay & om.exter
 
         function displayLabel = get.DisplayString(obj)
             if isa(obj, 'openminds.controlledterms.ControlledTerm')
-                displayLabel = sprintf('%s', char(obj));
+                %displayLabel = sprintf('%s', char(obj));
+                displayLabel = sprintf('%s', obj.name);
                 return
             end
 
