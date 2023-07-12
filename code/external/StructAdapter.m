@@ -63,7 +63,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             end
         end
 
-        function fromStruct(obj, S)
+        function obj = fromStruct(obj, S)
             
             C = struct2cell(S);
 
@@ -73,6 +73,9 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             [fieldNames, iA] = intersect(fieldNames, allowedPropertyNames);
             
             set(obj, fieldNames', C(iA)');
+            if ~nargout
+                clear obj
+            end
         end
     
         function T = toTable(obj)
