@@ -431,6 +431,11 @@ classdef ModelBuilder < handle
 
         function onSchemaMenuItemSelected(obj, functionName, selectionMode)
  
+            % Simplify function name. In order to make gui menus more
+            % userfriendly, the alias version of the schemas are used.
+            functionNameSplit = strsplit(functionName, '.');
+            functionName = strjoin(functionNameSplit([1,2,4]), '.');
+            
             switch selectionMode
                 
                 case 'Single'
