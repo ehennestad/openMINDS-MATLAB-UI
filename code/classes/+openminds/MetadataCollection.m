@@ -258,28 +258,61 @@ classdef MetadataCollection < handle
             arguments
                 obj
                 schemaNames
-                options.JoinMethod = 'join' % innerjoin , join, outerjoin
+                options.JoinMethod = 'outerjoin' % innerjoin , join, outerjoin
             end
 
-            instanceLinkee = schemaNames{1};
-            instanceLinked = schemaNames{2};
+            % Find link and direction.
+            instanceA = obj.metadata(schemaNames{1});
+            instanceB = obj.metadata(schemaNames{2});
+            
+            if instanceA(1).linkedTypeOfProperty(schemaNames{2}) ~= ""
+                instanceLinkee = schemaNames{1};
+                instanceLinked = schemaNames{2};
+                propertyWithLinkedType = instanceA(1).linkedTypeOfProperty(instanceLinked);
+            elseif instanceB(1).linkedTypeOfProperty(schemaNames{1}) ~= ""
+                instanceLinkee = schemaNames{2};
+                instanceLinked = schemaNames{1};
+                propertyWithLinkedType = instanceB(1).linkedTypeOfProperty(instanceLinked);
+            else
+                error('Tables have no link.')
+            end
+
+            % todo; above should be simplified, potentially use this
+            % instead:
+            [leftKey, ~] = obj.getKeyPairsForJoin(instanceLinkee, instanceLinked);
 
             tableLinker = obj.getTable(instanceLinkee).entries;
-            tableLinker.id = {obj.metadata(instanceLinked).id}';
             tableLinked = obj.getTable(instanceLinked).entries;
 
-            tableLinked.id = {obj.metadata(instanceLinked).id}';
-            
-            tableLinker = renamevars(tableLinker, 'lookupLabel', 'lookupLabel_Subject');
-            tableLinked = renamevars(tableLinked, 'lookupLabel', 'lookupLabel_SubjectState');
+            % Rename shared variable names
+            varNamesLinker = tableLinker.Properties.VariableNames;
+            varNamesLinked = tableLinked.Properties.VariableNames;
+            sharedVarNames = intersect(varNamesLinker, varNamesLinked);
+            for i = 1:numel(sharedVarNames)
+                tableLinker = renamevars(tableLinker, sharedVarNames{i}, sprintf('%s_%s', sharedVarNames{i}, instanceLinkee) );
+                tableLinked = renamevars(tableLinked, sharedVarNames{i}, sprintf('%s_%s', sharedVarNames{i}, instanceLinked) );
+            end
 
-            [leftKey, ~] = obj.getKeyPairsForJoin(instanceLinkee, instanceLinked);
-            leftKey = 'id';
-            rightKey = 'id';
+            linkId = cell(size(tableLinker, 1), 1);
+            for iRow = 1:size(tableLinker, 1)
+                if ~isempty(tableLinker{iRow, propertyWithLinkedType}{1})
+                    linkId{iRow}=tableLinker{iRow, propertyWithLinkedType}{1}.id;
+                else
+                    linkId{iRow} = "";
+                end
+            end
+            tableLinker.id = string(linkId);
+            %tableLinker.id = {obj.metadata(instanceLinkee).id}';
+            %tableLinker.id = get(obj.metadata(instanceLinked), 'id'); % workaround as overriding subsref has unintended effects
+            
+            %tableLinked.id = {obj.metadata(instanceLinked).id}';
+            tableLinked.id = get(obj.metadata(instanceLinked), 'id');
+            tableLinked.id = string(tableLinked.id);
+
 
             joinFcn = str2func(options.JoinMethod);
 
-            joinedTable = joinFcn(tableLinker, tableLinked, 'LeftKeys', leftKey, 'RightKeys', rightKey);
+            joinedTable = joinFcn(tableLinker, tableLinked, 'LeftKeys', "id", 'RightKeys', "id", 'MergeKeys', true);
             joinedTable.id = []; % Remove the id column
 
             joinedClassName = sprintf('%s * %s', instanceLinkee, instanceLinked);

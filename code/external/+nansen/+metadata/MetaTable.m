@@ -628,6 +628,7 @@ classdef MetaTable < handle
 
                 if isa( thisFormatter, 'char' )
                     tmpFcn = str2func( thisFormatter );
+                    jColumnValues(cellfun(@(c) ~isempty(c) && ismissing(c), jColumnValues))={""}; %#ok<STRSCALR> 
                     formattedValue = cellfun(@(s) tmpFcn(s), jColumnValues, 'uni', 0);
 
                 elseif isa( thisFormatter, 'function_handle')
