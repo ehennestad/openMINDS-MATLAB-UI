@@ -122,7 +122,8 @@ classdef ModelBuilder < handle
 
             h.CellEditCallback = @obj.onMetaTableDataChanged;
             
-            modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
+            %modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
+            modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab-alias', '+openminds');
             ignoreList = {'+category', '+linkset', '+controlledterms'};
             omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
 

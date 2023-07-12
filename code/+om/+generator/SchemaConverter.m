@@ -48,6 +48,8 @@ classdef SchemaConverter < ClassWriter
             obj.writeClassdef()
             
             obj.saveClassdef()
+
+            obj.saveAlias()
             
             if ~nargout
                 clear obj
@@ -182,7 +184,59 @@ classdef SchemaConverter < ClassWriter
             filename = [obj.SchemaName, '.m'];
             obj.Filepath = fullfile(mSchemaDirectory, schemaPackage{:}, filename );
         end
-        
+
+        function [pathStr, fullName] = getAliasFilePath(obj)
+            schemaDirectory = om.Constants.SchemaFolder;
+            mSchemaDirectory = fullfile( schemaDirectory, 'matlab-alias');
+            if isempty(obj.SchemaCategory)
+                schemaPackage = {'openminds', obj.MetadataModel, obj.MetadataModel};
+            else
+                schemaPackage = {'openminds', obj.MetadataModel, obj.SchemaCategory};
+            end
+            schemaPackage = lower( strcat('+', schemaPackage) );
+
+            filename = [obj.SchemaName, '.m'];
+            pathStr = fullfile(mSchemaDirectory, schemaPackage{:}, filename );
+
+            fullName = strjoin([schemaPackage, obj.SchemaName], '.');
+        end
+
+        function className = getFullClassName(obj, type)
+            
+            if type=="simple"
+                schemaPackage = {'openminds', obj.MetadataModel};
+            else
+                if isempty(obj.SchemaCategory)
+                    schemaPackage = {'openminds', obj.MetadataModel, obj.MetadataModel};
+                else
+                    schemaPackage = {'openminds', obj.MetadataModel, obj.SchemaCategory};
+                end
+            end
+            schemaPackage = lower( strjoin(schemaPackage, '.') );
+
+            className = sprintf('%s.%s', schemaPackage, obj.SchemaName);
+        end
+
+        function saveAlias(obj)
+            filePath = obj.getAliasFilePath();
+            
+            %fullClassName = obj.getFullClassName();
+            fullClassNameSimple = obj.getFullClassName("simple");
+
+
+            str = fileread('/Users/Eivind/Code/MATLAB/Github-Ehennestad/openMINDS-MATLAB-App/code/+om/+generator/+template/SchemaAlias.m');
+            str = strrep(str, 'SchemaAlias', obj.SchemaName);
+            str = strrep(str, 'SchemaClassName', fullClassNameSimple);
+
+            if ~isfolder(fileparts(filePath))
+                mkdir(fileparts(filePath))
+            end
+
+            fid = fopen(filePath, 'w');
+            fwrite(fid, str);
+            fclose(fid);
+            
+        end
     end
 
     methods (Access = protected) % Implement methods from superclass
