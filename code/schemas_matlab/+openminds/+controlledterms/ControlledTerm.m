@@ -38,6 +38,12 @@ classdef (Abstract) ControlledTerm < openminds.abstract.Schema & openminds.categ
         end
     end
 
+    methods
+        function str = char(obj)
+            str = char(string(obj));
+        end
+    end
+
     methods (Static)
         function members = getMembers()
             className = mfilename('class');
