@@ -28,5 +28,5 @@ function downloadSchemas()
     delete(savePath)
     
     % Save the current commit ID
-    om.internal.git.saveCurrentSchemaCommitID()
+    %om.internal.git.saveCurrentSchemaCommitID()
 end
