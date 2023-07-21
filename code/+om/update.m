@@ -44,7 +44,9 @@ function update(mode)
 
         % Temporary (om.updateSchemas is not implemented yet)
         schemaFolderPath = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
-        rmdir(schemaFolderPath, 's' )
+        if isfolder(schemaFolderPath)
+            rmdir(schemaFolderPath, 's' )
+        end
         om.generateSchemas()
 
         disp('Finished!')

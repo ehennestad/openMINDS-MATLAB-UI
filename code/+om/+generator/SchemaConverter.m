@@ -223,8 +223,8 @@ classdef SchemaConverter < ClassWriter
             %fullClassName = obj.getFullClassName();
             fullClassNameSimple = obj.getFullClassName("simple");
 
-
-            str = fileread('/Users/Eivind/Code/MATLAB/Github-Ehennestad/openMINDS-MATLAB-App/code/+om/+generator/+template/SchemaAlias.m');
+            folderPath = fullfile( om.Constants.getRootPath(), 'code', '+om', '+generator', '+template' );
+            str = fileread( fullfile(folderPath, 'SchemaAlias.m') );
             str = strrep(str, 'SchemaAlias', obj.SchemaName);
             str = strrep(str, 'SchemaClassName', fullClassNameSimple);
 
