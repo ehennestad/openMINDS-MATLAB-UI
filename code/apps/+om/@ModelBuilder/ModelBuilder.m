@@ -121,9 +121,16 @@ classdef ModelBuilder < handle
             %obj.UIMetaTableViewer.HTable.Units
 
             h.CellEditCallback = @obj.onMetaTableDataChanged;
-            
+
+
+            [menuInstance, graphicsMenu] = om.TableContextMenu(obj.Figure);
+            obj.UIMetaTableViewer.TableContextMenu = graphicsMenu;
+            menuInstance.DeleteItemFcn = @obj.onDeleteMetadataInstanceClicked;
+
             %modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
-            modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab-alias', '+openminds');
+            %modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab-alias', '+openminds');
+
+            modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
             ignoreList = {'+category', '+linkset', '+controlledterms'};
             omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
 
@@ -477,8 +484,12 @@ classdef ModelBuilder < handle
                     SNew.(iPropName) = char(iValue);
                 elseif isnumeric(iValue)
                     SNew.(iPropName) = double(iValue);
+                elseif isa(iValue, 'openminds.abstract.ControlledTerm')
+                    m = eval( sprintf('%s.CONTROLLED_INSTANCES', class(iValue)));
+                    SNew.(iPropName) = char(m(1));
+                    SNew.(iPropName_) = cellstr(m);
                 elseif isa(iValue, 'openminds.abstract.Schema') && ...
-                        ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
+                        ~isa(iValue, 'openminds.abstract.ControlledTerm')
                     
                     schemaLabels = obj.MetadataCollection.getSchemaInstanceLabels(class(iValue));
                     schemaShortName = openminds.MetadataCollection.getSchemaShortName(class(iValue));
@@ -535,7 +546,7 @@ classdef ModelBuilder < handle
 
 
             for i = 1:numel(newItem)
-                newItem(i).fromStruct(SNew)
+                newItem(i) = newItem(i).fromStruct(SNew);
             end
             
             obj.MetadataCollection.add(newItem)
@@ -562,6 +573,20 @@ classdef ModelBuilder < handle
 
             T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
             obj.updateUITable(T)
+        end
+
+        function onDeleteMetadataInstanceClicked(obj, src, evt)
+            selectedIdx = obj.UIMetaTableViewer.getSelectedEntries();
+
+            type = obj.CurrentSchemaTableName;
+
+            obj.MetadataCollection.removeInstance(type, selectedIdx)
+
+            T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            obj.updateUITable(T)
+            %app.MetaTable.removeEntries(selectedEntries)
+            %app.UiMetaTableViewer.refreshTable(app.MetaTable)
+
         end
     end
 

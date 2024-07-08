@@ -90,6 +90,12 @@ classdef MetadataCollection < handle
             obj.graph = rmnode(obj.graph, metadataName);
         end
 
+        function removeInstance(obj, type, index)
+            instancesOfType = obj.metadata(type);
+            instancesOfType(index)=[];
+            obj.metadata(type) = instancesOfType;
+        end
+
         function updateMetadata(obj)
             % Update all metadata
         end
@@ -322,37 +328,43 @@ classdef MetadataCollection < handle
                 % categorical...
 
                 try
-                thisValue = instanceTable{1,i};
-                if isa(thisValue, 'openminds.abstract.Schema') && ~isa(thisValue, 'openminds.controlledterms.ControlledTerm')
-                    className = openminds.abstract.Schema.getSchemaShortName(class(thisValue)); % Todo: get this in a better way
-                    % obj.getSchemaInstanceLabels(className)
-
-                    options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
-
-                    rowValues = cell(numRows, 1);
-                    for jRow = 1:numRows
-                        thisValue =  instanceTable{jRow,i};
-
-                        if isempty(thisValue)
-                            thisValue = options(1);
-                        else
-                            try
-                                % Todo: This need to be improved!!!
-                                thisValue = thisValue.getDisplayLabel;
-                                options(end+1) = thisValue;
-                            catch
-                                thisValue = options(1);
-                            end
-                        end
-
-                        rowValues{jRow} = categorical(thisValue, unique(options));
+                    thisValue = instanceTable{1,i};
+                
+                    if isa(thisValue, 'openminds.abstract.ControlledTerm')
+                        options = eval(sprintf('%s.CONTROLLED_INSTANCES', class(thisValue)));
+                    
+                    elseif isa(thisValue, 'openminds.abstract.Schema')
+                        className = openminds.abstract.Schema.getSchemaShortName(class(thisValue)); % Todo: get this in a better way
+                        options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
+                    
+                    else
+                        options = [];
                     end
-                    instanceTable.(thisColumnName) = cat(1,rowValues{:});
-                end
+
+                    if ~isempty(options)
+                        rowValues = cell(numRows, 1);
+                        for jRow = 1:numRows
+                            thisValue =  instanceTable{jRow,i};
+    
+                            if isempty(thisValue)
+                                thisValue = options(1);
+                            else
+                                try
+                                    % Todo: This need to be improved!!!
+                                    thisValue = thisValue.getDisplayLabel;
+                                    options(end+1) = thisValue;
+                                catch
+                                    thisValue = options(1);
+                                end
+                            end
+    
+                            rowValues{jRow} = categorical(thisValue, unique(options));
+                        end
+                        instanceTable.(thisColumnName) = cat(1, rowValues{:});
+                    end
                 end
             end            
         end
-        
     end
 
     methods 
