@@ -96,6 +96,12 @@ classdef MetadataCollection < handle
             obj.metadata(type) = instancesOfType;
         end
 
+        function modifyInstance(obj, type, index, propName, propValue)
+            instancesOfType = obj.metadata(type);
+            instancesOfType(index).(propName)=propValue;
+            obj.metadata(type) = instancesOfType;
+        end
+
         function updateMetadata(obj)
             % Update all metadata
         end

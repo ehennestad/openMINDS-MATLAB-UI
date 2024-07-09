@@ -413,8 +413,11 @@ classdef ModelBuilder < handle
         end
 
         function onMetaTableDataChanged(obj, src, evt)
-
-
+            type = obj.CurrentSchemaTableName;
+            instanceIdx = evt.Indices(1);
+            propName = src.ColumnName{ evt.Indices(2) };
+            propValue = evt.NewValue;
+            obj.MetadataCollection.modifyInstance(type, instanceIdx, propName, propValue);
         end
 
         function onSelectionChanged(obj, src, evt)
@@ -437,14 +440,14 @@ classdef ModelBuilder < handle
         end
 
         function onSchemaMenuItemSelected(obj, functionName, selectionMode)
- 
+        % onSchemaMenuItemSelected - Instance menu selection callback
+
             % Simplify function name. In order to make gui menus more
             % userfriendly, the alias version of the schemas are used.
             functionNameSplit = strsplit(functionName, '.');
             functionName = strjoin(functionNameSplit([1,2,4]), '.');
             
             switch selectionMode
-                
                 case 'Single'
                     n = 1;
                 case 'Multiple'
@@ -454,105 +457,16 @@ classdef ModelBuilder < handle
                 case 'Help'
                     help(functionName)
                     return
-
                 case 'Open'
                     open(functionName)
                     return
             end
 
-            
-            % TODO: New method!
-            % If we got this far, we are creating a new schema
-            itemFactory = str2func(functionName);
-            newItem = arrayfun(@(i)itemFactory(), 1:n);
-
-            [SOrig, SNew] = deal( newItem(1).toStruct() );
-            
-            % Fill out options for each property
-            propNames = fieldnames(SOrig);
-
-            for i = 1:numel(propNames)
-                iPropName = propNames{i};
-                iPropName_ = [iPropName, '_'];
-                iValue = SNew.(iPropName);
-
-                if isenum(iValue)
-                    [~, m] = enumeration( iValue );
-                    SNew.(iPropName) = m{1};
-                    SNew.(iPropName_) = m;
-                elseif isstring(iValue)
-                    SNew.(iPropName) = char(iValue);
-                elseif isnumeric(iValue)
-                    SNew.(iPropName) = double(iValue);
-                elseif isa(iValue, 'openminds.abstract.ControlledTerm')
-                    m = eval( sprintf('%s.CONTROLLED_INSTANCES', class(iValue)));
-                    SNew.(iPropName) = char(m(1));
-                    SNew.(iPropName_) = cellstr(m);
-                elseif isa(iValue, 'openminds.abstract.Schema') && ...
-                        ~isa(iValue, 'openminds.abstract.ControlledTerm')
-                    
-                    schemaLabels = obj.MetadataCollection.getSchemaInstanceLabels(class(iValue));
-                    schemaShortName = openminds.MetadataCollection.getSchemaShortName(class(iValue));
-
-                    if isempty(schemaLabels)
-                        options = {sprintf('No %s available', schemaShortName)};
-                    else
-                        options = [sprintf('Select a %s', schemaShortName), schemaLabels];
-                    end
-                    SNew.(iPropName) = options{1};
-                    SNew.(iPropName_) = options;
-                else
-                    warning('Values of type %s is not dealt with', class(iValue))
-
-                end
-
-            end
-
-            [~, ~, className] = fileparts(functionName);
-            [className, classNameLabel] = deal( className(2:end) );
-
-            if n>1; classNameLabel = [className, 's']; end
-
-            titleStr = sprintf('Create New %s', classNameLabel);
-            promptStr = sprintf('Fill out properties for %s', classNameLabel);
-            [SNew, wasAborted] = tools.editStruct(SNew, [], titleStr, 'Prompt', promptStr, 'Theme', 'light');
-
-            if wasAborted; return; end
-                
-            for i = 1:numel(propNames)
-                iPropName = propNames{i};
-                iValue = SOrig.(iPropName);
-
-                if isenum(iValue)
-                    enumFcn = str2func( class(iValue) );
-                    SNew.(iPropName) = enumFcn(SNew.(iPropName));
-                
-                elseif isstring(iValue)
-                    SNew.(iPropName) = char(SNew.(iPropName));
-                elseif isnumeric(iValue)
-                    SNew.(iPropName) = cast(SNew.(iPropName), class(newItem.(iPropName)));
-                elseif isa(iValue, 'openminds.abstract.Schema') && ...
-                        ~isa(iValue, 'openminds.controlledterms.ControlledTerm')
-                    if obj.isSchemaInstanceUnavailable(SNew.(iPropName))
-                        SNew.(iPropName) = SOrig.(iPropName);
-                    else
-                        label = SNew.(iPropName);
-                        schemaName = class(SOrig.(iPropName));
-                        schemaInstance = obj.MetadataCollection.getInstanceFromLabel(schemaName, label);
-                        SNew.(iPropName) = schemaInstance;
-                    end
-                end
-            end
-
-
-            for i = 1:numel(newItem)
-                newItem(i) = newItem(i).fromStruct(SNew);
-            end
-            
-            obj.MetadataCollection.add(newItem)
+            om.uiCreateNewInstance(functionName, obj.MetadataCollection, "NumInstances", n)
 
             % Todo: update tables...!
 
+            className = functionNameSplit{end};
             obj.changeSelection(className)
         end
         
