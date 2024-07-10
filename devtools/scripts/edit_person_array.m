@@ -1,6 +1,7 @@
+addpath( genpath( fullfile(fileparts(openminds.internal.rootpath), 'tests') ) )
 persons = personArray; % openminds/tests/oneOff
-metadataCollection = openminds.MetadataCollection();
 
+metadataCollection = openminds.MetadataCollection();
 personStruct = om.convert.toStruct( persons, metadataCollection );
 
 

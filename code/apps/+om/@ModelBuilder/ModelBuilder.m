@@ -165,8 +165,11 @@ classdef ModelBuilder < handle
                 delete(obj.UIMetaTableViewer)
             end
 
-            delete(obj.Figure)
+            delete(obj.MetadataCollection)
+            delete(obj.UIGraphViewer)
+            delete(obj.UIMetaTableViewer)
 
+            delete(obj.Figure)
         end
 
         function onExit(obj, src, evt)
