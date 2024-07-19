@@ -46,4 +46,3 @@ codegen/
 
 # Keep MATLAB projects local
 *.prj
-resources/

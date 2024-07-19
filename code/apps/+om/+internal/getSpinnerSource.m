@@ -1,6 +1,9 @@
-function filePath = getSpinnerSource()
-    
+function filePath = getSpinnerSource(spinnerName)
+    arguments
+        spinnerName (1,1) string = "pulsing_continous"
+    end
     folderPath = fullfile( om.internal.rootpath(), 'apps', 'resources', 'spinners');
-    filePath = fullfile(folderPath, 'test3.html');
 
+    fileName = spinnerName + ".html";
+    filePath = fullfile(folderPath, fileName);
 end
