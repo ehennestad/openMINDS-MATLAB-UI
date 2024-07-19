@@ -46,6 +46,9 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     
         editor = om.internal.window.HeterogeneousArrayEditor(structInstances, 'ItemType', typeName, 'Title', title, 'DefaultItem', referenceItems);
     else
+        typeName = class(metadataInstances);
+        typeName = openminds.internal.utility.getSchemaShortName(typeName);
+
         if isempty(structInstances)
             referenceItem = om.convert.toStruct( feval(class(metadataInstances)), metadataCollection );
             editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', typeName, 'Title', title, 'DefaultItem', referenceItem);
@@ -75,7 +78,8 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
 
         % Convert to openminds instances to get labels...    
         itemNames = cellfun(@(c) char(c), instances, 'UniformOutput', false);
-        itemData = data;
+        mixedTypeName = class(metadataInstances);
+        itemData = num2cell( feval(mixedTypeName, instances) );
     end
 
     delete(editor)

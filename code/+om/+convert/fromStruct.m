@@ -20,14 +20,18 @@ function instance = fromStruct(instance, data, metadataCollection)
             if isSchemaInstanceUnavailable(data.(iPropName)) % local function
                 %instance.(iPropName) = data.(iPropName);
             else
-                label = data.(iPropName);
+                linkedInstance = data.(iPropName);
                 schemaName = class(instance.(iPropName));
-                if isempty(label)
-                    schemaInstance = feval(sprintf('%s.empty', schemaName));
-                else
-                    schemaInstance = metadataCollection.getInstanceFromLabel(schemaName, label);
+                if ~isa(linkedInstance, 'openminds.abstract.Schema')
+                    if isempty(linkedInstance)
+                        linkedInstance = feval(sprintf('%s.empty', schemaName));
+                    else
+                        keyboard
+                        %schemaInstance = metadataCollection.getInstanceFromLabel(schemaName, label);
+                    end
                 end
-                instance.(iPropName) = schemaInstance;
+                
+                instance.(iPropName) = linkedInstance;
             end
         end
     end

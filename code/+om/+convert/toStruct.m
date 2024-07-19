@@ -8,7 +8,7 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
         for i = 1:numel(structInstance)
             structInstance{i} = om.convert.toStruct( openMindsInstance(i), metadataCollection );
         end
-        structInstance = [structInstance{:}];
+        %structInstance = [structInstance{:}];
         return
     end
 
@@ -17,7 +17,11 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
         openMindsInstance = openMindsInstance.Instance;
     end
 
-    structInstance = openMindsInstance.toStruct();
+    try
+        structInstance = openMindsInstance.toStruct();
+    catch
+        keyboard
+    end
     openMindsType = class(openMindsInstance);
 
     % Order fields according to settings/preferences
@@ -130,7 +134,11 @@ function [value, config] = getConfigForNonScalarValue(name, value, openMindsInst
         om.uiEditHeterogeneousList(value, propertyTypeName, metadataCollection );
     
     items = arrayfun(@(x) string(x), value);
-    value = num2cell( value );
+    if isempty(value)
+        value = {value};
+    else
+        value = num2cell( value );
+    end
 
     config = @(h, varargin) om.internal.control.ListControl(h, ...
         'Items', items, ...
@@ -150,7 +158,11 @@ function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, valu
         om.uiEditHeterogeneousList(value, propertyTypeName, metadataCollection );
     
     items = arrayfun(@(x) string(x), value);
-    value = num2cell( value );
+    if isempty(value)
+        value = {value};
+    else
+        value = num2cell( value );
+    end
 
     configFcn = @(h, varargin) om.internal.control.ListControl(h, ...
         'Items', items, ...

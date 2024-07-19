@@ -1,1 +1,4 @@
-{"Person": ["givenName", "familyName", "contactInformation", "digitalIdentifier", "affiliation", "associatedAccount", "alternateName"]}
+{
+    "Person": ["givenName", "familyName", "contactInformation", "digitalIdentifier", "affiliation", "associatedAccount", "alternateName"],
+    "Organization": ["fullName", "shortName", "digitalIdentifier", "homepage", "affiliation", "hasParent"]
+}
