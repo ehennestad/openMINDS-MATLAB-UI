@@ -1,7 +1,9 @@
 function structInstance = toStruct(openMindsInstance, metadataCollection)
-
     
-    if numel( openMindsInstance ) > 1
+    if isempty( openMindsInstance ) 
+        structInstance = struct.empty; return
+
+    elseif numel( openMindsInstance ) > 1 
         structInstance = cell(1, numel(openMindsInstance) );
         for i = 1:numel(structInstance)
             structInstance{i} = om.convert.toStruct( openMindsInstance(i), metadataCollection );
@@ -10,86 +12,148 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
         return
     end
 
-    if isempty(openMindsInstance) && isa(openMindsInstance, 'openminds.abstract.Schema')
-        openMindsInstance = feval(class(openMindsInstance));
-    end
-
-    % TODO: Consider to make this more internal...
+    % NB: Special case. Todo: Consider to make this more internal.
     if isa(openMindsInstance, 'openminds.internal.abstract.LinkedCategory')
-        if isempty(openMindsInstance)
-            structInstance = struct.empty; return
-        else
-            openMindsInstance = openMindsInstance.Instance;
-        end
+        openMindsInstance = openMindsInstance.Instance;
     end
 
-    [SOrig, SNew] = deal( openMindsInstance.toStruct() );
+    structInstance = openMindsInstance.toStruct();
+    openMindsType = class(openMindsInstance);
 
+    % Order fields according to settings/preferences
+    propertyOrder = om.internal.config.getPreferredPropertyOrder( openMindsType );
+    structInstance = orderfields(structInstance, propertyOrder);
     
     metaSchema = openminds.internal.SchemaInspector( openMindsInstance );
 
     % Fill out options for each property
-    propNames = fieldnames(SOrig);
+    propNames = fieldnames(structInstance);
 
     for i = 1:numel(propNames)
         
         iPropName = propNames{i};
-        iPropName_ = [iPropName, '_'];
-        iValue = SNew.(iPropName);
+        iValue = structInstance.(iPropName);
+        iConfig = [];
+        customFcn = [];
 
-        if isenum(iValue)
-            [~, m] = enumeration( iValue );
-            SNew.(iPropName) = m{1};
-            SNew.(iPropName_) = m;
-
-        elseif isstring(iValue)
+        if isstring(iValue)
             if ismissing(iValue); iValue = ''; end
-            SNew.(iPropName) = char(iValue);
+            iValue = char(iValue);
 
         elseif isnumeric(iValue)
-            SNew.(iPropName) = double(iValue);
+            iValue = double(iValue);
 
         elseif isdatetime(iValue)
             % pass
 
+        elseif isenum(iValue) % Deprecated?
+            [~, names] = enumeration( iValue );
+            iValue = categorical(names(1), names);
+
         elseif isa(iValue, 'openminds.abstract.ControlledTerm')
-            m = eval( sprintf('%s.CONTROLLED_INSTANCES', class(iValue)));
-            SNew.(iPropName) = categorical(m(1), m);
+            names = eval( sprintf('%s.CONTROLLED_INSTANCES', class(iValue)));
+            iValue = categorical(names(1), names);
 
         elseif isa(iValue, 'openminds.abstract.Schema')
-
-            schemaLabels = metadataCollection.getSchemaInstanceLabels(class(iValue));
-            schemaShortName = openminds.MetadataCollection.getSchemaShortName(class(iValue));
-
-            if isempty(schemaLabels)
-                valueOptions = {sprintf('No %s available', schemaShortName)};
-            else
-                valueOptions = [sprintf('Select a %s', schemaShortName), schemaLabels];
-            end
-
-            SNew.(iPropName) = categorical(valueOptions(1), valueOptions);
-
             if metaSchema.isPropertyValueScalar(iPropName)
-                SNew.(iPropName_) = 'om.internal.control.DropDownPlus';
-                SNew.(iPropName_) = @(h, varargin) om.internal.control.DropDownPlus(h, 'EditItemsFcn', @(varargin) om.uiCreateNewInstance(class(iValue), openMindsInstance.X_TYPE+"/"+iPropName ));
+                customFcn = @getConfigForScalarValue;
             else
-                SNew.(iPropName_) = 'om.internal.control.ListControl';
+                customFcn = @getConfigForNonScalarValue;
             end
-        
-        elseif isa(iValue, 'openminds.internal.abstract.LinkedCategory') % One of / any of
-            
+
+        elseif isa(iValue, 'openminds.internal.abstract.LinkedCategory') % oneOf/anyOf
             if metaSchema.isPropertyValueScalar(iPropName)
-                SNew.(iPropName) = '';
-                SNew.(iPropName_) = 'om.internal.control.DropDownPlus';
-                %SNew.(iPropName_) = @(h, varargin) om.internal.control.DropDownPlus(h, 'EditItemsFcn', @(varargin) om.uiCreateNewInstance(class(iValue), openMindsInstance.X_TYPE+"/"+iPropName ));
+                customFcn = @getConfigForHeterogeneousScalarValue;
             else
-                SNew.(iPropName) = string(iValue);
-                SNew.(iPropName_) = @(h, varargin) om.internal.control.ListControl(h, 'EditItemsFcn', @(varargin) om.uiEditHeterogeneousList(iValue, openMindsInstance.X_TYPE+"/"+iPropName ));
+                customFcn = @getConfigForHeterogeneousNonScalarValue;
             end
-        
+
         else
             warning('Values of type %s is not dealt with', class(iValue))
         end
+
+        if ~isempty(customFcn)
+            [iValue, iConfig] = customFcn(iPropName, iValue, openMindsInstance, metadataCollection);
+        end
+
+        structInstance.(iPropName) = iValue;
+        if ~isempty(iConfig)
+            iPropName_ = [iPropName, '_'];
+            structInstance.(iPropName_) = iConfig;
+        end
     end
-    structInstance = SNew;
+
+    structInstance.id = openMindsInstance.id;
+    structInstance.id_ = 'hidden';    
+end
+
+% Local functions
+
+function [value, config] = getConfigForScalarValue(name, value, openMindsInstance, metadataCollection)
+
+    typeShortName = openminds.internal.utility.getSchemaShortName(class(value));
+    existingInstances = metadataCollection.list( typeShortName );
+
+    if ~isempty(existingInstances)
+        schemaLabels = arrayfun(@(x) string(x), existingInstances);
+        items = cat(2, sprintf('Select a %s', typeShortName), schemaLabels);
+    else
+        items = {sprintf('No %s available', typeShortName)};
+    end
+    
+    emptyInstance = feval(sprintf('%s.empty', class(value)));
+
+    if isempty(value)
+        value = emptyInstance; 
+    end
+
+    itemsData = [{emptyInstance}, num2cell( existingInstances ) ];
+
+    propertyTypeName = openMindsInstance.X_TYPE + "/" + name;
+
+    editItemsFcn = @(value, varargin) ...
+        om.uiCreateNewInstance(value, propertyTypeName, metadataCollection );
+
+    config = @(h, varargin) om.internal.control.DropDownPlus(h, ...
+        'Items', items, ...
+        'ItemsData', itemsData, ...
+        'EditItemsFcn', editItemsFcn);
+
+end
+
+
+function [value, config] = getConfigForNonScalarValue(name, value, openMindsInstance, metadataCollection)
+
+    propertyTypeName = openMindsInstance.X_TYPE + "/" + name;
+
+    editItemsFcn = @(value, varargin) ...
+        om.uiEditHeterogeneousList(value, propertyTypeName, metadataCollection );
+    
+    items = arrayfun(@(x) string(x), value);
+    value = num2cell( value );
+
+    config = @(h, varargin) om.internal.control.ListControl(h, ...
+        'Items', items, ...
+        'ItemsData', value, ...
+        'EditItemsFcn', editItemsFcn);
+end
+
+function [value, config] = getConfigForHeterogeneousScalarValue(name, value, openMindsInstance, metadataCollection)
+    value = ''; config = []; % Not implemented yet
+end
+
+function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, value, openMindsInstance, metadataCollection)
+    
+    propertyTypeName = openMindsInstance.X_TYPE + "/" + name;
+
+    editItemsFcn = @(value, varargin) ...
+        om.uiEditHeterogeneousList(value, propertyTypeName, metadataCollection );
+    
+    items = arrayfun(@(x) string(x), value);
+    value = num2cell( value );
+
+    configFcn = @(h, varargin) om.internal.control.ListControl(h, ...
+        'Items', items, ...
+        'ItemsData', value, ...
+        'EditItemsFcn', editItemsFcn);
 end

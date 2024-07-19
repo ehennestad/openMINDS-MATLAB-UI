@@ -4,4 +4,7 @@ persons = personArray; % openminds/tests/oneOff
 dsv = openminds.core.DatasetVersion();
 dsv.author = persons;
 
-om.uiCreateNewInstance(dsv, openminds.MetadataCollection);
+collection = openminds.Collection();
+collection.add(dsv)
+
+om.uiCreateNewInstance(dsv, dsv.X_TYPE, collection);

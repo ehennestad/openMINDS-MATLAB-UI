@@ -1,15 +1,16 @@
-function [metadataInstance, userData] = uiCreateNewInstance(instanceType, metadataCollection, options)
+function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, typeURI, metadataCollection, options)
 % uiCreateNewInstance - Open form dialog window for entering instance information
     
     % Todo: select structeditor based on matlab version / settings...
 
     arguments
         instanceType
+        typeURI % todo: use for creating dialog title
         metadataCollection
         options.NumInstances = 1
     end
 
-    userData = [];
+    instanceName = string.empty;
 
     persistent formCache
 
@@ -18,65 +19,26 @@ function [metadataInstance, userData] = uiCreateNewInstance(instanceType, metada
     if isempty(formCache)
         formCache = dictionary;
     end
+
     
     if isa(instanceType, 'char') || isa(instanceType, 'string')
         itemFactory = str2func(instanceType);
-        metadataInstance = arrayfun(@(i)itemFactory(), 1:options.NumInstances);
+        metadataInstance = arrayfun(@(i) itemFactory(), 1:options.NumInstances);
     else
-        metadataInstance = instanceType;
+        if iscell(instanceType)
+            metadataInstance = [instanceType{:}];
+        else
+            metadataInstance = instanceType;
+        end
         instanceType = class(metadataInstance);
     end
 
-    [SOrig, SNew] = deal( metadataInstance(1).toStruct() );
-
+    [SOrig, ~] = deal( metadataInstance(1).toStruct() );
+    
     SNew = om.convert.toStruct( metadataInstance, metadataCollection );
     
     % Fill out options for each property
     propNames = fieldnames(SOrig);
-
-    % % for i = 1:numel(propNames)
-    % %     iPropName = propNames{i};
-    % %     iPropName_ = [iPropName, '_'];
-    % %     iValue = SNew.(iPropName);
-    % % 
-    % %     if isenum(iValue)
-    % %         [~, m] = enumeration( iValue );
-    % %         SNew.(iPropName) = m{1};
-    % %         SNew.(iPropName_) = m;
-    % %     elseif isstring(iValue)
-    % %         SNew.(iPropName) = char(iValue);
-    % %     elseif isnumeric(iValue)
-    % %         SNew.(iPropName) = double(iValue);
-    % %     elseif isa(iValue, 'openminds.abstract.ControlledTerm')
-    % %         m = eval( sprintf('%s.CONTROLLED_INSTANCES', class(iValue)));
-    % %         %SNew.(iPropName) = char(m(1));
-    % %         %SNew.(iPropName_) = cellstr(m);
-    % % 
-    % %         SNew.(iPropName) = categorical(m(1), m);
-    % % 
-    % %     elseif isa(iValue, 'openminds.abstract.Schema') && ...
-    % %             ~isa(iValue, 'openminds.abstract.ControlledTerm')
-    % % 
-    % %         schemaLabels = metadataCollection.getSchemaInstanceLabels(class(iValue));
-    % %         schemaShortName = openminds.MetadataCollection.getSchemaShortName(class(iValue));
-    % % 
-    % %         if isempty(schemaLabels)
-    % %             valueOptions = {sprintf('No %s available', schemaShortName)};
-    % %         else
-    % %             valueOptions = [sprintf('Select a %s', schemaShortName), schemaLabels];
-    % %         end
-    % %         %SNew.(iPropName) = valueOptions{1};
-    % %         %SNew.(iPropName_) = valueOptions;
-    % %         SNew.(iPropName) = categorical(valueOptions(1), valueOptions);
-    % % 
-    % %     elseif isa(iValue, 'openminds.internal.abstract.LinkedCategory')
-    % % 
-    % %         SNew.(iPropName) = '';
-    % %     else
-    % %         warning('Values of type %s is not dealt with', class(iValue))
-    % %     end
-    % % end
-
 
     [~, ~, className] = fileparts(instanceType);
     [className, classNameLabel] = deal( className(2:end) );
@@ -98,8 +60,15 @@ function [metadataInstance, userData] = uiCreateNewInstance(instanceType, metada
         SNew = hEditor.Data;
         hEditor.hide();
     else
+        
+        % Todo: Consider passing instances directly...
+        %hEditor = structeditor.StructEditorApp(metadataInstance, "Title", titleStr, 'LoadingHtmlSource', om.internal.getSpinnerSource());
 
-        hEditor = structeditor.StructEditorApp(SNew, "Title", titleStr);
+        hEditor = structeditor.StructEditorApp(SNew, ...
+            "Title", titleStr, ...
+            'LoadingHtmlSource', om.internal.getSpinnerSource(), ...
+            'EnableNestedStruct', 'off' );
+
         hEditor.OkButtonText = 'Create';
     
         uiwait(hEditor, true)
@@ -143,13 +112,14 @@ function [metadataInstance, userData] = uiCreateNewInstance(instanceType, metada
     end
     
     metadataCollection.add(metadataInstance)
+    instanceName = char(metadataInstance);
 
     if ~nargout
         clear metadataInstance
     end
 
     if nargout < 2
-        clear userData
+        clear instanceName
     end
 end
 
