@@ -122,7 +122,6 @@ function [value, config] = getConfigForScalarValue(name, value, openMindsInstanc
         'Items', items, ...
         'ItemsData', itemsData, ...
         'EditItemsFcn', editItemsFcn);
-
 end
 
 
@@ -147,7 +146,20 @@ function [value, config] = getConfigForNonScalarValue(name, value, openMindsInst
 end
 
 function [value, config] = getConfigForHeterogeneousScalarValue(name, value, openMindsInstance, metadataCollection)
-    value = ''; config = []; % Not implemented yet
+
+        allowedTypes = eval(sprintf("%s.ALLOWED_TYPES", class(value)));
+        allowedTypes = om.internal.config.sortTypes(class(openMindsInstance), name, allowedTypes);
+
+        value = '';
+        items = "";
+        itemsData = {''};
+        config = @(h, varargin) om.internal.control.DropDownPlusPlus(h, ...
+        "MetadataCollection", metadataCollection, ...
+        "AllowedTypes", allowedTypes, ...
+        'Items', items, ...
+        'ItemsData', itemsData);
+
+        % 'EditItemsFcn', editItemsFcn
 end
 
 function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, value, openMindsInstance, metadataCollection)

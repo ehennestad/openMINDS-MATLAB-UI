@@ -1,4 +1,12 @@
 {
+    "DatasetVersion": ["fullName", "shortName", "description", "keyword", "digitalIdentifier", "versionIdentifier", "versionInnovation", "isNewVersionOf", "isAlternativeVersionOf",
+                        "author", "custodian", "otherContribution",
+                        "dataType", "experimentalApproach", "technique", "preparationDesign", "behavioralProtocol", "protocol", "studiedSpecimen", "studyTarget", "inputData",
+                        "accessibility", "license", "copyright", "howToCite",
+                        "ethicsAssessment",
+                        "funding", "supportChannel",
+                        "relatedPublication", "fullDocumentation",
+                        "repository", "releaseDate", "homepage"],
     "Person": ["givenName", "familyName", "contactInformation", "digitalIdentifier", "affiliation", "associatedAccount", "alternateName"],
     "Organization": ["fullName", "shortName", "digitalIdentifier", "homepage", "affiliation", "hasParent"]
 }

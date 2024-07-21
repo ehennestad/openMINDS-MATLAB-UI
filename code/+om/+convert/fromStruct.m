@@ -9,7 +9,8 @@ function instance = fromStruct(instance, data, metadataCollection)
         if isenum(iValue)
             enumFcn = str2func( class(iValue) );
             instance.(iPropName) = enumFcn(data.(iPropName));
-        
+        elseif iscategorical(iValue)
+            instance.(iPropName) = char(data.(iPropName));
         elseif isstring(iValue)
             instance.(iPropName) = char(data.(iPropName));
         elseif isnumeric(iValue)
@@ -17,22 +18,30 @@ function instance = fromStruct(instance, data, metadataCollection)
         elseif isa(iValue, 'openminds.abstract.ControlledTerm')
             instance.(iPropName) = char(data.(iPropName));
         elseif isa(iValue, 'openminds.abstract.Schema')
-            if isSchemaInstanceUnavailable(data.(iPropName)) % local function
-                %instance.(iPropName) = data.(iPropName);
-            else
-                linkedInstance = data.(iPropName);
-                schemaName = class(instance.(iPropName));
-                if ~isa(linkedInstance, 'openminds.abstract.Schema')
-                    if isempty(linkedInstance)
-                        linkedInstance = feval(sprintf('%s.empty', schemaName));
-                    else
-                        keyboard
-                        %schemaInstance = metadataCollection.getInstanceFromLabel(schemaName, label);
-                    end
+            linkedInstance = data.(iPropName);
+            schemaName = class(instance.(iPropName));
+
+            if isa(linkedInstance, 'cell')
+                if numel(linkedInstance) == 1
+                    assert(numel(linkedInstance)==1, "Expected length to be 1")
+                    linkedInstance = linkedInstance{1};
+                else
+                    linkedInstance = [linkedInstance{:}];
                 end
-                
-                instance.(iPropName) = linkedInstance;
             end
+
+            if ~isa(linkedInstance, 'openminds.abstract.Schema')
+                if isempty(linkedInstance)
+                    linkedInstance = feval(sprintf('%s.empty', schemaName));
+                elseif isa(linkedInstance, 'openminds.internal.abstract.LinkedCategory')
+                    % pass
+                else
+                    keyboard
+                    %schemaInstance = metadataCollection.getInstanceFromLabel(schemaName, label);
+                end
+            end
+            
+            instance.(iPropName) = linkedInstance;
         end
     end
 end

@@ -1,7 +1,9 @@
 function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, typeURI, metadataCollection, options)
 % uiCreateNewInstance - Open form dialog window for entering instance information
     
-    % Todo: select structeditor based on matlab version / settings...
+    % Todo: 
+    % [ ] select structeditor based on matlab version / settings...
+    % [ ] create new vs edit
 
     arguments
         instanceType
@@ -31,6 +33,10 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, ty
             metadataInstance = instanceType;
         end
         instanceType = class(metadataInstance);
+    end
+
+    if isempty(metadataInstance)
+        metadataInstance = feval(instanceType);
     end
 
     [SOrig, ~] = deal( metadataInstance(1).toStruct() );
@@ -79,39 +85,20 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, ty
         formCache(className) = hEditor;
     end
     
-    if wasAborted; return; end
-        
-    for i = 1:numel(propNames)
-        iPropName = propNames{i};
-        iValue = SOrig.(iPropName);
-
-        if isenum(iValue)
-            enumFcn = str2func( class(iValue) );
-            SNew.(iPropName) = enumFcn(SNew.(iPropName));
-        
-        elseif isstring(iValue)
-            SNew.(iPropName) = char(SNew.(iPropName));
-        elseif isnumeric(iValue)
-            SNew.(iPropName) = cast(SNew.(iPropName), class(metadataInstance.(iPropName)));
-        elseif isa(iValue, 'openminds.abstract.ControlledTerm')
-            SNew.(iPropName) = char(SNew.(iPropName));
-        elseif isa(iValue, 'openminds.abstract.Schema')
-            if isSchemaInstanceUnavailable(SNew.(iPropName)) % local function
-                SNew.(iPropName) = SOrig.(iPropName);
-            else
-                label = SNew.(iPropName);
-                schemaName = class(SOrig.(iPropName));
-                schemaInstance = metadataCollection.getInstanceFromLabel(schemaName, label);
-                SNew.(iPropName) = schemaInstance;
-            end
-        end
-    end
-
-    for i = 1:numel(metadataInstance)
-        metadataInstance(i) = metadataInstance(i).fromStruct(SNew);
+    if wasAborted
+        metadataInstance = [];
+        return
     end
     
-    metadataCollection.add(metadataInstance)
+    for i = 1:numel(metadataInstance)
+        %metadataInstance(i) = metadataInstance(i).fromStruct(SNew);
+        metadataInstance(i) = om.convert.fromStruct(metadataInstance(i), SNew, metadataCollection);
+    end
+    
+    if ~metadataCollection.contains(metadataInstance)
+        metadataCollection.add(metadataInstance)
+    end
+
     instanceName = char(metadataInstance);
 
     if ~nargout

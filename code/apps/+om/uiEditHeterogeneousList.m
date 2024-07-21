@@ -49,6 +49,10 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
         typeName = class(metadataInstances);
         typeName = openminds.internal.utility.getSchemaShortName(typeName);
 
+        if iscell(structInstances)
+            structInstances = [structInstances{:}];
+        end
+
         if isempty(structInstances)
             referenceItem = om.convert.toStruct( feval(class(metadataInstances)), metadataCollection );
             editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', typeName, 'Title', title, 'DefaultItem', referenceItem);
@@ -65,21 +69,42 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     else
         % Heterogeneous...
         data = editor.Data;
+        
+        if ~iscell(data)
+            data = num2cell(data);
+        end
 
         instances = {};
 
         for i = 1:numel(data)
-            openmindsType = referenceItems.getStructType(data{i});
+            if isHeterogeneous
+                openmindsType = referenceItems.getStructType(data{i});
+            else
+                openmindsType = class(metadataInstances);
+            end
+
             iData = data{i};
-            iInstance = feval( openmindsType );
-            
+            if isfield(iData, 'id') && ~isempty(iData.id)
+                iInstance = feval( openmindsType, 'id', iData.id );
+            else
+                iInstance = feval( openmindsType );
+            end
             instances{i} = om.convert.fromStruct(iInstance, iData, metadataCollection); %#ok<AGROW>
+
+            if ~metadataCollection.contains( instances{i} )
+                metadataCollection.add( instances{i} )
+            end
         end
 
         % Convert to openminds instances to get labels...    
         itemNames = cellfun(@(c) char(c), instances, 'UniformOutput', false);
-        mixedTypeName = class(metadataInstances);
-        itemData = num2cell( feval(mixedTypeName, instances) );
+
+        if isHeterogeneous
+            mixedTypeName = class(metadataInstances);
+            itemData = num2cell( feval(mixedTypeName, instances) );
+        else
+            itemData = instances;
+        end
     end
 
     delete(editor)
