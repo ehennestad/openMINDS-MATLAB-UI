@@ -7,8 +7,8 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, ty
 
     arguments
         instanceType
-        typeURI % todo: use for creating dialog title
-        metadataCollection
+        typeURI = "" % todo: use for creating dialog title
+        metadataCollection = openminds.Collection([])
         options.NumInstances = 1
     end
 

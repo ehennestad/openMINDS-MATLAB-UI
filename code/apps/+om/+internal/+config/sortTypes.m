@@ -1,4 +1,7 @@
 function sortedTypes = sortTypes(className, typeName, types)   
+    
+    typeName = char(typeName);
+    typeName(1) = lower(typeName(1));
 
     preferredTypeOrder = om.internal.config.getPreferredTypeOrder(className, typeName);
     if ~isempty(preferredTypeOrder)

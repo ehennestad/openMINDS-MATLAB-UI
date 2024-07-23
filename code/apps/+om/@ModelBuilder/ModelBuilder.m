@@ -465,7 +465,7 @@ classdef ModelBuilder < handle
                     return
             end
 
-            om.uiCreateNewInstance(functionName, obj.MetadataCollection, "NumInstances", n)
+            om.uiCreateNewInstance(functionName, '', obj.MetadataCollection, "NumInstances", n)
 
             % Todo: update tables...!
 

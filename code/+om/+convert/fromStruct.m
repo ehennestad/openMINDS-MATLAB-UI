@@ -21,6 +21,7 @@ function instance = fromStruct(instance, data, metadataCollection)
             linkedInstance = data.(iPropName);
             schemaName = class(instance.(iPropName));
 
+            % Unpack instances from cell arrays
             if isa(linkedInstance, 'cell')
                 if numel(linkedInstance) == 1
                     assert(numel(linkedInstance)==1, "Expected length to be 1")
@@ -30,6 +31,7 @@ function instance = fromStruct(instance, data, metadataCollection)
                 end
             end
 
+            % Get "null" instance 
             if ~isa(linkedInstance, 'openminds.abstract.Schema')
                 if isempty(linkedInstance)
                     linkedInstance = feval(sprintf('%s.empty', schemaName));
@@ -41,6 +43,14 @@ function instance = fromStruct(instance, data, metadataCollection)
                 end
             end
             
+            instance.(iPropName) = linkedInstance;
+        elseif isa(iValue, 'openminds.internal.abstract.LinkedCategory')
+            linkedInstance = data.(iPropName);
+            
+            if isa(linkedInstance, 'cell')
+                linkedInstance = [linkedInstance{:}];
+            end
+
             instance.(iPropName) = linkedInstance;
         end
     end

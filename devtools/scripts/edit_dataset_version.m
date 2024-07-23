@@ -17,5 +17,6 @@ else
 end
 
 dsv = om.uiCreateNewInstance(dsv, dsv.X_TYPE, collection);
-
-collection.save(filePath)
+if ~isempty(dsv)
+    collection.save(filePath)
+end

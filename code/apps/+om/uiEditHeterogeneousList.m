@@ -85,7 +85,25 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
 
             iData = data{i};
             if isfield(iData, 'id') && ~isempty(iData.id)
-                iInstance = feval( openmindsType, 'id', iData.id );
+                % retrieve existing instance.
+                
+                if isempty(metadataInstances)
+                    iInstance = feval( openmindsType, 'id', iData.id );
+                else
+                    if isa(metadataInstances, 'openminds.abstract.Schema')
+                        isInstance = strcmp( {metadataInstances.id}, iData.id );
+                        iInstance = metadataInstances(isInstance);
+                    elseif isa(metadataInstances, 'openminds.internal.abstract.LinkedCategory')
+                        instanceIds = arrayfun(@(x) x.Instance.id, metadataInstances, 'uni', false);
+                        isInstance = strcmp( instanceIds, iData.id );
+                        iInstance = metadataInstances(isInstance).Instance; % Todo: Fix for .Instance
+                    else
+                        error('Unkown class for metadata instance')
+                    end
+                end
+                if isempty(iInstance)
+                    iInstance = metadataInstances(isInstance);
+                end
             else
                 iInstance = feval( openmindsType );
             end
