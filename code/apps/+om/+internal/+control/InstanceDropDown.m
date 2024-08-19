@@ -7,6 +7,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     %   [v] Only show download action if remote metadata collection is
     %       assigned
     %   [?] Add listener for Metadata collection events
+    %   [ ] Set mixed type (allowed types)
+    %   [ ] Update value properly...
 
 
     % Notes:
@@ -55,8 +57,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         % MetadataType - The metadata type which is currently active/selected 
         % in this component
         MetadataType (1,1) om.enum.Types = "None"
-        % Todo: ActiveType
-
+        
+        % Todo: AllowedTypes
     end
 
     properties (Access = private)
@@ -69,7 +71,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         GridLayout  matlab.ui.container.GridLayout
         DropDown    matlab.ui.control.DropDown
         ActionButton matlab.ui.control.Button
-        TypeSelectionContextMenu matlab.ui.container.Menu
+        TypeSelectionContextMenu om.internal.container.InstanceTypeMenu
     end
     
     % Properties that corresponds with internal states
@@ -255,6 +257,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 case 'TypeSelectionButton'
                     iconFilePath = om.internal.getIconPath('options');
                     callbackFcn = @comp.onChangeTypeButtonPushed;
+                    comp.initializeTypeSelectionContextMenu()
             end
 
             if isempty(comp.ActionButton)
@@ -405,7 +408,12 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         end
 
         function onChangeTypeButtonPushed(comp, src, evt)
-            disp('Change metadata type')
+            pos = getpixelposition(evt.Source, true);
+            comp.TypeSelectionContextMenu.open(pos(1), pos(2))
+        end
+
+        function onTypeSelectionContectMenuClicked(comp, src, evt)
+            comp.MetadataType = evt.SelectedType;
         end
     end
 
@@ -504,58 +512,18 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         end
     
         % Create context menu for selecting active type
-        function createContextMenu(comp, hFigure)
-        % createContextMenu - Create context menu for selecting active type
-            if nargin < 2; hFigure = ancestor(comp, 'figure'); end
-
-            if ~isempty(hFigure) && isvalid(hFigure)
-                if isempty(comp.TypeSelectionContextMenu)
-                    comp.TypeSelectionContextMenu = uicontextmenu(hFigure);
-                end
-                
-                if ~isempty(comp.TypeSelectionContextMenu.Children)
-                    delete(comp.TypeSelectionContextMenu.Children)
-                end
-
-                for i = 1:numel(comp.AllowedTypes)
-                    iType = comp.AllowedTypes(i);
-                    typeShortName = openminds.internal.utility.getSchemaShortName(iType);
-
-                    typeMenuItem = uimenu(comp.TypeSelectionContextMenu);
-                    typeMenuItem.Text = typeShortName;
-                    typeMenuItem.Callback = @comp.onMetadataTypeContextMenuItemClicked;
-                    typeMenuItem.Checked = 'off';
+        function initializeTypeSelectionContextMenu(comp)
+            if isempty(comp.TypeSelectionContextMenu)
+                hFigure = ancestor(comp, 'figure');
+                if ~isempty(hFigure) && isvalid(hFigure)
+                    comp.TypeSelectionContextMenu = ...
+                        om.internal.container.InstanceTypeMenu(hFigure, ...
+                        "Types", ["Person", "Organization"], ...
+                        "SelectedType", "Person", ...
+                        "SelectionChangedFcn", @comp.onTypeSelectionContectMenuClicked );
                 end
             end
         end
-
-        function onMetadataTypeContextMenuItemClicked(comp, src, event)
-            fullClassName = comp.findMatchingClassName(event.Source.Text, comp.AllowedTypes);
-            comp.ActiveType = fullClassName;
-        end
-
-        function changeType(comp, newType)
-            comp.DropDown.Placeholder = sprintf("Create a new %s", newType);
-        end        
-
-        function updateCheckedContextMenuItem(comp)
-            % Uncheck all menu items
-            set(comp.TypeSelectionContextMenu.Children, 'Checked', 'off');
-
-            if ismissing(comp.ActiveType)
-                % pass
-            else
-                menuItemLabels = {comp.TypeSelectionContextMenu.Children.Text};
-                activeTypeShortName = openminds.internal.utility.getSchemaShortName(comp.ActiveType);
-
-                isMatch = strcmp(menuItemLabels, activeTypeShortName);
-                if any(isMatch)
-                    comp.TypeSelectionContextMenu.Children(isMatch).Checked = "on";
-                else
-                    error('Unexpected')
-                end
-            end
-        end    
     end
 
     % Component methods (non-graphical)
