@@ -230,4 +230,14 @@ classdef Types
             obj.ClassName = name;
         end
     end
+
+    methods
+        function tf = ismissing(obj)
+            tf = strcmp(obj.ClassName, 'None');
+        end
+
+        function name = getSchemaName(obj)
+            name = openminds.internal.utility.getSchemaShortName(obj.ClassName);
+        end
+    end
 end
