@@ -1,4 +1,5 @@
 {
+    "Dataset": ["fullName", "author", "custodian", "shortName", "description", "digitalIdentifier", "hasVersion", "homepage", "howToCite"],
     "DatasetVersion": ["fullName", "shortName", "description", "keyword", "digitalIdentifier", "versionIdentifier", "versionInnovation", "isNewVersionOf", "isAlternativeVersionOf",
                         "author", "custodian", "otherContribution",
                         "dataType", "experimentalApproach", "technique", "preparationDesign", "behavioralProtocol", "protocol", "studiedSpecimen", "studyTarget", "inputData",

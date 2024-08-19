@@ -1,4 +1,11 @@
 {
+  "Dataset": {
+    "author": [
+      "Person",
+      "Organization",
+      "Consortium"
+    ]
+  },
   "DatasetVersion": {
     "author": [
       "Person",

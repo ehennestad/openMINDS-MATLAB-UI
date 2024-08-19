@@ -26,6 +26,12 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     end
 
     title = sprintf( 'Edit %s for %s', typeName, className);
+    
+    % Todo
+    titleStr = om.internal.text.getEditorTitle(...
+        "UpstreamInstanceType", className, ...
+        "UpstreamInstancePropertyName", typeName, ...
+        "Mode", "edit");
 
     if isHeterogeneous
         if ~isa(structInstances, 'cell')

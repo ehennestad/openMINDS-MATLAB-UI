@@ -1,7 +1,5 @@
 
-tic
-dsv = openminds.core.DatasetVersion();
-toc
+%dsv = openminds.core.DatasetVersion();
 
 cr = openminds.core.Copyright;
 metadataCollection = openminds.MetadataCollection();

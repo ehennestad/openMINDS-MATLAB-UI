@@ -95,6 +95,13 @@ end
 
 function [value, config] = getConfigForScalarValue(name, value, openMindsInstance, metadataCollection)
 
+    arguments
+        name
+        value
+        openMindsInstance
+        metadataCollection
+    end
+
     typeShortName = openminds.internal.utility.getSchemaShortName(class(value));
     existingInstances = metadataCollection.list( typeShortName );
 
@@ -112,11 +119,11 @@ function [value, config] = getConfigForScalarValue(name, value, openMindsInstanc
     end
 
     itemsData = [{emptyInstance}, num2cell( existingInstances ) ];
-
-    propertyTypeName = openMindsInstance.X_TYPE + "/" + name;
-
+    
     editItemsFcn = @(value, varargin) ...
-        om.uiCreateNewInstance(value, propertyTypeName, metadataCollection );
+        om.uiCreateNewInstance(value, metadataCollection, ...
+            "UpstreamInstanceType", openminds.internal.utility.getSchemaName(class(openMindsInstance)), ...
+            "UpstreamInstancePropertyName", name);
 
     config = @(h, varargin) om.internal.control.DropDownPlus(h, ...
         'Items', items, ...

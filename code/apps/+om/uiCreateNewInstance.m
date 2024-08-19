@@ -1,42 +1,51 @@
-function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, typeURI, metadataCollection, options)
+function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, metadataCollection, options)
 % uiCreateNewInstance - Open form dialog window for entering instance information
     
+%   Options (name-value pairs)
+%       UpstreamInstanceType         : Type of upstream instance if the instance 
+%                                      to be created is a linked instance of 
+%                                      another instance.
+%       
+%       UpstreamInstancePropertyName : Property name for upstream instance
+%                                      if instance to be created is a linked 
+%                                      instance
+
     % Todo: 
     % [ ] select structeditor based on matlab version / settings...
     % [ ] create new vs edit
 
     arguments
-        instanceType
-        typeURI = "" % todo: use for creating dialog title
+        instanceSpec
         metadataCollection = openminds.Collection([])
+        options.UpstreamInstanceType (1,1) string = missing
+        options.UpstreamInstancePropertyName (1,1) string = missing
         options.NumInstances = 1
     end
 
+    persistent formCache
+    if isempty(formCache); formCache = dictionary(); end
+
+    % Reset form cache during dev
+    formCache = dictionary(); % Todo: Remove
+
     instanceName = string.empty;
 
-    persistent formCache
-
-    formCache = []; % During dev.
-
-    if isempty(formCache)
-        formCache = dictionary;
-    end
-
     
-    if isa(instanceType, 'char') || isa(instanceType, 'string')
-        itemFactory = str2func(instanceType);
-        metadataInstance = arrayfun(@(i) itemFactory(), 1:options.NumInstances);
+    if isa(instanceSpec, 'char') || isa(instanceSpec, 'string')
+        
+        typeClassFcn = str2func(instanceSpec);
+        metadataInstance = arrayfun(@(i) typeClassFcn(), 1:options.NumInstances);
     else
-        if iscell(instanceType)
-            metadataInstance = [instanceType{:}];
+        if iscell(instanceSpec)
+            metadataInstance = [instanceSpec{:}];
         else
-            metadataInstance = instanceType;
+            metadataInstance = instanceSpec;
         end
-        instanceType = class(metadataInstance);
+        instanceSpec = class(metadataInstance);
     end
 
     if isempty(metadataInstance)
-        metadataInstance = feval(instanceType);
+        metadataInstance = feval(instanceSpec);
     end
 
     [SOrig, ~] = deal( metadataInstance(1).toStruct() );
@@ -46,12 +55,20 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceType, ty
     % Fill out options for each property
     propNames = fieldnames(SOrig);
 
-    [~, ~, className] = fileparts(instanceType);
+    [~, ~, className] = fileparts(instanceSpec);
     [className, classNameLabel] = deal( className(2:end) );
 
     if options.NumInstances > 1; classNameLabel = [className, 's']; end
 
     titleStr = sprintf('Create New %s', classNameLabel);
+
+
+    % titleStr = om.internal.text.getEditorTitle(...
+    %     "InstanceType", className, ...
+    %     "UpstreamInstanceType", options.UpstreamInstanceType, ...
+    %     "UpstreamInstancePropertyName", options.UpstreamInstancePropertyName, ...
+    %     "Mode", "create");
+
     promptStr = sprintf('Fill out properties for %s', classNameLabel);
     %[SNew, wasAborted] = tools.editStruct(SNew, [], titleStr, 'Prompt', promptStr, 'Theme', 'light');
     

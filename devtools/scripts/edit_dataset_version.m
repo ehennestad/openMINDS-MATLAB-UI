@@ -16,7 +16,7 @@ else
     dsv = collection.list("DatasetVersion");
 end
 
-dsv = om.uiCreateNewInstance(dsv, dsv.X_TYPE, collection);
+dsv = om.uiCreateNewInstance(dsv, collection);
 if ~isempty(dsv)
     collection.save(filePath)
 end
