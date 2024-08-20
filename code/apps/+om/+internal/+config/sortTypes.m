@@ -1,9 +1,9 @@
-function sortedTypes = sortTypes(className, typeName, types)   
+function sortedTypes = sortTypes(schemaName, propertyName, types)   
     
-    typeName = char(typeName);
-    typeName(1) = lower(typeName(1));
+    propertyName = char(propertyName);
+    propertyName(1) = lower(propertyName(1));
 
-    preferredTypeOrder = om.internal.config.getPreferredTypeOrder(className, typeName);
+    preferredTypeOrder = om.internal.config.getPreferredTypeOrder(schemaName, propertyName);
     if ~isempty(preferredTypeOrder)
         
         shortNames = cellfun(@(c)openminds.internal.utility.getSchemaName(c), types, 'uni', 1);

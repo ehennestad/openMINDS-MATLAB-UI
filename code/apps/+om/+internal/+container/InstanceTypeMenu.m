@@ -1,20 +1,40 @@
 classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
 % InstanceTypeMenu Provides a context menu for selecting openMINDS types
+%
+%   Attaches a context menu to the given figure which provides openMINDS
+%   types as options. Note: Types must be set upon creation of the menu
+%
+%   Example usage:
+% 
+%   om.internal.container.InstanceTypeMenu(hFigure,
+%       Types=["Person", "Organization"], ...
+%       SelectedType="Person" )
 
-    properties (SetAccess = private)
+
+    properties (SetAccess = immutable)
+        % Types - A list of types to select from (options)
         Types (1,:) om.enum.Types
     end
 
+    properties (AbortSet)
+        % SelectedType - The currently selected type 
+        SelectedType (1,1) om.enum.Types 
+    end
+
     properties
-        SelectedType (1,1) om.enum.Types
+        % SelectionChangedFcn - Function handle for function to call when a
+        % type is selected. The function will receive to inputs, the source
+        % of the interaction, i.e an object of this class, and an eventdata
+        % object. See: om.internal.event.SelectedTypeChangedData
         SelectionChangedFcn
     end
     
     properties (Access = private)
         UIContextMenu
     end
-
-    methods % Constructor
+    
+    % Constructor
+    methods
         function obj = InstanceTypeMenu(hFigure, options)
             arguments
                 hFigure matlab.ui.Figure
@@ -31,21 +51,24 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
             obj.set(options)
         end
     end
-
+    
+    % Public methods
     methods
         function open(obj, x, y)
             obj.UIContextMenu.open(x, y)
         end
     end
-
-    methods 
+    
+    % Set methods for properties
+    methods
         function set.SelectedType(obj, value)
             value = obj.validateActiveType(value);
             obj.SelectedType = value;
             obj.postSetSelectedType()
         end
     end
-
+    
+    % Postset methods for properties
     methods (Access = private)
         function postSetSelectedType(obj)
             obj.updateCheckedContextMenuItem()
@@ -55,7 +78,15 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
             end
         end
     end
+    
+    % Component callback methods 
+    methods (Access = private)
+        function onContextMenuItemClicked(obj, ~, event)
+            obj.SelectedType = om.enum.Types(event.Source.Text);
+        end
+    end
 
+    % Creation and internal updates
     methods (Access = private)
 
         % Create context menu for selecting active type
@@ -100,10 +131,6 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
             end
         end
 
-        function onContextMenuItemClicked(obj, ~, event)
-            obj.SelectedType = om.enum.Types(event.Source.Text);
-        end
-        
         function value = validateActiveType(obj, value)
         % validateActiveType - Validate value for ActiveType property
 

@@ -3,13 +3,13 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
     % Todo: 
     %   [v] Add enumeration for supplementary action button
-    %   [ ] Test editing of items. Does item change? does label change?
     %   [v] Only show download action if remote metadata collection is
     %       assigned
     %   [?] Add listener for Metadata collection events
-    %   [ ] Set mixed type (allowed types)
-    %   [ ] Update value properly...
-
+    %   [v] Set mixed type (allowed types)
+    %   [v] Update value properly...
+    %   [ ] How to deal with mixed type values???
+    %   [ ] Test editing of items. Does item change? does label change?
 
     % Notes:
     % For efficiency, the dropdown is only populated with items, the
@@ -17,6 +17,10 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % itemsdata, dropdowns are very slow to update when changing items and
     % itemsdata, which is necessary if implementing filtering and
     % modifications of items/itemsdata (TODO)
+
+    % Discussion
+    %  - How will this be called? What if we need to create it without having
+    %  - a value available.
 
 
     % Events with associated public callbacks
@@ -26,6 +30,14 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
     properties
         Value % NB: Need public set access
+    end
+
+    properties (Dependent)
+        HasButton
+    end
+
+    properties (Access = private)
+        ValueIndex
     end
 
     properties (Hidden)
@@ -38,9 +50,12 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         ItemsData (1,:) cell = {};
     end
 
-    
     properties (Constant, Access = private)
-        Actions = ["*Select a instance*", "*Create a new instance*", "*Download instances*"]
+        DefaultActions = ["*Select a instance*", "*Create a new instance*", "*Download instances*"]
+    end
+
+    properties (SetAccess = private)
+        MetadataType (1,1) string {om.internal.validator.mustBeTypeClassName} = missing
     end
 
     properties (SetAccess = private)
@@ -56,14 +71,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     properties (AbortSet = true)
         % MetadataType - The metadata type which is currently active/selected 
         % in this component
-        MetadataType (1,1) om.enum.Types = "None"
-        
-        % Todo: AllowedTypes
-    end
-
-    properties (Access = private)
-        % One of instance or mixedtype instance.
-        InstanceType
+        ActiveMetadataType (1,1) om.enum.Types = "None"
     end
 
     % Properties that correspond to underlying components
@@ -81,37 +89,68 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         % collection)
         HasRemoteInstances = false
 
+        % AllowedTypes - List of openMINDS types which this dropdown
+        % supports. Note, this is either a scalar or a list if the dropdown
+        % represents a mixed type.
+        AllowedTypes (1,:) om.enum.Types
+
         SearchField
         SearchString = ''
 
         ItemsStore
         ItemsDataStore
+
+        Actions (1,:) string
     end
 
     % Constructor
     methods
-        function comp = InstanceDropDown(propValues)
+        function comp = InstanceDropDown(parent, propValues)
             arguments
+                parent = []
                 propValues.?matlab.ui.control.DropDown
                 propValues.CreateFcn % ComponentContainer property
                 propValues.MetadataCollection
-                propValues.MetadataType (1,1) om.enum.Types = "None"
+                propValues.MetadataType (1,1) string = missing
+                propValues.ActiveMetadataType (1,1) om.enum.Types = "None"
                 propValues.UpstreamInstanceType (1,1) string = missing
                 propValues.UpstreamInstancePropertyName (1,1) string = missing
                 propValues.ActionButtonType (1,1) om.internal.control.enum.InstanceDropdownActionButton = "None"
                 propValues.RemoteMetadataCollection
             end
 
+            if ~isempty(parent)
+                propValues.Parent = parent;
+            end
+
             [propValues, propValuesSuper] = popPropValues(propValues, 'Parent', 'CreateFcn', 'Position');
             comp@matlab.ui.componentcontainer.ComponentContainer(propValuesSuper)
 
-            % Assign metadata collection and type
-            [propValues, propValuesMetadata] = popPropValues(propValues, ...
-                'MetadataCollection', 'RemoteMetadataCollection', 'MetadataType');
-            % NB: In order to correctly initialize, MetaDataType needs to
-            % be set last, hence it is last input in function call above.
-            set(comp, propValuesMetadata)
+            % Assign metadata collection(s)
+            [propValues, propValuesMetadataCollection] = popPropValues(propValues, ...
+                'MetadataCollection', 'RemoteMetadataCollection');
+            set(comp, propValuesMetadataCollection)
 
+            % NB: In order to correctly initialize, MetaDataType needs to
+            % be set after collections are set.
+            if isfield(propValues, "MetadataType")
+                comp.MetadataType = propValues.MetadataType;
+                propValues = rmfield(propValues, "MetadataType");
+            end
+            if isfield(propValues, "ActiveMetadataType") 
+                if propValues.ActiveMetadataType ~= "None"
+                    comp.ActiveMetadataType = propValues.ActiveMetadataType;
+                end
+                propValues = rmfield(propValues, "ActiveMetadataType");
+            end
+
+            % Check if Value is provided
+            if isfield(propValues, "Value")
+                comp.MetadataType = class(propValues.Value);
+                comp.Value = propValues.Value;
+                propValues = rmfield(propValues, "Value");
+            end
+            
             % Assign upstream instance information
             [propValues, propValuesUpstream] = popPropValues(propValues, ...
                 'UpstreamInstanceType', 'UpstreamInstancePropertyName');
@@ -120,17 +159,11 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             [propValues, propValuesBtn] = popPropValues(propValues, 'ActionButtonType');
             set(comp, propValuesBtn)
 
-
-            % break out Items and ItemsData (Todo: Not needed)
-            [propValues, propValuesItems] = popPropValues(propValues, 'Items', 'ItemsData');
-            
-            % Set items and itemsdata...
-
             % Assign property values to dropdown
             set(comp.DropDown, propValues)
 
             % Initialize filter functionality
-            % (Not functional yet)
+            % (TODO, Not functional yet)
             % comp.createFilter()
         end
     end
@@ -138,6 +171,10 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % Public methods
     methods
         function updateValue(comp, newValue, previousValue)
+
+            % Todo: Wrap in mixed type if metadata type is mixed type...???
+
+
             comp.Value = newValue;
 
             evtData = matlab.ui.eventdata.ValueChangedData(...
@@ -149,10 +186,32 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
     % Property set methods
     methods
+        
+        % Public properties
         function set.Value(comp, value)
             comp.Value = value;
             comp.postSetValue()
         end
+
+        function set.ActiveMetadataType(comp, value)
+            %value = comp.validateMetadataType(value);
+            if strcmp(comp.ActiveMetadataType, value); return; end
+            comp.ActiveMetadataType = value;
+            comp.postSetActiveMetadataType()
+        end
+
+        function set.ActionButtonType(comp, value)
+            comp.ActionButtonType = value;
+            comp.postSetActionTypeButton()
+        end
+
+        % Immutable properties
+        function set.MetadataType(comp, value)
+            comp.MetadataType = value;
+            comp.postSetMetadataType()
+        end
+
+        % Private properties
 
         function set.Items(comp, value)
             comp.Items = value;
@@ -164,16 +223,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             comp.postSetItemsData()
         end
 
-        function set.MetadataType(comp, value)
-            %value = comp.validateMetadataType(value);
-            if strcmp(comp.MetadataType, value); return; end
-            comp.MetadataType = value;
-            comp.postSetMetadataType()
-        end
-
-        function set.ActionButtonType(comp, value)
-            comp.ActionButtonType = value;
-            comp.postSetActionTypeButton()
+        function value = get.HasButton(comp)
+            value = comp.ActionButtonType ~= "None";
         end
     end
 
@@ -181,13 +232,64 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     methods (Access = private)
         function postSetValue(comp)
             if isempty(comp.Value)
+                % Todo: Update logic here.
                 % Make sure the empty instance in ItemsData is the same 
                 % object (handle) as the current Value
-                if strcmp( class(comp.Value), class(comp.DropDown.ItemsData{1}) )
-                    comp.DropDown.ItemsData{1} = comp.Value;
+                
+                assert(isa(comp.Value, comp.MetadataType), ...
+                    'Something unexpected happened (DropDown value is not of expected type)')
+
+                comp.DropDown.ValueIndex = 1;
+                return
+            end
+            
+            % Find value index for given value
+            valueIndex = [];
+            for i = 1:numel(comp.ItemsData)
+                if isequal(comp.Value, comp.ItemsData{i})
+                    valueIndex = i; break
                 end
             end
-            comp.DropDown.Value = comp.Value;
+
+            % Use ValueIndex to set DropDown selection in case some 
+            % elements of comp.Items are identical
+            if ~isempty(valueIndex)
+                comp.DropDown.ValueIndex = valueIndex + numel(comp.Actions);
+            else
+                error('Not implemeted.')
+            end
+        end
+
+        function postSetActiveMetadataType(comp)
+            comp.updateItemsFromCollection()
+
+            if ~isempty(comp.TypeSelectionContextMenu)
+                comp.TypeSelectionContextMenu.SelectedType = comp.ActiveMetadataType;
+            end
+        end
+        
+        function postSetMetadataType(comp)
+            % Fill out allowed types.
+
+            if ismissing(comp.MetadataType); return; end
+
+            % Properly assign class name if only (short) name was provided
+            [~, typeNames] = enumeration('om.enum.Types');
+            if any(strcmp(comp.MetadataType, typeNames))
+                comp.MetadataType = om.enum.Types(comp.MetadataType).ClassName;
+                return
+            end
+
+            if om.internal.validator.isMixedTypeClassName( comp.MetadataType )
+                allowedTypes = om.internal.getSortedTypesForMixedType( comp.MetadataType );
+            else
+                allowedTypes = comp.MetadataType;
+            end
+
+            allowedTypesShortNames = openminds.internal.utility.getSchemaShortName(allowedTypes);
+            comp.AllowedTypes = om.enum.Types(allowedTypesShortNames);
+
+            comp.ActiveMetadataType = comp.AllowedTypes(1);
         end
 
         function postSetItems(comp)
@@ -195,51 +297,21 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             if isempty(comp.RemoteMetadataCollection)
                 actions = actions(1:2);
             end
+
             items = [actions, comp.Items];
+            comp.Actions = actions;
             comp.DropDown.Items = items;
 
-            %s1 = uistyle("Icon", om.internal.getIconPath('id_none-34-32'), "IconAlignment", 'leftmargin', "HorizontalAlignment", 'center', "FontWeight", "bold");
-            s2 = uistyle("Icon", om.internal.getIconPath('id_create-v-32'));
-            s3 = uistyle("Icon", om.internal.getIconPath('id_download-download-3-32'));
-
-            %s1 = uistyle("FontWeight", "bold", "FontColor", [0.3,0.3,0.3]);
-            % s1 = uistyle("FontAngle", "italic", "FontColor", [0.15,0.15,0.15]);
-            % 
-            % addStyle(comp.DropDown,s1,"item",1);
-            % addStyle(comp.DropDown,s1,"item",2);
-            % addStyle(comp.DropDown,s1,"item",3);
+            comp.styleDropDownItems()
         end
                 
         function postSetItemsData(comp)
-            % Build items for actions.
-            if comp.MetadataType == om.enum.Types.None
-                emptyInstance = [];
-            else
-                emptyInstance = feval( sprintf("%s.empty", comp.MetadataType.ClassName));
-            end
-            if isempty(comp.RemoteMetadataCollection)
-                actionItems = [{emptyInstance}, cellstr(comp.Actions(2))];
-            else
-                actionItems = [{emptyInstance}, cellstr(comp.Actions(2:3))];
-            end
-
-            itemsData = [actionItems, comp.ItemsData];
-            comp.DropDown.ItemsData = itemsData;
+            assert( numel(comp.ItemsData) == numel(comp.Items), ...
+                "ItemsData must have the same number of elements as Items")
         end
 
-        function postSetMetadataType(comp)
-            comp.updateDropdownItems()
-        end
-
-        function postSetRemoteMetadataCollection(comp)
-            % Get instances of dropdown type...
-            
-            %comp.postSetItems()
-            %comp.postSetItemsData()
-        end
-                
         function postSetActionTypeButton(comp)
-                  
+        % Update complementary button based on which button is selected
             comp.updateDropdownLayout()
 
             switch char(comp.ActionButtonType)
@@ -295,7 +367,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             comp.DropDown = uidropdown(comp.GridLayout);
             comp.DropDown.Layout.Row = 1;
             comp.DropDown.Layout.Column = [1, 2];
-            comp.DropDown.ValueChangedFcn = matlab.apps.createCallbackFcn(comp, @DropDownValueChanged, true);
+            comp.DropDown.ValueChangedFcn = ...
+                matlab.apps.createCallbackFcn(comp, @onDropDownValueChanged, true);
 
             % Activate InheritableBackgroundColor functionality
             comp.addBackgroundColorLinkTargets(comp.GridLayout)
@@ -306,21 +379,43 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % Component callbacks
     methods (Access = private)
         % Value changed function: DropDown
-        function DropDownValueChanged(comp, event)
-            value = comp.DropDown.Value;
+        function onDropDownValueChanged(comp, event)
             
-            if isequal(value, comp.Actions(2)) || isequal(value, comp.Actions(3))
-                switch value
-                    case comp.Actions(2)
+            value = comp.DropDown.Value;
+            valueIndex = comp.DropDown.ValueIndex;
+
+            if any( strcmp(value, comp.Actions) )
+                
+                switch comp.DefaultActions( valueIndex)
+
+                    case "*Select a instance*"
+                        % Todo...
+
+                    case "*Create a new instance*"
                         wasSuccess = comp.createNewInstance();
-                    case comp.Actions(3)
+                    
+                    case "*Download instances*"
                         wasSuccess = comp.downloadRemoteInstances();
+
+                    otherwise
+                        error('Something unexpected occured')
                 end
+                
                 if ~wasSuccess % Reset dropdown selection
-                    comp.DropDown.Value = comp.Value;
+                    comp.DropDown.Value = event.PreviousValue;
                 end
             else
-                comp.updateValue(value, event.PreviousValue)
+                valueIndex = valueIndex - numel(comp.Actions);
+                newValue = comp.ItemsData{valueIndex};
+
+                if event.PreviousValueIndex ~= 1
+                    previousValueIndex = event.PreviousValueIndex - numel(comp.Actions);
+                    previousValue = comp.ItemsData{previousValueIndex};
+                else
+                    previousValue = feval(sprintf("%s.empty", comp.MetadataType));
+                end
+
+                comp.updateValue(newValue, previousValue)
             end
         end
 
@@ -413,7 +508,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         end
 
         function onTypeSelectionContectMenuClicked(comp, src, evt)
-            comp.MetadataType = evt.SelectedType;
+            comp.ActiveMetadataType = evt.SelectedType;
         end
     end
 
@@ -442,18 +537,19 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             end
         end
 
-        function updateDropdownItems(comp)
+        function updateItemsFromCollection(comp)
+        % updatItemsFromCollection - Update items from metadata collections
+        % 
+        % Retrieving all instances of active type from metadata collections
+        % and update component's Items and ItemsData properties.
+            
             items = string.empty;
             itemsData = {};
 
-            if ismissing(comp.MetadataType)
+            if ismissing(comp.ActiveMetadataType)
                 % pass
             else
-                
-                %schemaName = openminds.internal.utility.getSchemaShortName(comp.ActiveType);
-                %typeClassName = comp.MetadataType.ClassName;
-                
-                metadataType = string(comp.MetadataType);
+                metadataType = string(comp.ActiveMetadataType);
                 itemsData = comp.MetadataCollection.list( metadataType );
 
                 if ~isempty(comp.RemoteMetadataCollection)
@@ -465,13 +561,9 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 end
 
                 if ~isempty(itemsData)
+                    % Create items (string labels for items data)
                     items = arrayfun(@(i) string(char(i)), itemsData);
                 end
-                itemsDataCell = cell(1, numel(itemsData));
-                for i = 1:numel(itemsData)
-                    %itemsDataCell{i} = feval(comp.MixedTypeClassName, itemsData(i));
-                end
-                %itemsData = itemsDataCell;
             end
 
             comp.Items = items;
@@ -479,15 +571,15 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         end
 
         function actions = getActionsWithTypeLabels(comp)
-            actions = comp.Actions;
+            actions = comp.DefaultActions;
 
-            if ismissing(comp.MetadataType)
+            if ismissing(comp.ActiveMetadataType)
                 return
             end
             
-            %activeTypeShortName = openminds.internal.utility.getSchemaShortName(comp.MetadataType);
+            %activeTypeShortName = openminds.internal.utility.getSchemaShortName(comp.ActiveMetadataType);
             
-            typeName = string(comp.MetadataType);
+            typeName = string(comp.ActiveMetadataType);
 
             % Get label from vocab
             label = om.internal.vocab.getSchemaLabelFromName(typeName);
@@ -518,11 +610,22 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 if ~isempty(hFigure) && isvalid(hFigure)
                     comp.TypeSelectionContextMenu = ...
                         om.internal.container.InstanceTypeMenu(hFigure, ...
-                        "Types", ["Person", "Organization"], ...
-                        "SelectedType", "Person", ...
+                        "Types", comp.AllowedTypes, ...
+                        "SelectedType", comp.ActiveMetadataType, ...
                         "SelectionChangedFcn", @comp.onTypeSelectionContectMenuClicked );
                 end
             end
+        end
+        
+        function styleDropDownItems(comp)
+
+            % Todo: Make dependent on matlab version
+            % s1 = uistyle("FontWeight", "bold", "FontColor", [0.3,0.3,0.3]);
+            % s1 = uistyle("FontAngle", "italic", "FontColor", [0.15,0.15,0.15]);
+            
+            % for i = 1:numel(comp.Actions)
+            %     addStyle(comp.DropDown, s1, "item", i);
+            % end
         end
     end
 
@@ -532,7 +635,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         function wasSuccess = createNewInstance(comp)
             wasSuccess = false;
 
-            emptyInstance = feval(comp.MetadataType);
+            emptyInstance = feval(comp.ActiveMetadataType);
 
             schemaName = om.internal.vocab.getSchemaNameFromMixedTypeClassName(comp.MixedTypeClassName);
             schemaClassName = om.internal.vocab.getFullClassNameFromSchemaName(schemaName);
@@ -551,7 +654,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 comp.Items = [comp.Items, item];
                 comp.ItemsData = [comp.ItemsData, {itemData}];
                 drawnow
-                comp.Value = itemData;
+                comp.Value = itemData; %Todo!
 
                 wasSuccess = true;
             end
@@ -570,7 +673,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 if comp.DropDown.ValueIndex == 1
                     comp.Items = [comp.Items, newItems];
                     comp.ItemsData = [comp.ItemsData, {newItemsData}];
-                    comp.updateValue(newItemsData, comp.DropDown.Value)
+                    comp.updateValue(newItemsData, comp.DropDown.Value) % Todo..
                 else
                     comp.Items( comp.DropDown.ValueIndex ) = newItems;
                     comp.ItemsData( comp.DropDown.ValueIndex ) = {newItemsData};
@@ -582,14 +685,14 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         
         function wasSuccess = downloadRemoteInstances(comp)
             try
-                activeType = comp.MetadataType;
+                activeType = comp.ActiveMetadataType;
     
                 % Create a progress bar
                 hFigure = ancestor(comp, 'figure');
                 hProgress = uiprogressdlg(hFigure, 'Message', 'Downloading instances...', 'Indeterminate', true);
     
                 comp.RemoteMetadataCollection.downloadRemoteInstances(activeType, 'ProgressDialog', hProgress)
-                comp.updateDropdownItems()
+                comp.updateItemsFromCollection()
                 wasSuccess = true;
             catch
                 wasSuccess = false;

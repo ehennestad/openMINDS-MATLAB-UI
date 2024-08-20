@@ -166,10 +166,13 @@ function [value, config] = getConfigForHeterogeneousScalarValue(name, value, ope
 
     %value = '';
 
-    config = @(h, varargin) om.internal.control.DropDownPlusPlus(h, ...
-        "MetadataCollection", metadataCollection);
+    %config = @(h, varargin) om.internal.control.DropDownPlusPlus(h, ...
+    %    "MetadataCollection", metadataCollection);
 
-    % 'EditItemsFcn', editItemsFcn
+    config = @(h, varargin) om.internal.control.InstanceDropDown(h, ...
+        "MetadataType", class(value), ...
+        "MetadataCollection", metadataCollection, ...
+        "ActionButtonType", "TypeSelectionButton" );
 end
 
 function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, value, openMindsInstance, metadataCollection)

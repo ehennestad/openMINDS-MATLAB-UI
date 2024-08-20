@@ -7,8 +7,8 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     
     typePathSplit = strsplit(typeURI, '/');
 
-    typeName = typePathSplit{end};
-    className = typePathSplit{end-1};
+    schemaName = typePathSplit{end-1};
+    propertyName = typePathSplit{end};
 
     if nargin < 3
         metadataCollection = openminds.MetadataCollection();
@@ -25,12 +25,12 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
         structInstances = struct.empty;
     end
 
-    title = sprintf( 'Edit %s for %s', typeName, className);
+    title = sprintf( 'Edit %s for %s', propertyName, schemaName);
     
     % Todo
     titleStr = om.internal.text.getEditorTitle(...
-        "UpstreamInstanceType", className, ...
-        "UpstreamInstancePropertyName", typeName, ...
+        "UpstreamInstanceType", schemaName, ...
+        "UpstreamInstancePropertyName", propertyName, ...
         "Mode", "edit");
 
     if isHeterogeneous
@@ -39,8 +39,7 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
         end
     
         % Also: Get reference types...
-        allTypes = eval( sprintf("%s.ALLOWED_TYPES", class(metadataInstances)) );
-        allTypes = om.internal.config.sortTypes(className, typeName, allTypes);
+        allTypes = om.internal.getSortedTypesForMixedType( class(metadataInstances) );
 
         referenceItems = struct('Type', {}, 'Data', {});
         for i = 1:numel(allTypes)
@@ -50,10 +49,10 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     
         referenceItems = structeditor.TypedStructArray({}, {referenceItems.Data}, allTypes);
     
-        editor = om.internal.window.HeterogeneousArrayEditor(structInstances, 'ItemType', typeName, 'Title', title, 'DefaultItem', referenceItems);
+        editor = om.internal.window.HeterogeneousArrayEditor(structInstances, 'ItemType', propertyName, 'Title', title, 'DefaultItem', referenceItems);
     else
-        typeName = class(metadataInstances);
-        typeName = openminds.internal.utility.getSchemaShortName(typeName);
+        propertyName = class(metadataInstances);
+        propertyName = openminds.internal.utility.getSchemaShortName(propertyName);
 
         if iscell(structInstances)
             structInstances = [structInstances{:}];
@@ -61,9 +60,9 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
 
         if isempty(structInstances)
             referenceItem = om.convert.toStruct( feval(class(metadataInstances)), metadataCollection );
-            editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', typeName, 'Title', title, 'DefaultItem', referenceItem);
+            editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', propertyName, 'Title', title, 'DefaultItem', referenceItem);
         else
-            editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', typeName, 'Title', title);
+            editor = om.internal.window.ArrayEditor(structInstances, 'ItemType', propertyName, 'Title', title);
         end
     end
 
