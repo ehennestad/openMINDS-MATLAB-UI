@@ -113,7 +113,13 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
     end
     
     if ~metadataCollection.contains(metadataInstance)
-        metadataCollection.add(metadataInstance)
+        
+        if ~ismissing(options.UpstreamInstanceType) && ...
+                openminds.utility.isEmbeddedType(options.UpstreamInstanceType, options.UpstreamInstancePropertyName)
+            metadataCollection.add(metadataInstance, "AddSubNodesOnly", true)
+        else
+            metadataCollection.add(metadataInstance)
+        end
     end
 
     instanceName = char(metadataInstance);

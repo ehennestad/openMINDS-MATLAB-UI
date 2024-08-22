@@ -102,38 +102,18 @@ function [value, config] = getConfigForScalarValue(name, value, openMindsInstanc
         metadataCollection
     end
 
-    typeShortName = openminds.internal.utility.getSchemaShortName(class(value));
-    existingInstances = metadataCollection.list( typeShortName );
-
-    if ~isempty(existingInstances)
-        schemaLabels = arrayfun(@(x) string(x), existingInstances);
-        items = cat(2, sprintf('Select a %s', typeShortName), schemaLabels);
-    else
-        items = {sprintf('No %s available', typeShortName)};
-    end
-    
-    emptyInstance = feval(sprintf('%s.empty', class(value)));
-
-    if isempty(value)
-        value = emptyInstance; 
-    end
-
-    itemsData = [{emptyInstance}, num2cell( existingInstances ) ];
-    
-    editItemsFcn = @(value, varargin) ...
-        om.uiCreateNewInstance(value, metadataCollection, ...
-            "UpstreamInstanceType", openminds.internal.utility.getSchemaName(class(openMindsInstance)), ...
-            "UpstreamInstancePropertyName", name);
-
-    config = @(h, varargin) om.internal.control.DropDownPlus(h, ...
-        'Items', items, ...
-        'ItemsData', itemsData, ...
-        'EditItemsFcn', editItemsFcn);
+    config = @(h, varargin) om.internal.control.InstanceDropDown(h, ...
+        "MetadataType", class(value), ...
+        "MetadataCollection", metadataCollection, ...
+        "ActionButtonType", "InstanceEditorButton", ...
+        "UpstreamInstanceType", openminds.internal.utility.getSchemaName(class(openMindsInstance)), ...
+        "UpstreamInstancePropertyName", name);
 end
 
 
 function [value, config] = getConfigForNonScalarValue(name, value, openMindsInstance, metadataCollection)
 
+    % Todo: Use "Upstream..." instead, like for InstanceDropDown
     propertyTypeName = openMindsInstance.X_TYPE + "/" + name;
 
     editItemsFcn = @(value, varargin) ...
@@ -161,18 +141,12 @@ function [value, config] = getConfigForHeterogeneousScalarValue(name, value, ope
         metadataCollection openminds.Collection
     end
 
-    %allowedTypes = eval(sprintf("%s.ALLOWED_TYPES", class(value)));
-    %allowedTypes = om.internal.config.sortTypes(class(openMindsInstance), name, allowedTypes);
-
-    %value = '';
-
-    %config = @(h, varargin) om.internal.control.DropDownPlusPlus(h, ...
-    %    "MetadataCollection", metadataCollection);
-
     config = @(h, varargin) om.internal.control.InstanceDropDown(h, ...
         "MetadataType", class(value), ...
         "MetadataCollection", metadataCollection, ...
-        "ActionButtonType", "TypeSelectionButton" );
+        "ActionButtonType", "TypeSelectionButton", ...
+        "UpstreamInstanceType", openminds.internal.utility.getSchemaName(class(openMindsInstance)), ...
+        "UpstreamInstancePropertyName", name);
 end
 
 function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, value, openMindsInstance, metadataCollection)
