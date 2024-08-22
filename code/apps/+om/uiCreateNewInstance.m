@@ -20,6 +20,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
         options.UpstreamInstanceType (1,1) string = missing
         options.UpstreamInstancePropertyName (1,1) string = missing
         options.NumInstances = 1
+        options.Mode (1,1) string {mustBeMember(options.Mode, ["create", "modify"])} = "create"
     end
 
     persistent formCache
@@ -91,9 +92,13 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
             "Title", titleStr, ...
             'LoadingHtmlSource', om.internal.getSpinnerSource(), ...
             'EnableNestedStruct', 'off' );
-
-        hEditor.OkButtonText = 'Create';
-    
+        
+        if options.Mode == "create"
+            hEditor.OkButtonText = 'Create';
+        elseif options.Mode == "modify"
+            hEditor.OkButtonText = 'Save';
+        end
+        
         uiwait(hEditor, true)
         
         wasAborted = hEditor.FinishState ~= "Finished";

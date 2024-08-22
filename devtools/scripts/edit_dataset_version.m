@@ -11,12 +11,14 @@ if ~isfile(filePath)
     collection = openminds.Collection();
     collection.add(dsv)
     collection.save(filePath)
+    mode = "create";
 else
     collection = openminds.Collection(filePath);
     dsv = collection.list("DatasetVersion");
+    mode = "modify";
 end
 
-dsv = om.uiCreateNewInstance(dsv, collection);
+dsv = om.uiCreateNewInstance(dsv, collection, "Mode", mode);
 if ~isempty(dsv)
     collection.save(filePath)
 end
