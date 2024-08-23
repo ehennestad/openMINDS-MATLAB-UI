@@ -1,6 +1,14 @@
 classdef TypeSelector < handle & matlab.mixin.SetGet
 % TypeSelector Provides an abstract class for a component to select openMINDS types
 
+% For subclass implementations:
+%   1) Implement abstract methods: 
+%       - createComponent
+%       - updateSelectedTypeInComponent
+%       - onSelectedTypeChangedInComponent
+%   2) Use the method privateComponentCallback as callback function for internal
+%      components
+
     properties (SetAccess = immutable)
         % Types - A list of types to select from (options)
         Types (1,:) om.enum.Types
@@ -56,6 +64,15 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
         end
     end
 
+    methods
+        function notifySelectedTypeChanged(obj)
+            if ~isempty(obj.SelectionChangedFcn)
+                evtData = om.internal.event.SelectedTypeChangedData(obj.SelectedType);
+                obj.SelectionChangedFcn(obj, evtData)
+            end
+        end
+    end
+
     methods (Abstract, Access = protected)
         createComponent(obj)
         
@@ -65,13 +82,18 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
         updateSelectedTypeInComponent(obj)
 
         % This is a callback method that should handle interaction events,
-        % i.e when the selected type through user interactions with the
-        % component
+        % i.e when the selected type changes through user interactions with the
+        % component. It should at minimum set the SelectedType property
         onSelectedTypeChangedInComponent(obj)
     end
 
-    % Public methods
-    methods
+    % Internal callback method. Subclasses should use this method as a
+    % callback function in their own components.
+    methods (Access = protected)
+        function privateComponentCallback(obj, src, evt)
+            obj.onSelectedTypeChangedInComponent(src, evt)
+            obj.notifySelectedTypeChanged()
+        end
     end
     
     % Set methods for properties
@@ -87,10 +109,6 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
     methods (Access = private)
         function postSetSelectedType(obj)
             obj.updateSelectedTypeInComponent()
-            if ~isempty(obj.SelectionChangedFcn)
-                evtData = om.internal.event.SelectedTypeChangedData(obj.SelectedType);
-                obj.SelectionChangedFcn(obj, evtData)
-            end
         end
     end
 
@@ -102,7 +120,7 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
 
             isValid = any( obj.Types == value );
             
-            errorMessage = sprintf( 'Selected type must be any of: %s', ...
+            errorMessage = sprintf('Selected type must be any of: %s', ...
                     strjoin(string(obj.Types), ', '));
 
             assert(isValid, errorMessage)

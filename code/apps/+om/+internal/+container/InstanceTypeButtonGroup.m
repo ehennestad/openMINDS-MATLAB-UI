@@ -30,7 +30,7 @@ classdef InstanceTypeButtonGroup < om.internal.abstract.TypeSelector
         end
     end
 
-    methods (Access = protected)
+    methods (Access = protected) % Implement abstract methods
         function createComponent(comp)
             comp.createGridLayout
             comp.createButtons()
@@ -62,10 +62,6 @@ classdef InstanceTypeButtonGroup < om.internal.abstract.TypeSelector
             % Create a grid layout with 1 row and N columns
             comp.UIGridLayout = uigridlayout(comp.Parent, [1, N]);
             comp.UIGridLayout.Padding = 0;
-            
-            % Todo...
-            %grid.Layout.Row = 2;
-            %grid.Layout.Column = 2;
         end
 
         function createButtons(comp)
@@ -75,10 +71,9 @@ classdef InstanceTypeButtonGroup < om.internal.abstract.TypeSelector
                 typeLabel = string(comp.Types(i));
 
                 btn = uibutton(comp.UIGridLayout, "state", "Text", typeLabel);
-                %btn.Tag = comp.DefaultItem.TypeNames(i);
                 btn.Tag = comp.Types(i).ClassName;
                 
-                btn.ValueChangedFcn = @comp.onSelectedTypeChangedInComponent;
+                btn.ValueChangedFcn = @comp.privateComponentCallback;
 
                 % Set the button layout to the i-th column
                 btn.Layout.Column = i;

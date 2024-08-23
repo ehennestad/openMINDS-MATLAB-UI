@@ -17,7 +17,7 @@ classdef InstanceTypeDropDown < om.internal.abstract.TypeSelector
         end
     end
 
-    methods (Access = protected)
+    methods (Access = protected) % Implement abstract methods
         function createComponent(comp)
             comp.createDropDown()
         end
@@ -36,7 +36,7 @@ classdef InstanceTypeDropDown < om.internal.abstract.TypeSelector
             comp.UIComponent = uidropdown(comp.Parent);
             comp.UIComponent.Items = string([comp.Types.ClassName]);
             comp.UIComponent.ItemsData = string(comp.Types);
-            comp.UIComponent.ValueChangedFcn = @comp.onSelectedTypeChangedInComponent;
+            comp.UIComponent.ValueChangedFcn = @comp.privateComponentCallback;
         end
     end
 
