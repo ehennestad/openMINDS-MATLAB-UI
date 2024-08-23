@@ -46,6 +46,10 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         ValueIndex
     end
 
+    properties
+        ShowCreateAction = true
+    end
+
     properties (Hidden)
         ActionButtonType (1,1) om.internal.control.enum.InstanceDropdownActionButton ...
             = om.internal.control.enum.InstanceDropdownActionButton.None
@@ -113,6 +117,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 parent = []
                 propValues.?matlab.ui.control.DropDown
                 propValues.CreateFcn % ComponentContainer property
+                propValues.ShowCreateAction = true
                 propValues.MetadataCollection
                 propValues.MetadataType (1,1) string = missing
                 propValues.ActiveMetadataType (1,1) om.enum.Types = "None"
@@ -128,6 +133,11 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
             [propValues, propValuesSuper] = popPropValues(propValues, 'Parent', 'CreateFcn', 'Position');
             comp@matlab.ui.componentcontainer.ComponentContainer(propValuesSuper)
+
+            if isfield(propValues, "ShowCreateAction")
+                comp.ShowCreateAction = propValues.ShowCreateAction;
+                propValues = rmfield(propValues, "ShowCreateAction");
+            end
 
             % Assign metadata collection(s)
             [propValues, propValuesMetadataCollection] = popPropValues(propValues, ...
@@ -173,7 +183,9 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
     % Public methods
     methods
-        function updateValue(comp, newValue, previousValue)
+        function updateValue(comp, newValue, previousValue, doNotify)
+
+            if nargin < 4; doNotify = true; end
 
             % Todo: Wrap in mixed type if metadata type is mixed type...???
             if om.internal.validator.isMixedTypeClassName( comp.MetadataType )
@@ -185,8 +197,23 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
             evtData = matlab.ui.eventdata.ValueChangedData(...
                 newValue, previousValue);
+            
+            if doNotify
+                notify(comp, 'ValueChanged', evtData);
+            end
+        end
+    
+        function setValueFromId(comp, id, doNotify)
 
-            notify(comp, 'ValueChanged', evtData);
+            if nargin < 3; doNotify = true; end
+
+            allIdentifiers = cellfun(@(c) c.id , comp.ItemsData, 'uni', 0);
+            if any(strcmp(allIdentifiers, id))
+                newValue =  comp.ItemsData{ strcmp(allIdentifiers, id) };
+                comp.updateValue(newValue, comp.Value, doNotify)
+            else
+                error('No instance with given identifier')
+            end
         end
     end
 
@@ -303,6 +330,10 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             actions = comp.getActionsWithTypeLabels();
             if isempty(comp.RemoteMetadataCollection)
                 actions = actions(1:2);
+            end
+
+            if ~comp.ShowCreateAction
+                actions(2) = [];
             end
 
             items = [actions, comp.Items];

@@ -46,10 +46,15 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
             referenceItems(i).Type = allTypes{i};
             referenceItems(i).Data = om.convert.toStruct( feval(allTypes{i}), metadataCollection );
         end
-    
+        
         referenceItems = structeditor.TypedStructArray({}, {referenceItems.Data}, allTypes);
     
-        editor = om.internal.window.HeterogeneousArrayEditor(structInstances, 'ItemType', propertyName, 'Title', title, 'DefaultItem', referenceItems, "MetadataCollection", metadataCollection);
+        editor = om.internal.window.HeterogeneousArrayEditor(structInstances, ...
+            'ItemType', propertyName, ...
+            'Title', title, ...
+            'DefaultItem', referenceItems, ...
+            "OpenMindsType", class(metadataInstances), ...
+            "MetadataCollection", metadataCollection);
     else
         propertyName = class(metadataInstances);
         propertyName = openminds.internal.utility.getSchemaShortName(propertyName);
@@ -67,6 +72,8 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
     end
 
     uim.utility.centerFigure(editor.UIFigure)
+    
+    return
     uiwait(editor, true)
     
     if ~isvalid(editor) || editor.FinishState ~= "Finished"
