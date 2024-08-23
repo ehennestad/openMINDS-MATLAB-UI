@@ -326,8 +326,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                     if ~isempty(comp.ActionButton)
                         delete(comp.ActionButton)
                         comp.ActionButton(:) = [];
-                        return
                     end
+                    return
 
                 case 'InstanceEditorButton'        
                     iconFilePath = om.internal.getIconPath('form');
@@ -337,6 +337,9 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                     iconFilePath = om.internal.getIconPath('options');
                     callbackFcn = @comp.onChangeTypeButtonPushed;
                     comp.initializeTypeSelectionContextMenu()
+
+                otherwise
+                    return
             end
 
             if isempty(comp.ActionButton)
