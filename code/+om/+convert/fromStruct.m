@@ -16,7 +16,22 @@ function instance = fromStruct(instance, data, metadataCollection)
         elseif isnumeric(iValue)
             instance.(iPropName) = cast(data.(iPropName), class(instance.(iPropName)));
         elseif isa(iValue, 'openminds.abstract.ControlledTerm')
-            instance.(iPropName) = char(data.(iPropName));
+            %instance.(iPropName) = char(data.(iPropName));
+
+            linkedInstance = data.(iPropName);
+            
+            % Unpack instances from cell arrays (Todo: function for this)
+            if isa(linkedInstance, 'cell')
+                if numel(linkedInstance) == 1
+                    assert(numel(linkedInstance)==1, "Expected length to be 1")
+                    linkedInstance = linkedInstance{1};
+                else
+                    linkedInstance = [linkedInstance{:}];
+                end
+            end
+
+            instance.(iPropName) = string(linkedInstance);
+
         elseif isa(iValue, 'openminds.abstract.Schema')
             linkedInstance = data.(iPropName);
             schemaName = class(instance.(iPropName));

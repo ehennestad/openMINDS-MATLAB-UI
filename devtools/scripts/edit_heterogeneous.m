@@ -1,15 +1,13 @@
 
 %dsv = openminds.core.DatasetVersion();
-option = 2;
+option = 3;
 
 if option == 1
     cr = openminds.core.Copyright;
     %metadataCollection = openminds.MetadataCollection();
     metadataCollection = openminds.Collection();
     
-    
     typeURI = cr.X_TYPE + "/" + "holder";
-    
     om.uiEditHeterogeneousList(cr.holder, typeURI, metadataCollection)
 
 elseif option == 2
@@ -43,5 +41,13 @@ elseif option == 2
     if ~isempty(dsv)
         collection.save(filePath)
     end
+
+elseif option == 3
+    
+    dsv = openminds.core.DatasetVersion;
+    metadataCollection = openminds.Collection();
+    
+    typeURI = dsv.X_TYPE + "/" + "keyword";
+    om.uiEditHeterogeneousList(dsv.keyword, typeURI, metadataCollection)
 
 end

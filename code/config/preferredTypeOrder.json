@@ -15,5 +15,9 @@
   },
   "Affiliation": {
     "memberOf": ["Organization", "Consortium"]
+  },
+  "Funding": {
+    "funder": ["Organization", "Consortium", "Person"]
   }
+
 }

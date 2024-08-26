@@ -264,6 +264,10 @@ classdef Types
     methods (Static)
         function typeEnum = fromClassName(className)
             
+            if ischar(className)
+                className = string(className);
+            end
+
             if numel(className) > 1
                 if iscell(className); className = string(className); end
                 typeEnum = arrayfun(@(str) om.enum.Types.fromClassName(str), className);

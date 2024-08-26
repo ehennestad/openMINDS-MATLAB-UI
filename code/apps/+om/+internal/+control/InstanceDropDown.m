@@ -14,7 +14,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     %   [ ] Create filter
     %   [ ] Flexibly wrap and unwrap comp.Value in mixed type class if 
     %       MetadataType is a mixed type
-    %
+    %   [ ] Fill out controlled term instances if controlled term...
     %
 
     % Notes:
@@ -40,6 +40,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
     properties (Dependent)
         HasButton
+        Enable
     end
 
     properties (Access = private)
@@ -192,7 +193,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 newValue = feval(comp.MetadataType, newValue);
                 previousValue = feval(comp.MetadataType, previousValue);
             end
-
+            
             comp.Value = newValue;
 
             evtData = matlab.ui.eventdata.ValueChangedData(...
@@ -206,14 +207,27 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         function setValueFromId(comp, id, doNotify)
 
             if nargin < 3; doNotify = true; end
+            
+            % Handle controlled instances
+            if startsWith(id, "https://openminds.ebrains.eu/instances/")
+                [~, instanceName] = fileparts(id);
+                if any(strcmp(string(comp.ItemsData), instanceName))
+                    comp.updateValue(instanceName, comp.Value, doNotify)
+                end
 
-            allIdentifiers = cellfun(@(c) c.id , comp.ItemsData, 'uni', 0);
-            if any(strcmp(allIdentifiers, id))
-                newValue =  comp.ItemsData{ strcmp(allIdentifiers, id) };
-                comp.updateValue(newValue, comp.Value, doNotify)
             else
-                error('No instance with given identifier')
+                allIdentifiers = cellfun(@(c) c.id , comp.ItemsData, 'uni', 0);
+                if any(strcmp(allIdentifiers, id))
+                    newValue =  comp.ItemsData{ strcmp(allIdentifiers, id) };
+                    comp.updateValue(newValue, comp.Value, doNotify)
+                else
+                    error('No instance with given identifier')
+                end
             end
+        end
+    
+        function resetSelection(comp)
+            comp.Value = feval( sprintf('%s.empty', comp.MetadataType) );
         end
     end
 
@@ -259,6 +273,14 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         function value = get.HasButton(comp)
             value = comp.ActionButtonType ~= "None";
         end
+
+        function set.Enable(comp, value)
+            comp.DropDown.Enable = value;
+        end
+
+        function value = get.Enable(comp)
+            value = comp.DropDown.Enable;
+        end
     end
 
     % Property post-set methods
@@ -276,8 +298,16 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             % exists.
             valueIndex = [];
             for i = 1:numel(comp.ItemsData)
-                if isequal(comp.Value, comp.ItemsData{i})
-                    valueIndex = i; break
+                if isstring(comp.ItemsData{i}) % For controlled instances.
+                    if isequal(string(comp.Value), comp.ItemsData{i})
+                        valueIndex = i; break
+                    end
+                elseif isa(comp.ItemsData{i}, 'openminds.abstract.Schema')
+                    if isequal(comp.Value, comp.ItemsData{i})
+                        valueIndex = i; break
+                    end
+                else
+                    error('Unsupported type for ItemsData elements')
                 end
             end
 
@@ -590,6 +620,11 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                         itemsData = [itemsData, remoteInstances];
                         comp.HasRemoteInstances = true;
                     end
+                end
+
+                if contains(comp.ActiveMetadataType.ClassName, '.controlledterms')
+                    controlledInstances = eval(sprintf('%s.CONTROLLED_INSTANCES', comp.ActiveMetadataType.ClassName));
+                    itemsData = [itemsData, controlledInstances];
                 end
 
                 if ~isempty(itemsData)

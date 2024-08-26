@@ -39,10 +39,14 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
         iValue = structInstance.(iPropName);
         iConfig = [];
         customFcn = [];
-
+        
         if isstring(iValue)
             if ismissing(iValue); iValue = ''; end
-            iValue = char(iValue);
+            if numel(iValue) > 1
+                iValue = char(strjoin(iValue, '; ')); % Todo: reverse in fromStruct
+            else
+                iValue = char(iValue);
+            end
 
         elseif isnumeric(iValue)
             iValue = double(iValue);
@@ -78,6 +82,8 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
 
         if ~isempty(customFcn)
             [iValue, iConfig] = customFcn(iPropName, iValue, openMindsInstance, metadataCollection);
+        else
+            iConfig = om.internal.config.getCustomFieldComponent(iPropName);
         end
 
         structInstance.(iPropName) = iValue;
@@ -87,8 +93,13 @@ function structInstance = toStruct(openMindsInstance, metadataCollection)
         end
     end
 
+    % Add @id and @type
     structInstance.id = openMindsInstance.id;
-    structInstance.id_ = 'hidden';    
+    structInstance.id_ = 'hidden';
+
+    % Todo: Use matlab class name, not @type...
+    structInstance.type = openMindsInstance.X_TYPE;
+    structInstance.type_ = 'hidden';
 end
 
 % Local functions
