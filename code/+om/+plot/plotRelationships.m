@@ -4,6 +4,6 @@ function plotRelationships(modelName)
         modelName (1,1) om.enum.Models = "core"
     end
     
-    G = om.generateGraph(lower(char(modelName)));
+    G = om.internal.graph.generateGraph(lower(char(modelName)));
     om.internal.graphics.InteractiveOpenMINDSPlot(G)
 end

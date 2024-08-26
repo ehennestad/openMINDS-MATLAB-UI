@@ -92,7 +92,7 @@ classdef ModelBuilder < handle
 
 
             % % Create graph of the core module of openMINDS
-            [G,e] = om.generateGraph('core');
+            [G,e] = om.internal.graph.generateGraph('core');
             
             hAxes = axes(obj.UIContainer.UITab(2));
             hAxes.Position = [0,0,0.999,1];
