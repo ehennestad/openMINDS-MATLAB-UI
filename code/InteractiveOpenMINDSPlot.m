@@ -32,7 +32,8 @@ classdef InteractiveOpenMINDSPlot < handle
             if nargin >= 2
                 obj.Axes = hAxes;
             else
-                obj.Axes = axes();
+                f = figure('MenuBar', 'none');
+                obj.Axes = axes(f, 'Position', [0.05,0.05,0.9,0.9]);
             end
 
             obj.updateGraph(graphObj)
@@ -42,7 +43,7 @@ classdef InteractiveOpenMINDSPlot < handle
             %obj.GraphPlot.EdgeLabel = e;
     
             obj.Axes.YDir = 'normal';
-            hFigure = ancestor(hAxes, 'figure');
+            hFigure = ancestor(obj.Axes, 'figure');
             obj.PointerManager = uim.interface.pointerManager(hFigure, ...
                 obj.Axes, {'zoomIn', 'zoomOut', 'pan'});
             addlistener(hFigure, 'WindowKeyPress', @obj.keyPress);
@@ -56,14 +57,15 @@ classdef InteractiveOpenMINDSPlot < handle
             delete( obj.GraphPlot )        
             hold(obj.Axes, 'off')
 
-            obj.GraphPlot = plot(obj.Axes, graphObj, 'Layout', 'force');
+            %obj.GraphPlot = plot(obj.Axes, graphObj, 'Layout', 'force');
+            obj.GraphPlot = plot(obj.Axes, graphObj, 'Layout', 'auto');
 
             numNodes = graphObj.numnodes;
             colors = colormap(obj.ColorMap);
             randIdx = randperm(256, numNodes);
             obj.GraphPlot.NodeColor = colors(randIdx, :);
             
-            obj.GraphPlot.MarkerSize = 20;
+            obj.GraphPlot.MarkerSize = 10;
             obj.GraphPlot.LineWidth = 1;
             obj.GraphPlot.EdgeColor = ones(1, 3)*0.6;
             

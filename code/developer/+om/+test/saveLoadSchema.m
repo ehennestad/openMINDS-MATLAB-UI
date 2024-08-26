@@ -1,12 +1,9 @@
 function T = saveLoadSchema()
     
-    %moduleName = "SANDS";
-    %schemaList = om.dir.schema(moduleName);
+    % Todo: move to openMINDS_MATLAB
 
-    schemaTable = om.internal.dir.listSourceSchemas();
-    %schemaTable = schemaTable(schemaTable.ModuleName == moduleName, :);
-
-    numSchemas = size(schemaTable, 1);
+    types = enumeration('om.enum.Types');
+    numTypes = numel(types);
 
     tempsavepath = tempname;
     tempsavepath = [tempsavepath, '.mat'];
@@ -19,23 +16,17 @@ function T = saveLoadSchema()
 
     C = cell(0, 4);
 
-    for i = 1:numSchemas
+    for i = 1:numTypes
 
-        iSchemaName = schemaTable{i, "SchemaName"};
-        iModelName = schemaTable{i, "ModuleName"};
-        iSubmoduleName = schemaTable{i, "SubModuleName"};
-
-        
-        schemaClassFunctionName = om.strutil.buildClassName(iSchemaName, iSubmoduleName, iModelName);
-        schemaFcn = str2func(schemaClassFunctionName);
+        schemaClassFunctionName = types(i).ClassName;
+        schemaFcn = str2func( schemaClassFunctionName );
         
         try
             mc = meta.class.fromName(schemaClassFunctionName);
             if isempty(mc); continue; end
             if mc.Abstract; continue; end
         catch ME
-            %C{numTestsFailed, 1} = schemaList(i).Name;
-            C{numTestsFailed, 1} = schemaClassFunctionName;
+            C{numTestsFailed, 1} = schemaClassFunctionName ;
             C{numTestsFailed, 2} = 'Get class meta info';
             C{numTestsFailed, 3} = ME.message;
             C{numTestsFailed, 4} = getReport(ME);
@@ -49,7 +40,6 @@ function T = saveLoadSchema()
             %disp(getReport(ME))
             numTestsFailed = numTestsFailed + 1;
 
-            %C{numTestsFailed, 1} = schemaList(i).Name;
             C{numTestsFailed, 1} = schemaClassFunctionName;
             C{numTestsFailed, 2} = 'Create object';
             C{numTestsFailed, 3} = ME.message;

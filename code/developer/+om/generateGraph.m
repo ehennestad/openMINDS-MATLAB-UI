@@ -10,14 +10,15 @@ function [G, edgeLabels] = generateGraph(moduleName, force)
 
     [s, t, e] = deal(cell(0,1));
 
+    types = enumeration( 'om.enum.Types' );
+    classNames = [types.ClassName];
+    keep = startsWith( classNames, sprintf('openminds.%s', moduleName) );
+    classNames = classNames(keep);
 
-    schemaList = om.dir.schema(moduleName);
+    numTypes = numel(classNames);
 
-    numSchemas = numel(schemaList);
-
-    for i = 1:numSchemas
-        className = om.strutil.buildClassName(schemaList(i).Name, schemaList(i).Category, moduleName);
-        classFcn = str2func(className);
+    for i = 1:numTypes
+        classFcn = str2func(classNames(i));
         
         try
             tempObj = classFcn();
@@ -27,13 +28,25 @@ function [G, edgeLabels] = generateGraph(moduleName, force)
             for j = 1:numel(propertyNames)
                 iValue = tempObj.(propertyNames{j});
 
+                [~, ~, sourceName] = fileparts( class(tempObj) );
+
                 if isa(iValue, 'openminds.abstract.Schema') && ~isa(iValue, 'openminds.controlledterm.ControlledTerm')
-                    [~, ~, sourceName] = fileparts( class(tempObj) );
                     [~, ~, targetName] = fileparts( class(iValue) );
 
                     s{end+1} = sourceName(2:end); %#ok<AGROW> 
                     t{end+1} = targetName(2:end); %#ok<AGROW> 
                     e{end+1} = propertyNames{j}; %#ok<AGROW> 
+                elseif isa(iValue, 'openminds.internal.abstract.LinkedCategory')
+
+                    allowedTypes = eval(sprintf("%s.ALLOWED_TYPES", class(iValue)));
+
+                    for k = 1:numel(allowedTypes)
+                        [~, ~, targetName] = fileparts( allowedTypes{k} );
+                        
+                        s{end+1} = sourceName(2:end); %#ok<AGROW> 
+                        t{end+1} = targetName(2:end); %#ok<AGROW> 
+                        e{end+1} = propertyNames{j}; %#ok<AGROW> 
+                    end
                 end
             end
         end

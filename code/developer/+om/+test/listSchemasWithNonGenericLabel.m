@@ -1,13 +1,11 @@
 function S = listSchemasWithNonGenericLabel()
     
-    moduleName = "core";
-    %schemaList = om.dir.schema(moduleName);
-
-    schemaTable = om.internal.dir.listSourceSchemas();
-    schemaTable = schemaTable(schemaTable.ModuleName == moduleName, :);
-
-    numSchemas = size(schemaTable, 1);
-
+    % Todo: move to openMINDS
+    
+    types = enumeration('om.enum.Types');
+    types = types(2:end); % Exclude NONE
+    numTypes = numel(types);
+    
     tempsavepath = tempname;
     tempsavepath = [tempsavepath, '.mat'];
     
@@ -21,16 +19,12 @@ function S = listSchemasWithNonGenericLabel()
     count = 0;
     S = struct;
 
-    for i = 1:numSchemas
-
-        iSchemaName = schemaTable{i, "SchemaName"};
-        iModelName = schemaTable{i, "ModuleName"};
-        iSubmoduleName = schemaTable{i, "SubModuleName"};
-
-        
-        schemaClassFunctionName = om.strutil.buildClassName(iSchemaName, iSubmoduleName, iModelName);
+    for i = 1:numTypes
+        schemaClassFunctionName = types(i).ClassName;
         schemaFcn = str2func(schemaClassFunctionName);
         
+        iSchemaName = string(types(i));
+
         mc = meta.class.fromName(schemaClassFunctionName);
         if mc.Abstract; continue; end
         
@@ -46,7 +40,6 @@ function S = listSchemasWithNonGenericLabel()
             elseif isprop(itemPreSave, 'fullName')
                 S.(iSchemaName).propertyName = 'fullName';
                 S.(iSchemaName).stringFormat = "sprintf('%s', fullName)";
-
 
                 %pass
             elseif isprop(itemPreSave, 'identifier')
