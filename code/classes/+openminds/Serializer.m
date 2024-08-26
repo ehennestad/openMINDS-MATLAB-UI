@@ -157,7 +157,7 @@ classdef Serializer < handle
         end
 
         function jsonStr = convertStructToJsonld(obj, S)
-            jsonStr = om.json.encode(S);
+            jsonStr = openminds.internal.utility.json.encode(S);
             jsonStr = strrep(jsonStr, 'VOCAB_URI_', sprintf('%s/vocab/', obj.DEFAULT_VOCAB) );
         end
 

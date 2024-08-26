@@ -5,5 +5,5 @@ function plotRelationships(modelName)
     end
     
     G = om.generateGraph(lower(char(modelName)));
-    InteractiveOpenMINDSPlot(G)
+    om.internal.graphics.InteractiveOpenMINDSPlot(G)
 end

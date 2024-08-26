@@ -103,7 +103,7 @@ classdef ModelBuilder < handle
             obj.addMetadataCollectionListeners()
 
 
-            h = InteractiveOpenMINDSPlot(G, hAxes, e);
+            h = om.internal.graphics.InteractiveOpenMINDSPlot(G, hAxes, e);
             obj.UIGraphViewer = h;
 
             % NB NB NB: Some weird bug occurs if this is created before the
