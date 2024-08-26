@@ -1,7 +1,5 @@
 function S = listSchemasWithNonGenericLabel()
-    
-    % Todo: move to openMINDS
-    
+        
     types = enumeration('om.enum.Types');
     types = types(2:end); % Exclude NONE
     numTypes = numel(types);
