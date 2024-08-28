@@ -50,7 +50,7 @@ function installFexPackage(toolboxIdentifier, installLocation, options)
             % Sometimes the URL is for an xml, in which case we need to
             % parse the xml and retrieve the download url from the xml.
             [filepath, C] = om.internal.tempsave(addonUrl);
-            S = readstruct(filepath); delete(C)
+            S = readstruct(filepath); delete(C) % Read XML
             toolboxName = S.name;
 
             addonUrl = S.downloadUrl;
