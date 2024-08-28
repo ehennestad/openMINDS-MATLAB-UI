@@ -1,1 +1,1 @@
-om.internal.setup.installRequirements(reqs)
+om.internal.setup.installRequirements()
