@@ -1,16 +1,27 @@
-function installGithubRepository(repositoryUrl)
+function installGithubRepository(repositoryUrl, options)
+
+    arguments
+        repositoryUrl (1,1) string
+        options.Update (1,1) logical = false
+    end
 
     repoName = string( regexp(repositoryUrl, '[^/]+$', 'match', 'once') );
     
     % Check if this repo is already on path:
     pathList = strsplit(path, pathsep);
-    match = regexp(pathList, repoName+"$" ); % Like this???
+    matchingFolderName = regexp(pathList, repoName+"$" ); % Like this???
     
-    isEmpty = cellfun('isempty', match);
-    matchIdx = find(~isEmpty);
+    isEmpty = cellfun('isempty', matchingFolderName);
+    matchedFolderIndex = find(~isEmpty);
 
     % Todo: Check for presence of Readme.md and LICENSE
     
+    if ~isempty(matchedFolderIndex)
+        if options.Update
+
+        end
+    end
+        
 
     targetFolder = om.internal.constant.AddonTargetFolder();
     repoTargetFolder = fullfile(targetFolder, repoName);
