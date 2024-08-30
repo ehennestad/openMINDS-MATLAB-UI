@@ -2,7 +2,7 @@
 A matlab graphical user interface for openMINDS
 
 Requirements:
-MATLAB 2022b or later
+MATLAB 2023a or later
 
 Dependencies:
 https://github.com/VervaekeLab/NANSEN
