@@ -1,7 +1,10 @@
-# openMINDS-MATLAB
-A matlab interface for openMINDS
+# openMINDS-MATLAB-UI
+A matlab graphical user interface for openMINDS
 
-Requires:
+Requirements:
+MATLAB 2022b or later
+
+Dependencies:
 https://github.com/VervaekeLab/NANSEN
 
 When nansen is on path, run the following:
