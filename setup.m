@@ -6,4 +6,6 @@ function setup(mode)
     
     addpath(genpath(fileparts(mfilename('fullpath'))))
     om.internal.setup.installRequirements(mode)
+
+    run( fullfile(om.internal.rootpath, 'startup.m') )
 end

@@ -69,8 +69,8 @@ end
 function [repoUrl, branchName] = parseGitHubUrl(repoUrl)
 % parseGitHubUrl - Extract branchname if present
     branchName = string(missing);
-    if contains(url, '@')
-        splitUrl = strsplit(url, '@');
+    if contains(repoUrl, '@')
+        splitUrl = strsplit(repoUrl, '@');
         repoUrl = splitUrl{1};
         branchName = splitUrl{2};
     end

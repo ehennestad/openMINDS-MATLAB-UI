@@ -2,40 +2,37 @@ function installGithubRepository(repositoryUrl, branchName, options)
 
     arguments
         repositoryUrl (1,1) string
-        branchName (1,1) string = "master"
+        branchName (1,1) string = "main"
         options.Update (1,1) logical = false
     end
 
-    if ismissing(branchName); branchName = "master"; end
+    if ismissing(branchName); branchName = "main"; end
 
-    repoName = string( regexp(repositoryUrl, '[^/]+$', 'match', 'once') );
+    [organization, repoName] = om.internal.setup.github.parseRepositoryURL(repositoryUrl);
     
-    % Check if this repo is already on path:
-    pathList = strsplit(path, pathsep);
-    matchingFolderName = regexp(pathList, repoName+"$" ); % Like this???
+    %[repoExists, repoPath] = om.internal.setup.pathtool.lookForRepository(repoName, branchName);
     
-    isEmpty = cellfun('isempty', matchingFolderName);
-    matchedFolderIndex = find(~isEmpty);
-
-    % Todo: Check for presence of Readme.md and LICENSE
-    
-    % Todo: How to deal with different branches?
-
     % Todo: Implement updating
-    if ~isempty(matchedFolderIndex)
-        if options.Update
-
-        end
-    end
+    % if repoExists
+    %     if options.Update
+    %         % Todo: Delete old repo and download again.
+    %     else
+    %         return
+    %     end
+    % end
 
     targetFolder = om.internal.constant.AddonTargetFolder();
-    repoTargetFolder = fullfile(targetFolder, repoName);
+    repoTargetFolder = fullfile(targetFolder);
 
     if ~isfolder(repoTargetFolder); mkdir(repoTargetFolder); end
 
+    % Download repository
     downloadUrl = sprintf( '%s/archive/refs/heads/%s.zip', repositoryUrl, branchName );
+    repoTargetFolder = om.internal.setup.downloadZippedGithubRepo(downloadUrl, repoTargetFolder, true, true);
 
-    om.internal.setup.downloadZippedGithubRepo(downloadUrl, repoTargetFolder, true, true);
+    commitId = om.internal.setup.github.getCurrentCommitID(repoName, 'Organization', organization, "BranchName", branchName);
+    filePath = fullfile(repoTargetFolder, '.commit_hash');
+    om.internal.fileio.filewrite(filePath, commitId)
     
     % Run setup.m if present.
     if isfile( fullfile(repoTargetFolder, 'setup.m') )

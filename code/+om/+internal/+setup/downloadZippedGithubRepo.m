@@ -30,7 +30,7 @@ function repoFolder = downloadZippedGithubRepo(githubUrl, targetFolder, updateFl
                 rmpath(genpath(targetFolder))
             end
             try
-                rmdir(targetFolder, 's')
+                %rmdir(targetFolder, 's')
             catch
                 warning('Could not remove old installation... Please report')
             end
@@ -39,13 +39,15 @@ function repoFolder = downloadZippedGithubRepo(githubUrl, targetFolder, updateFl
         %pass
     end
 
-    unzip(tempFilepath, targetFolder);
+    fileName = unzip(tempFilepath, targetFolder);
     
     % Delete the temp zip file
     clear fileCleanupObj
 
+    repoFolder = fileName{1};
+
     % Fix github unzipped directory...
-    restructureUnzippedGithubRepo(targetFolder);
+    %repoFolder = restructureUnzippedGithubRepo(targetFolder);
 end
 
 
