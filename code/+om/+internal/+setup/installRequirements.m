@@ -1,11 +1,18 @@
-function installRequirements(options)
+function installRequirements(mode, options)
 
+    arguments (Repeating)
+        mode string {mustBeMember(mode, ["force", "f", "update", "u"])}
+    end
+    
     arguments
         % Tentative, not implemented yet!
         options.UseDefaultInstallationLocation (1,1) logical = true
         options.UpdateSearchPath (1,1) logical = true
     end
 
+    doUpdate = any(strcmp(mode, {'update'})) || any( strcmp(mode, {'u'}) );
+    %Todo.
+    
     reqs = om.internal.setup.getRequirements();
     
     installationLocation = om.internal.constant.AddonTargetFolder();

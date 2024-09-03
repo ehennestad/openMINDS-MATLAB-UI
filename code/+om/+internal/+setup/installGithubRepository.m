@@ -1,8 +1,9 @@
-function installGithubRepository(repositoryUrl, branchName)
+function installGithubRepository(repositoryUrl, branchName, options)
 
     arguments
         repositoryUrl (1,1) string
         branchName (1,1) string = "master"
+        options.Update (1,1) logical = false
     end
 
     if ismissing(branchName); branchName = "master"; end
@@ -11,14 +12,21 @@ function installGithubRepository(repositoryUrl, branchName)
     
     % Check if this repo is already on path:
     pathList = strsplit(path, pathsep);
-    match = regexp(pathList, repoName+"$" ); % Like this???
+    matchingFolderName = regexp(pathList, repoName+"$" ); % Like this???
     
-    isEmpty = cellfun('isempty', match);
-    matchIdx = find(~isEmpty);
+    isEmpty = cellfun('isempty', matchingFolderName);
+    matchedFolderIndex = find(~isEmpty);
 
     % Todo: Check for presence of Readme.md and LICENSE
     
     % Todo: How to deal with different branches?
+
+    % Todo: Implement updating
+    if ~isempty(matchedFolderIndex)
+        if options.Update
+
+        end
+    end
 
     targetFolder = om.internal.constant.AddonTargetFolder();
     repoTargetFolder = fullfile(targetFolder, repoName);
