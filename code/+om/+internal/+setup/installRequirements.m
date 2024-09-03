@@ -14,7 +14,8 @@ function installRequirements(options)
     for i = 1:numel(reqs)
         switch reqs(i).Type
             case 'GitHub'
-                om.internal.setup.installGithubRepository( reqs(i).URI )
+                [repoUrl, branchName] = parseGitHubUrl(reqs(i).URI);
+                om.internal.setup.installGithubRepository( repoUrl, branchName )
             case 'FileExchange'
                 [packageUuid, version] = getFEXPackageSpecification( reqs(i).URI );
                 om.internal.setup.installFexPackage(packageUuid, installationLocation, 'Version', version);
@@ -55,5 +56,15 @@ function [packageUuid, version] = getFEXPackageSpecification(uri)
         assert( any(strcmp(packageInfo.versions, version) ), ...
             'Specified version "%s" is not supported for FEX package "%s"', ...
             version, splitUri{2});
+    end
+end
+
+function [repoUrl, branchName] = parseGitHubUrl(repoUrl)
+% parseGitHubUrl - Extract branchname if present
+    branchName = string(missing);
+    if contains(url, '@')
+        splitUrl = strsplit(url, '@');
+        repoUrl = splitUrl{1};
+        branchName = splitUrl{2};
     end
 end

@@ -1,4 +1,11 @@
-function installGithubRepository(repositoryUrl)
+function installGithubRepository(repositoryUrl, branchName)
+
+    arguments
+        repositoryUrl (1,1) string
+        branchName (1,1) string = "master"
+    end
+
+    if ismissing(branchName); branchName = "master"; end
 
     repoName = string( regexp(repositoryUrl, '[^/]+$', 'match', 'once') );
     
@@ -11,13 +18,14 @@ function installGithubRepository(repositoryUrl)
 
     % Todo: Check for presence of Readme.md and LICENSE
     
+    % Todo: How to deal with different branches?
 
     targetFolder = om.internal.constant.AddonTargetFolder();
     repoTargetFolder = fullfile(targetFolder, repoName);
 
     if ~isfolder(repoTargetFolder); mkdir(repoTargetFolder); end
 
-    downloadUrl = sprintf( '%s/archive/refs/heads/master.zip',  repositoryUrl );
+    downloadUrl = sprintf( '%s/archive/refs/heads/%s.zip', repositoryUrl, branchName );
 
     om.internal.setup.downloadZippedGithubRepo(downloadUrl, repoTargetFolder, true, true);
     
