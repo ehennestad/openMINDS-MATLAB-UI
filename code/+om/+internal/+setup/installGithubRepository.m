@@ -10,7 +10,10 @@ function installGithubRepository(repositoryUrl, branchName, options)
 
     [organization, repoName] = om.internal.setup.github.parseRepositoryURL(repositoryUrl);
     
-    %[repoExists, repoPath] = om.internal.setup.pathtool.lookForRepository(repoName, branchName);
+    [repoExists, repoPath] = om.internal.setup.pathtool.lookForRepository(repoName, branchName);
+    if repoExists
+        return
+    end
     
     % Todo: Implement updating
     % if repoExists
@@ -35,9 +38,10 @@ function installGithubRepository(repositoryUrl, branchName, options)
     om.internal.fileio.filewrite(filePath, commitId)
     
     % Run setup.m if present.
-    if isfile( fullfile(repoTargetFolder, 'setup.m') )
-        run( fullfile(repoTargetFolder, 'setup.m') )
+    setupFile = om.internal.setup.findSetupFile(repoTargetFolder);
+    if isfile( setupFile )
+        run( setupFile )
     else
-        addpath(genpath(repoTargetFolder)); savepath()
+        addpath(genpath(repoTargetFolder));
     end
 end

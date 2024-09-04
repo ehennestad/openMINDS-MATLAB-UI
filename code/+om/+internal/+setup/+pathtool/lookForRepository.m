@@ -14,8 +14,10 @@ function [exists, repositoryPath] = lookForRepository(repositoryName, branchName
     %   the repository is cloned from GitHub
 
     expectedFolderName = [ ...
-        sprintf("%s-%s", repositoryName, branchName), ...
-        string(repositoryName) ];
+        sprintf("%s-%s$", repositoryName, branchName), ...
+        sprintf("%s-%s%s", repositoryName, branchName, filesep), ...
+        string(repositoryName) + "$", ...
+        string(repositoryName) + filesep];
     
     for i = 1:numel(expectedFolderName)
 
@@ -24,24 +26,31 @@ function [exists, repositoryPath] = lookForRepository(repositoryName, branchName
         
         isEmpty = cellfun('isempty', matchingFolderName);
         matchedFolderIndex = find(~isEmpty);
+
+        if endsWith(expectedFolderName(i), filesep)
+            matchedFolderNames = string(pathList(matchedFolderIndex));
+            matchedFolderNames = unique( extractBefore(matchedFolderNames, expectedFolderName(i)));
+            matchedFolderNames = fullfile(matchedFolderNames, expectedFolderName(i));
+        else
+            matchedFolderNames = unique( string( pathList(matchedFolderIndex) ) );
+        end
     
-        if numel(matchedFolderIndex) == 1
+        if numel(matchedFolderNames) == 1
             exists = true;
-            repositoryPath = pathList{matchedFolderIndex}; 
+            repositoryPath = matchedFolderNames;
             break
 
         elseif numel(matchedFolderIndex) > 1
             warning('Multiple folders matching the repository name was found on path')
             exists = true;
-            repositoryPath = pathList(matchedFolderIndex);
+            repositoryPath = matchedFolderNames(1);
             break
-
         end
     end
     repositoryPath = string(repositoryPath);
     
     % Make sure folder exists
-    if ~isfolder(repositoryPath(1))
+    if ~isempty(char(repositoryPath)) && ~isfolder(repositoryPath)
         warning("Repository was found on MATLAB's search path, but folder does not exist")
         exists = false;
         repositoryPath = "";
@@ -50,7 +59,7 @@ function [exists, repositoryPath] = lookForRepository(repositoryName, branchName
     if repositoryPath == ""; return; end
     
     % Check if folder contains expected files...
-    L = dir( repositoryPath(1) );
+    L = dir( repositoryPath );
     assert(contains('README.md', {L.name}, 'IgnoreCase', true) && ...
         contains('LICENSE', {L.name}, 'IgnoreCase', true), ...
         "Expected repository to contain a Readme and LICENSE file")
