@@ -9,5 +9,3 @@ function setup(mode)
 
     run( fullfile(om.internal.rootpath, 'startup.m') )
 end
-
-%% test
