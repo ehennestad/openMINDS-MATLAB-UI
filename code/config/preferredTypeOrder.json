@@ -1,0 +1,23 @@
+{
+  "Dataset": {
+    "author": [
+      "Person",
+      "Organization",
+      "Consortium"
+    ]
+  },
+  "DatasetVersion": {
+    "author": [
+      "Person",
+      "Organization",
+      "Consortium"
+    ]
+  },
+  "Affiliation": {
+    "memberOf": ["Organization", "Consortium"]
+  },
+  "Funding": {
+    "funder": ["Organization", "Consortium", "Person"]
+  }
+
+}

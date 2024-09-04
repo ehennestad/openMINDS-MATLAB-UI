@@ -1,2 +1,0 @@
-classdef StudyTarget < handle
-end

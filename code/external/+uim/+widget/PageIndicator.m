@@ -15,6 +15,7 @@ classdef PageIndicator < uim.abstract.virtualContainer & uim.mixin.assignPropert
        FontSize = 12
        IndicatorSize = 10
        IndicatorColor = ones(1,3) * 0.5
+       SelectedIndicatorColor = ones(1,3) * 0.5
        BarColor = 'k'
        BarVisibility = 'on'
        TextVisibility = 'on'; % 'on', 'hit', 'off'
@@ -286,7 +287,7 @@ classdef PageIndicator < uim.abstract.virtualContainer & uim.mixin.assignPropert
             obj.hPageLabels(obj.CurrentPage).Visible = 'off';
 
             % Activate new page
-            obj.hPageButtons(newPageNumber).FaceColor = obj.BarColor;
+            obj.hPageButtons(newPageNumber).FaceColor = obj.SelectedIndicatorColor;
             obj.hPageLabels(newPageNumber).Visible = 'on';
             
             obj.CurrentPage = newPageNumber;

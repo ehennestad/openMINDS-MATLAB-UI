@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="svg-icon"
+   style="width: 1em;height: 1em;vertical-align: middle;fill: currentColor;overflow: hidden;"
+   viewBox="0 0 1024 1024"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="001_-list.svg"
+   inkscape:export-filename="001_-list_.png"
+   inkscape:export-xdpi="12"
+   inkscape:export-ydpi="12"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.23046875"
+     inkscape:cx="512"
+     inkscape:cy="512"
+     inkscape:window-width="1312"
+     inkscape:window-height="449"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <path
+     d="M782.37 216.15v596.6H244.45v-596.6h537.92m22.25-88.56H222.2c-36.53 0-66.31 27.9-66.31 61.88v650c0.11 34.1 30 61.88 66.42 61.88h582.31c36.53 0 66.31-27.9 66.31-61.88v-650c0-34.21-29.67-61.88-66.31-61.88z"
+     fill="#4D4D4D"
+     id="path1" />
+  <path
+     d="M706.54 706.58H418.7a33.31 33.31 0 0 1-33.21-33.21 33.31 33.31 0 0 1 33.21-33.21h287.84a33.31 33.31 0 0 1 33.21 33.21 33.31 33.31 0 0 1-33.21 33.21zM320.4 640.16a33.21 33.21 0 1 1-33.21 33.21 33.17 33.17 0 0 1 33.21-33.21z m386.14-92.55H418.7a33.31 33.31 0 0 1-33.21-33.21 33.31 33.31 0 0 1 33.21-33.21h287.84a33.31 33.31 0 0 1 33.21 33.21 33.31 33.31 0 0 1-33.21 33.21zM320.4 481.18a33.21 33.21 0 1 1-33.21 33.21 33.17 33.17 0 0 1 33.21-33.21z m386.14-92.44H418.7a33.31 33.31 0 0 1-33.21-33.21 33.31 33.31 0 0 1 33.21-33.21h287.84a33.31 33.31 0 0 1 33.21 33.21 33.31 33.31 0 0 1-33.21 33.21zM320.4 322.32a33.21 33.21 0 1 1-33.21 33.21 33.17 33.17 0 0 1 33.21-33.21z"
+     fill="#00796B"
+     id="path2" />
+</svg>
