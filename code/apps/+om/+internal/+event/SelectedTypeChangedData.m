@@ -8,7 +8,7 @@ classdef SelectedTypeChangedData < event.EventData
     methods
         function obj = SelectedTypeChangedData(selectedType)
             arguments
-                selectedType (1,1) om.enum.Types
+                selectedType (1,1) openminds.enum.Types
             end
             obj.SelectedType = selectedType;
         end

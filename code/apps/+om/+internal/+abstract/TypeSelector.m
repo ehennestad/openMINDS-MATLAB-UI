@@ -11,12 +11,12 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
 
     properties (SetAccess = immutable)
         % Types - A list of types to select from (options)
-        Types (1,:) om.enum.Types
+        Types (1,:) openminds.enum.Types
     end
 
     properties (AbortSet)
         % SelectedType - The currently selected type 
-        SelectedType (1,1) om.enum.Types 
+        SelectedType (1,1) openminds.enum.Types 
     end
 
     properties
@@ -41,7 +41,7 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
             arguments
                 hParent = []
                 options.?om.internal.abstract.TypeSelector
-                options.Types (1,:) om.enum.Types
+                options.Types (1,:) openminds.enum.Types
             end
 
             if isempty(hParent)

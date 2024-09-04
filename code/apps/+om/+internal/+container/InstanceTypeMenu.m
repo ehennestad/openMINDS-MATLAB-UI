@@ -13,12 +13,12 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
 
     properties (SetAccess = immutable)
         % Types - A list of types to select from (options)
-        Types (1,:) om.enum.Types
+        Types (1,:) openminds.enum.Types
     end
 
     properties (AbortSet)
         % SelectedType - The currently selected type 
-        SelectedType (1,1) om.enum.Types 
+        SelectedType (1,1) openminds.enum.Types 
     end
 
     properties
@@ -39,7 +39,7 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
             arguments
                 hFigure matlab.ui.Figure
                 options.?om.internal.container.InstanceTypeMenu
-                options.Types (1,:) om.enum.Types
+                options.Types (1,:) openminds.enum.Types
             end
 
             if isfield(options, 'Types')
@@ -82,7 +82,7 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
     % Component callback methods 
     methods (Access = private)
         function onContextMenuItemClicked(obj, ~, event)
-            obj.SelectedType = om.enum.Types(event.Source.Text);
+            obj.SelectedType = openminds.enum.Types(event.Source.Text);
         end
     end
 

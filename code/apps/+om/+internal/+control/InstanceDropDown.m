@@ -82,7 +82,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     properties (AbortSet = true)
         % MetadataType - The metadata type which is currently active/selected 
         % in this component
-        ActiveMetadataType (1,1) om.enum.Types = "None"
+        ActiveMetadataType (1,1) openminds.enum.Types = "None"
     end
 
     % Properties that correspond to underlying components
@@ -103,7 +103,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
         % AllowedTypes - List of openMINDS types which this dropdown
         % supports. Note, this is either a scalar or a list if the dropdown
         % represents a mixed type.
-        AllowedTypes (1,:) om.enum.Types
+        AllowedTypes (1,:) openminds.enum.Types
 
         SearchField
         SearchString = ''
@@ -121,7 +121,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 propValues.ShowCreateAction = true
                 propValues.MetadataCollection
                 propValues.MetadataType (1,1) string = missing
-                propValues.ActiveMetadataType (1,1) om.enum.Types = "None"
+                propValues.ActiveMetadataType (1,1) openminds.enum.Types = "None"
                 propValues.UpstreamInstanceType (1,1) string = missing
                 propValues.UpstreamInstancePropertyName (1,1) string = missing
                 propValues.ActionButtonType (1,1) om.internal.control.enum.InstanceDropdownActionButton = "None"
@@ -338,9 +338,9 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             if ismissing(comp.MetadataType); return; end
 
             % Properly assign class name if only (short) name was provided
-            [~, typeNames] = enumeration('om.enum.Types');
+            [~, typeNames] = enumeration('openminds.enum.Types');
             if any(strcmp(comp.MetadataType, typeNames))
-                comp.MetadataType = om.enum.Types(comp.MetadataType).ClassName;
+                comp.MetadataType = openminds.enum.Types(comp.MetadataType).ClassName;
                 return
             end
 
@@ -351,7 +351,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             end
 
             allowedTypesShortNames = openminds.internal.utility.getSchemaShortName(allowedTypes);
-            comp.AllowedTypes = om.enum.Types(allowedTypesShortNames);
+            comp.AllowedTypes = openminds.enum.Types(allowedTypesShortNames);
 
             comp.ActiveMetadataType = comp.AllowedTypes(1);
         end

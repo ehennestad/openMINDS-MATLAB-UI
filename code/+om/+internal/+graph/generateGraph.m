@@ -44,7 +44,7 @@ function [G, edgeLabels] = generateGraph(modelName)
 
     [s, t, e] = deal(cell(0,1));
 
-    types = enumeration( 'om.enum.Types' );
+    types = enumeration( 'openminds.enum.Types' );
     classNames = [types.ClassName];
     keep = startsWith( classNames, sprintf('openminds.%s', modelName) );
     classNames = classNames(keep);

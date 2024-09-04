@@ -9,5 +9,5 @@ function instance = getControlledInstance(instanceId)
     end
 
     [~, schemaType, ] = fileparts(fileparts(instanceId));
-    instance = feval( om.enum.Types(schemaType).ClassName, instanceId );
+    instance = feval( openminds.enum.Types(schemaType).ClassName, instanceId );
 end

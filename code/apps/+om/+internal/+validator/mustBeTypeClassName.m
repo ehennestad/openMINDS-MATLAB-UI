@@ -8,7 +8,7 @@ function mustBeTypeClassName(className)
 
     if ismissing(className); return; end
 
-    [~, typeNames] = enumeration('om.enum.Types');
+    [~, typeNames] = enumeration('openminds.enum.Types');
     if any(strcmp(className, typeNames))
         return
     end
