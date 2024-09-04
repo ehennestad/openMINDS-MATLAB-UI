@@ -1,16 +1,35 @@
 # openMINDS-MATLAB-UI
-A matlab graphical user interface for openMINDS
+A MATLAB graphical user interface (GUI) for openMINDS. This toolbox builds upon the [openMINDS_MATLAB](https://github.com/openMetadataInitiative/openMINDS_MATLAB) toolkit, offering interactive forms to streamline metadata entry."
 
-Requirements:
+## Requirements:
 MATLAB 2023a or later
 
-Dependencies:
-https://github.com/VervaekeLab/NANSEN
+## Installation
+1. Clone or download this repository
+2. Navigate to the repository folder in MATLAB
+3. Run `setup.m`
 
-When nansen is on path, run the following:
+## Getting started
+This is a very minimal example on how to try out this toolbox. More examples and interactive workflows will be added later.
 ```
-AM = nansen.AddonManager;
-AM.downloadAddon('WidgetsToolbox')
+% Create a filepath to a file for saving metadata
+filePath = fullfile(userpath, "openMINDS_MATLAB", "demo", "datasetversion_gui.jsonld");
+
+if ~isfile(filePath)
+    dsv = openminds.core.DatasetVersion();
+    collection = openminds.Collection();
+    collection.save(filePath)
+    mode = "create";
+else
+    collection = openminds.Collection(filePath);
+    dsv = collection.list("DatasetVersion");
+    mode = "modify";
+end
+
+dsv = om.uiCreateNewInstance(dsv, collection, "Mode", mode);
+
+if ~isempty(dsv)
+    collection.save(filePath)
+end
 ```
 
-Then check out the live demo located [here](demo/)
