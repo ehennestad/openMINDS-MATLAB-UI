@@ -1,20 +1,45 @@
 function addDependenciesToPath()
+    
+     reqs = om.internal.setup.getRequirements();
 
-    installationLocation = om.internal.constant.AddonTargetFolder();
+     for i = 1:numel(reqs)
+        switch reqs(i).Type
+            case 'GitHub'
+                % Todo.
+                %[repoUrl, branchName] = parseGitHubUrl(reqs(i).URI);
+                %om.internal.setup.installGithubRepository( repoUrl, branchName )
+            
+            case 'FileExchange'
+                [packageUuid, version] = om.internal.setup.fex.parseFileExchangeURI( reqs(i).URI );
+                [isInstalled, version] = om.internal.setup.fex.isToolboxInstalled(packageUuid, version);
+                if isInstalled
+                    matlab.addons.enableAddon(packageUuid, version)
+                end
+            case 'Unknown'
+                continue
+        end        
+    end
+    
+    % Add all addons in the package's addon folder to path
+    addonLocation = om.internal.constant.AddonTargetFolder();
 
-    % Add everything to path, so that recursiveDir can be used below
-    s = warning('off');
-    addpath(genpath(installationLocation));
-    warning(s)
+    addonListing = dir(addonLocation);
 
-    % Lookfor startup files..
-    startupListing = recursiveDir(installationLocation, ...
-        'Expression', '^startup', ...
-        'FileType', 'm', ...
-        'RecursionDepth', 3, ...
-        'OutputType', 'FilePath');
+    for i = 1:numel(addonListing)
+        if startsWith(addonListing(i).name, '.')
+            continue
+        end
+        if ~addonListing(i).isdir
+            continue
+        end
 
-    for i = 1:numel(startupListing)
-        run(startupListing{i})
+        folderPath = fullfile(addonListing(i).folder, addonListing(i).name);
+        startupFile = om.internal.setup.findStartupFile(folderPath);
+        
+        if ~isempty(startupFile)
+            run( startupFile ) 
+        else
+            addpath(genpath(folderPath))
+        end
     end
 end

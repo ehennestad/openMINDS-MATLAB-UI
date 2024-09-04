@@ -19,22 +19,12 @@ function installFexPackage(toolboxIdentifier, installLocation, options)
     end
 
     % Check if toolbox is installed
-    addonsTable = matlab.addons.installedAddons();
+    [isInstalled, version] = om.internal.setup.fex.isToolboxInstalled(toolboxIdentifier, options.Version);
 
-    isInstalled = addonsTable.Identifier == toolboxIdentifier;
+    if isInstalled
+        matlab.addons.enableAddon(toolboxIdentifier, version)
 
-    if any(isInstalled)
-        % Todo: Verify that we have the correct version.
-        if sum(isInstalled) == 1
-            toolboxVersion = addonsTable.Version(isInstalled);
-        elseif sum(isInstalled) > 1
-            idx = find(isInstalled, 1, 'first');
-            toolboxVersion = addonsTable.Version(idx);
-            warning('Selected version %s', toolboxVersion)
-        end
-        toolboxFolder = matlab.internal.addons.util.retrieveInstallationFolderForAddOn(toolboxIdentifier, toolboxVersion);
-        addpath(genpath(toolboxFolder));
-    else
+    else % Download toolbox
         fex = matlab.addons.repositories.FileExchangeRepository();
 
         if ismissing(options.Version)
@@ -47,6 +37,8 @@ function installFexPackage(toolboxIdentifier, installLocation, options)
         addonUrl = fex.getAddonURL(toolboxIdentifier, versionStr);
         
         if endsWith(addonUrl, '.xml')
+            % Todo: Install in MATLAB's Addon folder
+
             % Sometimes the URL is for an xml, in which case we need to
             % parse the xml and retrieve the download url from the xml.
             [filepath, C] = om.internal.tempsave(addonUrl);
@@ -75,6 +67,9 @@ function installFexPackage(toolboxIdentifier, installLocation, options)
 
         if endsWith(addonUrl, '/zip')
             [tempFilepath, C] = om.internal.tempsave(addonUrl, [toolboxIdentifier, '_temp.zip']);
+
+            installLocation = fullfile(installLocation, toolboxName);
+            if ~isfolder(installLocation); mkdir(installLocation); end
             unzip(tempFilepath, installLocation);
 
         elseif endsWith(addonUrl, '/mltbx')

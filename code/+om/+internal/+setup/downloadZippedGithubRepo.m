@@ -26,8 +26,10 @@ function repoFolder = downloadZippedGithubRepo(githubUrl, targetFolder, updateFl
         
         % Delete current version
         if isfolder(targetFolder)
-            if contains(path, targetFolder)
-                rmpath(genpath(targetFolder))
+            if contains(path, fullfile(targetFolder, filesep))
+                pathList = strsplit(path, pathsep);
+                pathList_ = pathList(startsWith(pathList, fullfile(targetFolder, filesep)));
+                rmpath(strjoin(pathList_, pathsep))
             end
             try
                 %rmdir(targetFolder, 's')
