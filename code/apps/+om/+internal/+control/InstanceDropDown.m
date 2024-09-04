@@ -649,7 +649,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             typeName = string(comp.ActiveMetadataType);
 
             % Get label from vocab
-            label = om.internal.vocab.getSchemaLabelFromName(typeName);
+            label = openminds.internal.vocab.getSchemaLabelFromName(typeName);
 
             vowels = 'aeiouy';
             label = char(label);
