@@ -39,7 +39,7 @@ function [G, edgeLabels] = generateGraph(modelName)
 
     arguments
         modelName = 'core'
-        force = false
+        %force = false
     end
 
     [s, t, e] = deal(cell(0,1));
