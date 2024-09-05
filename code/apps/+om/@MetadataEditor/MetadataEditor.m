@@ -90,7 +90,6 @@ classdef MetadataEditor < handle
             obj.createSchemaSelectorSidebar()
             obj.plotOpenMindsLogo()
 
-
             % % Create graph of the core module of openMINDS
             [G,e] = om.internal.graph.generateGraph('core');
             
@@ -132,7 +131,11 @@ classdef MetadataEditor < handle
 
             modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
             ignoreList = {'+category', '+linkset', '+controlledterms'};
-            omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
+            
+
+            %omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
+            omModels = recursiveDir(modelRoot, "Type", "folder", "IgnoreList", ignoreList, ...
+                "RecursionDepth", 1, "OutputType", "FilePath");
 
             %omModels = {'openminds.core', 'openminds.sands'};
             obj.SchemaMenu = om.SchemaMenu(obj, omModels, true);
@@ -551,12 +554,12 @@ classdef MetadataEditor < handle
         end
 
         function downloadOpenMindsLogo()
-            logoUrl = om.Constants.LogoLightURL;
+            logoUrl = om.common.constant.OpenMindsLogoLightURL;
             websave(om.MetadataEditor.getLogoFilepath(), logoUrl);
         end
 
         function logoFilepath = getLogoFilepath()
-            logoUrl = om.Constants.LogoLightURL;
+            logoUrl = om.common.constant.OpenMindsLogoLightURL;
             logoURI = matlab.net.URI(logoUrl);
             
             % Download logo
