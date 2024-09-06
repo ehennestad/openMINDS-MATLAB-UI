@@ -51,7 +51,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
 
     [SOrig, ~] = deal( metadataInstance(1).toStruct() );
     
-    SNew = om.convert.toStruct( metadataInstance, metadataCollection );
+    SNew = om.convert.toStruct( metadataInstance(1), metadataCollection );
     
     % Fill out options for each property
     propNames = fieldnames(SOrig);
@@ -115,19 +115,19 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
     for i = 1:numel(metadataInstance)
         %metadataInstance(i) = metadataInstance(i).fromStruct(SNew);
         metadataInstance(i) = om.convert.fromStruct(metadataInstance(i), SNew, metadataCollection);
-    end
     
-    if ~metadataCollection.contains(metadataInstance)
-        
-        if ~ismissing(options.UpstreamInstanceType) && ...
-                openminds.utility.isEmbeddedType(options.UpstreamInstanceType, options.UpstreamInstancePropertyName)
-            metadataCollection.add(metadataInstance, "AddSubNodesOnly", true)
-        else
-            metadataCollection.add(metadataInstance)
+        if ~metadataCollection.contains(metadataInstance(i))
+            
+            if ~ismissing(options.UpstreamInstanceType) && ...
+                    openminds.utility.isEmbeddedType(options.UpstreamInstanceType, options.UpstreamInstancePropertyName)
+                metadataCollection.add(metadataInstance(i), "AddSubNodesOnly", true)
+            else
+                metadataCollection.add(metadataInstance(i))
+            end
         end
     end
 
-    instanceName = char(metadataInstance);
+    instanceName = arrayfun(@(i) char(i), metadataInstance, 'uni', 0);
 
     if ~nargout
         clear metadataInstance
