@@ -1,7 +1,7 @@
 classdef CollectionChangedEventData < event.EventData
 
     properties
-        EventType openminds.metadatacollection.event.CollectionChangedEventType
+        EventType om.ui.uicollection.event.CollectionChangedEventType
         Instances
         AffectedTypes
     end

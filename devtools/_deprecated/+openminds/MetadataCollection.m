@@ -46,7 +46,7 @@ classdef MetadataCollection < handle
         
         function add(obj, metadataInstance)
             
-            import openminds.metadatacollection.event.CollectionChangedEventData
+            import om.ui.uicollection.event.CollectionChangedEventData
 
             instanceClass = class(metadataInstance);
             instanceName = obj.getSchemaShortName(instanceClass);
