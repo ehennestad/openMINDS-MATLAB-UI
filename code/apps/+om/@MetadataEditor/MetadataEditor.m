@@ -31,7 +31,7 @@ classdef MetadataEditor < handle
 
     properties
         MetadataInstance
-        MetadataCollection openminds.MetadataCollection
+        MetadataCollection openminds.Collection
         MetadataSet
     end
 
@@ -53,10 +53,15 @@ classdef MetadataEditor < handle
         UIMetaTableViewer
         UISideBar
         UIGraphViewer
+        UIButtonCreateNew
     end
 
     properties (Access = private)
         SchemaMenu
+    end
+
+    properties (Access = private)
+        CurrentTableInstanceIds
     end
 
     properties (Access = private, Dependent)
@@ -77,7 +82,7 @@ classdef MetadataEditor < handle
                 obj.loadMetadataCollection()
             else
                 obj.MetadataCollection = metadataCollection;
-                obj.MetadataCollection.createListenersForAllInstances()
+                %obj.MetadataCollection.createListenersForAllInstances()
             end
 
             obj.createFigure()
@@ -86,6 +91,7 @@ classdef MetadataEditor < handle
             obj.updateLayoutPositions()
 
             obj.createTabGroup()
+            obj.createCreateNewButton()
 
             obj.createSchemaSelectorSidebar()
             obj.plotOpenMindsLogo()
@@ -109,7 +115,7 @@ classdef MetadataEditor < handle
             % axes with the graph plot, where the axes current point seems
             % to be reversed in the y-dimension.
             columnSettings = obj.loadMetatableColumnSettings();
-            nvPairs = {'ColumnSettings', columnSettings};
+            nvPairs = {'ColumnSettings', columnSettings, 'TableFontSize', 8};
             h = nansen.MetaTableViewer( obj.UIContainer.UITab(1), [], nvPairs{:});
             h.HTable.KeyPressFcn = @obj.onKeyPressed;
             obj.UIMetaTableViewer = h;
@@ -145,7 +151,7 @@ classdef MetadataEditor < handle
             obj.Figure.SizeChangedFcn = @(s, e) obj.onFigureSizeChanged;
             obj.Figure.CloseRequestFcn = @obj.onExit;
 
-            obj.changeSelection('Subject')
+            obj.changeSelection('DatasetVersion')
                        
             obj.configureFigureInteractionCallbacks()
 
@@ -190,7 +196,7 @@ classdef MetadataEditor < handle
     methods %Set / get 
         function saveFolder = get.SaveFolder(~)
             % Todo: Get from preferences
-            saveFolder = fullfile(userpath, 'openMINDS', 'userdata');
+            saveFolder = fullfile(userpath, 'openMINDS-MATLAB-UI', 'userdata');
             if ~isfolder(saveFolder); mkdir(saveFolder); end
         end
     end
@@ -198,9 +204,15 @@ classdef MetadataEditor < handle
     methods
 
         function changeSelection(obj, schemaName)
-            if any(strcmp(obj.UISideBar.Items, schemaName))
-                obj.UISideBar.SelectedItems = schemaName;
+            if ~any(strcmp(obj.UISideBar.Items, schemaName))
+                % Todo: Update sidebar control to have settable items
+                items = obj.UISideBar.Items;
+                delete(obj.UISideBar);
+                newItems = [items, {schemaName}];
+                obj.createSchemaSelectorSidebar(newItems)
             end
+            
+            obj.UISideBar.SelectedItems = schemaName;
         end
         
         function updateLayoutPositions(obj)
@@ -220,7 +232,11 @@ classdef MetadataEditor < handle
             
             h = H-MARGIN*2-toolH-PADDING;
             w = 150;
-            obj.UIPanel.SidebarL.Position = [MARGIN, MARGIN+PADDING+logoH,logoW,h-logoH-PADDING];
+
+            newButtonHeight = 30;
+            obj.UIPanel.SidebarL.Position = [MARGIN, MARGIN+PADDING+logoH,logoW,h-logoH-newButtonHeight-PADDING*2];
+            obj.UIPanel.CreateNew.Position = [MARGIN, sum(obj.UIPanel.SidebarL.Position([2,4]))+PADDING,logoW,newButtonHeight];
+
             obj.UIPanel.Table.Position = [w+MARGIN+PADDING, MARGIN, W-MARGIN*2-w-PADDING, h];
 
             obj.UIPanel.Logo.Position = [MARGIN, MARGIN, logoW, logoH];
@@ -281,6 +297,7 @@ classdef MetadataEditor < handle
 
         function createPanels(obj)
             obj.UIPanel.Toolbar = uipanel(obj.Figure);
+            obj.UIPanel.CreateNew = uipanel(obj.Figure);
             obj.UIPanel.SidebarL = uipanel(obj.Figure);
             obj.UIPanel.Table = uipanel(obj.Figure);
             obj.UIPanel.Logo = uipanel(obj.Figure);
@@ -306,13 +323,26 @@ classdef MetadataEditor < handle
                 obj.UIContainer.UITab(i) = hTab;
             end
         end
+
+        function createCreateNewButton(obj)
+            
+            obj.UIButtonCreateNew = uicontrol(obj.UIPanel.CreateNew, 'Style', 'pushbutton');
+            obj.UIButtonCreateNew.String = "Create New";
+            obj.UIButtonCreateNew.Callback = @obj.onCreateNewButtonPressed;
+            obj.UIButtonCreateNew.Units = 'normalized';
+            obj.UIButtonCreateNew.Position = [0,0,1,1];
+            obj.UIPanel.CreateNew.BorderType = 'none';
+            obj.UIPanel.CreateNew.BackgroundColor = obj.Figure.Color;
+        end
         
-        function createSchemaSelectorSidebar(obj)
-        %createSchemaSelectorSidebar Create a selector widget in side panel    
-            
-            initSchemas = {'Subject', 'TissueSample', 'SubjectState', 'TissueSampleState'};
-            
-            sideBar = om.gui.control.ListBox(obj.UIPanel.SidebarL, initSchemas);
+        function createSchemaSelectorSidebar(obj, schemaTypes)
+        %createSchemaSelectorSidebar Create a selector widget in side panel
+
+            if nargin < 2
+                schemaTypes = {'DatasetVersion'};
+            end
+                        
+            sideBar = om.gui.control.ListBox(obj.UIPanel.SidebarL, schemaTypes);
             sideBar.SelectionChangedFcn = @obj.onSelectionChanged;
             obj.UISideBar = sideBar;
         end
@@ -389,9 +419,9 @@ classdef MetadataEditor < handle
             if isfile(metadataFilepath)
                 S = load(metadataFilepath, 'MetadataCollection');
                 obj.MetadataCollection = S.MetadataCollection;
-                obj.MetadataCollection.createListenersForAllInstances()
+                %obj.MetadataCollection.createListenersForAllInstances()
             else
-                obj.MetadataCollection = openminds.MetadataCollection();
+                obj.MetadataCollection = om.ui.UICollection();
             end
 
 
@@ -419,23 +449,27 @@ classdef MetadataEditor < handle
         end
 
         function onMetaTableDataChanged(obj, src, evt)
-            type = obj.CurrentSchemaTableName;
-            instanceIdx = evt.Indices(1);
+        % onMetaTableDataChanged - Call back to handle value changes from table
+            instanceIndex = evt.Indices(1);
+            instanceID = obj.CurrentTableInstanceIds{instanceIndex};
+
             propName = src.ColumnName{ evt.Indices(2) };
             propValue = evt.NewValue;
-            obj.MetadataCollection.modifyInstance(type, instanceIdx, propName, propValue);
+            obj.MetadataCollection.modifyInstance(instanceID, propName, propValue);
         end
 
         function onSelectionChanged(obj, src, evt)
             
-            schemaName = evt.NewSelection;
-            obj.CurrentSchemaTableName = schemaName;
+            selectedTypes = evt.NewSelection;
+            obj.CurrentSchemaTableName = selectedTypes;
 
             % check if schema has a table
-            if numel(schemaName) == 1
-                metaTable = obj.MetadataCollection.getTable(schemaName{1});
+            if numel(selectedTypes) == 1
+                schemaType = openminds.internal.vocab.getSchemaName(selectedTypes{1});
+                [metaTable, ids] = obj.MetadataCollection.getTable(schemaType);
+                obj.CurrentTableInstanceIds = ids;
             else
-                metaTable = obj.MetadataCollection.joinTables(schemaName);
+                metaTable = obj.MetadataCollection.joinTables(selectedTypes);
             end
 
             obj.updateUITable(metaTable)
@@ -465,6 +499,10 @@ classdef MetadataEditor < handle
                     return
                 case 'Open'
                     open(functionName)
+                case 'View'
+                    schemaType = functionNameSplit{end};
+                    %obj.UISideBar.Items = schemaType;
+                    obj.changeSelection(schemaType)
                     return
             end
 
@@ -475,13 +513,26 @@ classdef MetadataEditor < handle
             className = functionNameSplit{end};
             obj.changeSelection(className)
         end
+
+        function onCreateNewButtonPressed(obj, src, evt)
+
+            selectedItems = obj.UISideBar.SelectedItems{1};
+            type = openminds.internal.vocab.getSchemaName(selectedItems);
+
+            type = eval( sprintf( 'openminds.enum.Types.%s', type) );
+            om.uiCreateNewInstance(type.ClassName, obj.MetadataCollection, "NumInstances", 1)
+
+            % Todo: update tables...!
+            %obj.changeSelection(string(type))
+        end
         
         function onMetadataCollectionChanged(obj, src, evt)
             
             G = obj.MetadataCollection.graph;
             obj.UIGraphViewer.updateGraph(G);
             
-            T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            [T, ids] = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            obj.CurrentTableInstanceIds = ids;
             obj.updateUITable(T)
 
         end
@@ -498,12 +549,18 @@ classdef MetadataEditor < handle
         function onDeleteMetadataInstanceClicked(obj, src, evt)
             selectedIdx = obj.UIMetaTableViewer.getSelectedEntries();
 
+            % Todo: Make sure this is name and not label.
             type = obj.CurrentSchemaTableName;
+             
+            % Todo: Support removing multiple instances.
+            instanceID = obj.CurrentTableInstanceIds{selectedIdx};
+            obj.MetadataCollection.remove(instanceID)
 
-            obj.MetadataCollection.removeInstance(type, selectedIdx)
+            %obj.MetadataCollection.removeInstance(type, selectedIdx)
 
-            T = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
+            [T, ids] = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
             obj.updateUITable(T)
+            obj.CurrentTableInstanceIds = ids;
             %app.MetaTable.removeEntries(selectedEntries)
             %app.UiMetaTableViewer.refreshTable(app.MetaTable)
 

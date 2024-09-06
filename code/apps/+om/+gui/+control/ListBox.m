@@ -99,6 +99,10 @@ classdef ListBox < handle
             hToolbar.Location = 'northwest';
 
         end
+
+        function delete(obj)
+            delete(obj.ButtonCollection)
+        end
     end
 
     methods % Set/get
