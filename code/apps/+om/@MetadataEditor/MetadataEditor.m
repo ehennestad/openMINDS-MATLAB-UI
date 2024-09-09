@@ -107,34 +107,17 @@ classdef MetadataEditor < handle
 
             obj.addMetadataCollectionListeners()
 
-
             h = om.internal.graphics.InteractiveOpenMINDSPlot(G, hAxes, e);
             obj.UIGraphViewer = h;
 
             % NB NB NB: Some weird bug occurs if this is created before the
             % axes with the graph plot, where the axes current point seems
             % to be reversed in the y-dimension.
-            columnSettings = obj.loadMetatableColumnSettings();
-            nvPairs = {'ColumnSettings', columnSettings, 'TableFontSize', 8};
-            h = nansen.MetaTableViewer( obj.UIContainer.UITab(1), [], nvPairs{:});
-            h.HTable.KeyPressFcn = @obj.onKeyPressed;
-            obj.UIMetaTableViewer = h;
+            obj.initializeTableViewer()
 
-            colSettings = h.ColumnSettings;
-            [colSettings(:).IsEditable] = deal(true);
-            h.ColumnSettings = colSettings;
-            %obj.UIMetaTableViewer.HTable.Units
+            obj.initializeTableContextMenu()
 
-            h.CellEditCallback = @obj.onMetaTableDataChanged;
-
-
-            [menuInstance, graphicsMenu] = om.TableContextMenu(obj.Figure);
-            obj.UIMetaTableViewer.TableContextMenu = graphicsMenu;
-            menuInstance.DeleteItemFcn = @obj.onDeleteMetadataInstanceClicked;
-
-            %modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab', '+openminds');
-            %modelRoot = fullfile(om.Constants.SchemaFolder, 'matlab-alias', '+openminds');
-
+            % Todo: Get model version from preferences...
             modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
             ignoreList = {'+category', '+linkset', '+controlledterms'};
             
@@ -345,6 +328,28 @@ classdef MetadataEditor < handle
             sideBar = om.gui.control.ListBox(obj.UIPanel.SidebarL, schemaTypes);
             sideBar.SelectionChangedFcn = @obj.onSelectionChanged;
             obj.UISideBar = sideBar;
+        end
+        
+        function initializeTableViewer(obj)
+
+            columnSettings = obj.loadMetatableColumnSettings();
+            nvPairs = {'ColumnSettings', columnSettings, 'TableFontSize', 8};
+            h = nansen.MetaTableViewer( obj.UIContainer.UITab(1), [], nvPairs{:});
+            h.HTable.KeyPressFcn = @obj.onKeyPressed;
+            obj.UIMetaTableViewer = h;
+
+            colSettings = h.ColumnSettings;
+            [colSettings(:).IsEditable] = deal(true);
+            h.ColumnSettings = colSettings;
+            %obj.UIMetaTableViewer.HTable.Units
+
+            h.CellEditCallback = @obj.onMetaTableDataChanged;
+        end
+
+        function initializeTableContextMenu(obj)
+            [menuInstance, graphicsMenu] = om.TableContextMenu(obj.Figure);
+            obj.UIMetaTableViewer.TableContextMenu = graphicsMenu;
+            menuInstance.DeleteItemFcn = @obj.onDeleteMetadataInstanceClicked;
         end
 
         function plotOpenMindsLogo(obj)
