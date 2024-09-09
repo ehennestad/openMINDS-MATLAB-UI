@@ -126,7 +126,11 @@ classdef UICollection < openminds.Collection
 
         function modifyInstance(obj, instanceId, propName, propValue)
             instance = obj.get(instanceId);
-            instance.(propName) = propValue;
+            if isempty(propValue)
+                instance.(propName)(:) = [];
+            else
+                instance.(propName) = propValue;
+            end
             obj.Nodes(instanceId) = {instance};
         end
 
@@ -376,10 +380,15 @@ classdef UICollection < openminds.Collection
                     % Get the value of the first row
                     thisValue = instanceTable{1,i};
                 
+                    % If the table column contains rows where the number of 
+                    % instances differ, need to extract instances from a cell
+                    if iscell(thisValue); thisValue = [thisValue{:}]; end
+                
                     % Get all the possible options.
                     if isa(thisValue, 'openminds.abstract.ControlledTerm')
                         options = eval(sprintf('%s.CONTROLLED_INSTANCES', class(thisValue)));
-                    
+                        options = ["<no selection>", options]; %#ok<AGROW>
+
                     elseif isa(thisValue, 'openminds.abstract.Schema')
                         
                         className = string( openminds.enum.Types.fromClassName( class(thisValue) ) ); 
@@ -391,10 +400,13 @@ classdef UICollection < openminds.Collection
 
 
                     if ~isempty(options)
+                        % Question/todo: Should we make a protected
+                        % categorical with this extra option?
                         rowValues = cell(numRows, 1);
                         for jRow = 1:numRows
                             thisValue =  instanceTable{jRow,i};
-    
+                            if iscell(thisValue); thisValue = [thisValue{:}]; end
+
                             if isempty(thisValue)
                                 thisValue = options(1);
                             else
@@ -409,13 +421,12 @@ classdef UICollection < openminds.Collection
                                 end
                             end
     
-                            rowValues{jRow} = categorical(thisValue, unique(options));
+                            rowValues{jRow} = categorical(thisValue, unique(options), 'Protected', true);
                         end
                         instanceTable.(thisColumnName) = cat(1, rowValues{:});
                     end
 
                 catch ME
-                    error(ME)
                     rethrow(ME)
                 end
             end            
