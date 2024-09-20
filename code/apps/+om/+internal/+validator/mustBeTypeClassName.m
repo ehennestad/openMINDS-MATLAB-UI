@@ -21,7 +21,8 @@ function mustBeTypeClassName(className)
     assert( ~isempty(mc), '"%s" does not appear to be a class name. Please make sure openMINDS_MATLAB is added to the search path', className)
 
     isValid = any( strcmp({mc.SuperclassList.Name}, 'openminds.abstract.Schema') ) || ...
-                any( strcmp({mc.SuperclassList.Name}, 'openminds.internal.abstract.LinkedCategory') );
+                any( strcmp({mc.SuperclassList.Name}, 'openminds.abstract.ControlledTerm') ) || ...
+                    any( strcmp({mc.SuperclassList.Name}, 'openminds.internal.abstract.LinkedCategory') );
 
     assert(isValid, "%s is not a valid class name for an openminds instance", className)
 end

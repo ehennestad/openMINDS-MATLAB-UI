@@ -344,6 +344,8 @@ classdef MetadataEditor < handle
             %obj.UIMetaTableViewer.HTable.Units
 
             h.CellEditCallback = @obj.onMetaTableDataChanged;
+            h.GetTableVariableAttributesFcn = @obj.createTableVariableAttributes;
+            h.MouseDoubleClickedFcn = @obj.onMouseDoubleClickedInTable;
         end
 
         function initializeTableContextMenu(obj)
@@ -458,6 +460,12 @@ classdef MetadataEditor < handle
             instanceIndex = evt.Indices(1);
             instanceID = obj.CurrentTableInstanceIds{instanceIndex};
 
+            % Todo: Handle actions...
+            % Update: obj.MetaTableVariableAttributes
+            % Update column layout.
+
+            % Todo: Update column format for individual column
+
             propName = src.ColumnName{ evt.Indices(2) };
             propValue = evt.NewValue;
             obj.MetadataCollection.modifyInstance(instanceID, propName, propValue);
@@ -476,8 +484,8 @@ classdef MetadataEditor < handle
             else
                 metaTable = obj.MetadataCollection.joinTables(selectedTypes);
             end
-
             obj.updateUITable(metaTable)
+            obj.UIMetaTableViewer.MetaTableType = string(schemaType);
         end
 
         function onFigureSizeChanged(app)
@@ -570,6 +578,56 @@ classdef MetadataEditor < handle
             %app.UiMetaTableViewer.refreshTable(app.MetaTable)
 
         end
+    
+        function onMouseDoubleClickedInTable(obj, src, evt)
+        % onMouseDoubleClickedInTable - Callback for double clicks
+        %
+        %   Check if the currently selected column has an associated table
+        %   variable definition with a double click callback function.
+
+            thisRow = evt.Cell(1); % Clicked row index
+            thisCol = evt.Cell(2); % Clicked column index
+            
+            if thisRow == 0 || thisCol == 0
+                return
+            end
+            
+            % Get name of column which was clicked
+            thisColumnName = obj.UIMetaTableViewer.getColumnNames(thisCol);
+
+            % Use table variable attributes to check if a double click 
+            % callback function exists for the current table column
+            TVA = obj.UIMetaTableViewer.MetaTableVariableAttributes([obj.UIMetaTableViewer.MetaTableVariableAttributes.HasDoubleClickFunction]);
+            
+            isMatch = strcmp(thisColumnName, {TVA.Name});
+
+            if any( isMatch )
+                if isa(TVA(isMatch).DoubleClickFunctionName, 'function_handle')
+                    fcnHandle = TVA(isMatch).DoubleClickFunctionName;
+
+                    instanceID = obj.CurrentTableInstanceIds{thisRow};
+                    instance = obj.MetadataCollection.get(instanceID);
+                    thisValue = instance.(thisColumnName);
+
+                    [items, itemsData] = fcnHandle(thisValue);
+                    if ~isempty(itemsData)
+                        instance.(thisColumnName) = [itemsData{:}];
+                        newValueStr = strjoin(items, '; ');
+                           
+                        % TODO: Method of metatable viewer:
+                        %thisColIdxView = find(strcmp(obj.UIMetaTableViewer.getColumnNames, thisColumnName));
+                        thisColIdxView = find(strcmp(obj.UIMetaTableViewer.MetaTable.Properties.VariableNames, thisColumnName));
+
+                        obj.UIMetaTableViewer.updateCells(thisRow, thisColIdxView, {newValueStr})
+                    end
+                    %keyboard
+
+                else
+                    error('Not supported')
+                end
+            end
+        end
+    
     end
 
     methods (Access = private) % Internal updating
@@ -584,7 +642,64 @@ classdef MetadataEditor < handle
                 obj.UIMetaTableViewer.refreshTable(table.empty, true)
             end
         end
+        
+        function tableVariableAttributes = createTableVariableAttributes(obj, metaTableType)
 
+            import nansen.metadata.abstract.TableVariable;
+            
+            metaTable = obj.UIMetaTableViewer.MetaTable;
+            if ~isempty(metaTable)
+
+                varNames = metaTable.Properties.VariableNames;
+                numVars = numel(varNames);
+                S = TableVariable.getDefaultTableVariableAttribute();
+                S = repmat(S, 1, numVars);
+                
+                % Fill out names and table type
+                [S(1:numVars).Name] = varNames{:};
+                [S(1:numVars).TableType] = deal(string(metaTableType));
+                [S(1:numVars).IsEditable] = deal( true );
+
+                openMindsType = openminds.enum.Types(metaTableType);
+                instance = feval(openMindsType.ClassName);  
+                    
+
+                metaSchema = openminds.internal.SchemaInspector( instance );
+
+
+                for i = 1:numel(varNames)
+                    if openminds.utility.isInstance( instance.(varNames{i}) ) && ...
+                            ~isa(instance.(varNames{i}), 'openminds.abstract.ControlledTerm')
+
+                        if metaSchema.isPropertyValueScalar(varNames{i})
+                            S(i).HasOptions = true;
+                            S(i).OptionsList = {'<Select>', '<Create>', '<Download>'};
+                        else
+                            propertyTypeName = instance.X_TYPE + "/" + varNames{i};
+    
+                            S(i).IsEditable = false;
+                            S(i).HasDoubleClickFunction = true;
+                            S(i).DoubleClickFunctionName = @(value, varargin) ...
+                                om.uiEditHeterogeneousList(value, propertyTypeName, obj.MetadataCollection );
+                        end
+                    elseif openminds.utility.isMixedInstance( instance.(varNames{i}) )
+
+                        propertyTypeName = instance.X_TYPE + "/" + varNames{i};
+
+                        S(i).IsEditable = false;
+                        S(i).HasDoubleClickFunction = true;
+                        S(i).DoubleClickFunctionName = @(value, varargin) ...
+                            om.uiEditHeterogeneousList(value, propertyTypeName, obj.MetadataCollection );
+
+                        % continue
+                    end
+                end
+
+                tableVariableAttributes = S;
+            else
+                tableVariableAttributes = TableVariable.getDefaultTableVariableAttribute();
+            end
+        end
     end
 
     methods (Static)
