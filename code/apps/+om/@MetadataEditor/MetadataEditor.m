@@ -103,8 +103,6 @@ classdef MetadataEditor < handle
             hAxes.Position = [0,0,0.999,1];
 
             G = obj.MetadataCollection.graph;
-            addlistener(obj.MetadataCollection, 'CollectionChanged', @obj.onMetadataCollectionChanged);
-
             obj.addMetadataCollectionListeners()
 
             h = om.internal.graphics.InteractiveOpenMINDSPlot(G, hAxes, e);
@@ -498,8 +496,10 @@ classdef MetadataEditor < handle
             % Simplify function name. In order to make gui menus more
             % userfriendly, the alias version of the schemas are used.
             functionNameSplit = strsplit(functionName, '.');
-            functionName = strjoin(functionNameSplit([1,2,4]), '.');
-            
+            if numel(functionNameSplit)==4
+                %functionName = strjoin(functionNameSplit([1,2,4]), '.');
+            end
+
             switch selectionMode
                 case 'Single'
                     n = 1;
@@ -547,7 +547,6 @@ classdef MetadataEditor < handle
             [T, ids] = obj.MetadataCollection.getTable(obj.CurrentSchemaTableName);
             obj.CurrentTableInstanceIds = ids;
             obj.updateUITable(T)
-
         end
 
         function onMetadataInstanceModified(obj, src, evt)
@@ -591,7 +590,7 @@ classdef MetadataEditor < handle
             if thisRow == 0 || thisCol == 0
                 return
             end
-            
+
             % Get name of column which was clicked
             thisColumnName = obj.UIMetaTableViewer.getColumnNames(thisCol);
 
@@ -625,6 +624,9 @@ classdef MetadataEditor < handle
                 else
                     error('Not supported')
                 end
+            else
+                evt.HitObject.ColumnEditable(thisCol)=true;
+                evt.HitObject.JTable.editCellAt(thisRow-1, thisCol-1);
             end
         end
     
@@ -658,7 +660,7 @@ classdef MetadataEditor < handle
                 % Fill out names and table type
                 [S(1:numVars).Name] = varNames{:};
                 [S(1:numVars).TableType] = deal(string(metaTableType));
-                [S(1:numVars).IsEditable] = deal( true );
+                [S(1:numVars).IsEditable] = deal( false );
 
                 openMindsType = openminds.enum.Types(metaTableType);
                 instance = feval(openMindsType.ClassName);  
@@ -673,7 +675,7 @@ classdef MetadataEditor < handle
 
                         if metaSchema.isPropertyValueScalar(varNames{i})
                             S(i).HasOptions = true;
-                            S(i).OptionsList = {'<Select>', '<Create>', '<Download>'};
+                            S(i).OptionsList = {{'<Select>', '<Create>', '<Download>'}}; % Todo
                         else
                             propertyTypeName = instance.X_TYPE + "/" + varNames{i};
     
