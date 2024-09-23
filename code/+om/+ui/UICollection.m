@@ -380,6 +380,9 @@ classdef UICollection < openminds.Collection
             [numRows, numColumns] = size(instanceTable);
             %tempStruct = table2struct(instanceTable(1,:));
             
+            className = openminds.enum.Types(instanceType).ClassName;
+            metaSchema = openminds.internal.SchemaInspector(className);
+
             for i = 1:numColumns
                 thisColumnName = instanceTable.Properties.VariableNames{i};
 
@@ -401,14 +404,16 @@ classdef UICollection < openminds.Collection
                         options = ["<no selection>", options]; %#ok<AGROW>
 
                     elseif isa(thisValue, 'openminds.abstract.Schema')
-                        
-                        className = string( openminds.enum.Types.fromClassName( class(thisValue) ) ); 
-                        options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
-                    
+                            
+                        if metaSchema.isPropertyValueScalar(thisColumnName)
+                            className = string( openminds.enum.Types.fromClassName( class(thisValue) ) ); 
+                            options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
+                        else
+                            options = [];
+                        end
                     else
                         options = [];
                     end
-
 
                     if ~isempty(options)
                         % Question/todo: Should we make a protected
@@ -435,6 +440,17 @@ classdef UICollection < openminds.Collection
                             rowValues{jRow} = categorical(thisValue, unique(options), 'Protected', true);
                         end
                         instanceTable.(thisColumnName) = cat(1, rowValues{:});
+                    else
+                        if isa(thisValue, 'openminds.abstract.Schema')
+                            if ~metaSchema.isPropertyValueScalar(thisColumnName)
+                                rowValues = cell(numRows, 1);
+                                for jRow = 1:numRows
+                                    thisValue =  instanceTable{jRow,i};
+                                    rowValues{jRow} = string(thisValue);
+                                end
+                                instanceTable.(thisColumnName) = cat(1, rowValues{:});
+                            end
+                        end
                     end
 
                 catch ME
