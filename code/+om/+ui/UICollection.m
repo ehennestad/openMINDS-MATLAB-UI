@@ -127,7 +127,12 @@ classdef UICollection < openminds.Collection
         function modifyInstance(obj, instanceId, propName, propValue)
             instance = obj.get(instanceId);
             if isempty(propValue)
-                instance.(propName)(:) = [];
+                if openminds.utility.isMixedInstance( instance.(propName) ) || ...
+                        openminds.utility.isInstance( instance.(propName) )
+                    instance.(propName)(:) = [];
+                else
+                    instance.(propName)(:) = propValue;
+                end
             else
                 instance.(propName) = propValue;
             end

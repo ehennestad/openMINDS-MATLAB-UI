@@ -27,7 +27,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
     if isempty(formCache); formCache = dictionary(); end
 
     % Reset form cache during dev
-    formCache = dictionary(); % Todo: Remove
+    %formCache = dictionary(); % Todo: Remove
 
     instanceName = string.empty;
 
@@ -57,7 +57,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
     propNames = fieldnames(SOrig);
 
     [~, ~, className] = fileparts(instanceSpec);
-    [className, classNameLabel] = deal( className(2:end) );
+    [className, classNameLabel] = deal( className );
 
     if options.NumInstances > 1; classNameLabel = [className, 's']; end
 
