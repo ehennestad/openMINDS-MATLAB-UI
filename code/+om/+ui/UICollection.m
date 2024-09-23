@@ -293,9 +293,15 @@ classdef UICollection < openminds.Collection
                 
                 instanceIDs = {schemaInstanceList.id};
                 instanceTable = schemaInstanceList.toTable();
+                instanceTable.id = instanceIDs';
                 instanceTable = obj.replaceLinkedInstancesWithCategoricals(instanceTable, schemaName);
 
                 metaTable = nansen.metadata.MetaTable(instanceTable, 'MetaTableClass', class(schemaInstanceList));
+                % metaTable = Catalog(instanceTable, 'NameField', 'lookupLabel', 'ItemClass', class(schemaInstanceList));
+                % metaTable.ItemRepresentation = 'object';
+                % metaTable.ItemConstructorInputType = 'nvpairs';
+                % 
+                % metaTable.columnProperties = om.ui.initializeColumnAttributes(metaTable);
             else
                 metaTable = [];
             end
