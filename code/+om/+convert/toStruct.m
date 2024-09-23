@@ -132,15 +132,16 @@ function [value, config] = getConfigForNonScalarValue(name, value, openMindsInst
     
     items = arrayfun(@(x) string(x), value);
     if isempty(value)
-        value = {value};
+        itemsData = {value};
     else
-        value = num2cell( value );
+        itemsData = num2cell( value );
     end
 
     config = @(h, varargin) om.internal.control.ListControl(h, ...
         'Items', items, ...
         'ItemsData', value, ...
         'EditItemsFcn', editItemsFcn);
+    %value = itemsData;
 end
 
 function [value, config] = getConfigForHeterogeneousScalarValue(name, value, openMindsInstance, metadataCollection)
@@ -168,14 +169,18 @@ function [value, configFcn] = getConfigForHeterogeneousNonScalarValue(name, valu
         om.uiEditHeterogeneousList(value, propertyTypeName, metadataCollection );
     
     items = arrayfun(@(x) string(x), value);
+
+    % Todo: Clarify why this needs to be a cell array
     if isempty(value)
-        value = {value};
+        itemsData = {value};
     else
-        value = num2cell( value );
+        itemsData = num2cell( value );
     end
 
     configFcn = @(h, varargin) om.internal.control.ListControl(h, ...
         'Items', items, ...
         'ItemsData', value, ...
         'EditItemsFcn', editItemsFcn);
+
+    %value = itemsData;
 end

@@ -302,7 +302,8 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                     if isequal(string(comp.Value), comp.ItemsData{i})
                         valueIndex = i; break
                     end
-                elseif isa(comp.ItemsData{i}, 'openminds.abstract.Schema')
+                elseif openminds.utility.isInstance(comp.ItemsData{i}) || ...
+                        openminds.utility.isMixedInstance(comp.ItemsData{i})
                     if isequal(comp.Value, comp.ItemsData{i})
                         valueIndex = i; break
                     end

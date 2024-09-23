@@ -137,11 +137,12 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
         end
 
         % Convert to openminds instances to get labels...    
-        itemNames = cellfun(@(c) char(c), instances, 'UniformOutput', false);
+        itemNames = cellfun(@(c) string(c), instances, 'UniformOutput', true);
 
         if isHeterogeneous
             mixedTypeName = class(metadataInstances);
-            itemData = num2cell( feval(mixedTypeName, instances) );
+            %itemData = num2cell( feval(mixedTypeName, instances) );
+            itemData = feval(mixedTypeName, instances);
         else
             itemData = instances;
         end

@@ -83,6 +83,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
         wasAborted = hEditor.FinishState ~= "Finished";
         SNew = hEditor.Data;
         hEditor.hide();
+        hEditor.reset()
     else
         
         % Todo: Consider passing instances directly...
@@ -104,6 +105,7 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
         wasAborted = hEditor.FinishState ~= "Finished";
         SNew = hEditor.Data;
         hEditor.hide();
+        hEditor.reset()
         formCache(className) = hEditor;
     end
     

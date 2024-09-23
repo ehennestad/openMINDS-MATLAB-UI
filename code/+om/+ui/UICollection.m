@@ -49,9 +49,8 @@ classdef UICollection < openminds.Collection
     % Override Collection methods
     
     methods (Access = protected)
-        function addNode(obj, instance, varargin)
+        function wasAdded = addNode(obj, instance, varargin)
 
-            
             import om.ui.uicollection.event.CollectionChangedEventData
 
             % - Invoke superclass method
