@@ -93,7 +93,8 @@ classdef MetadataEditor < handle
             obj.createTabGroup()
             obj.createCreateNewButton()
 
-            obj.createSchemaSelectorSidebar()
+            typeSelections = obj.loadTypeQuickSelection();
+            obj.createSchemaSelectorSidebar(typeSelections)
             obj.plotOpenMindsLogo()
 
             % % Create graph of the core module of openMINDS
@@ -115,18 +116,7 @@ classdef MetadataEditor < handle
 
             obj.initializeTableContextMenu()
 
-            % Todo: Get model version from preferences...
-            modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
-            ignoreList = {'+category', '+linkset', '+controlledterms'};
-            
-
-            %omModels = om.dir.listSubDir(modelRoot, '', ignoreList)';
-            omModels = recursiveDir(modelRoot, "Type", "folder", "IgnoreList", ignoreList, ...
-                "RecursionDepth", 1, "OutputType", "FilePath");
-
-            %omModels = {'openminds.core', 'openminds.sands'};
-            obj.SchemaMenu = om.SchemaMenu(obj, omModels, true);
-            obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
+            obj.createMainMenu()
 
             % Add these callbacks after every component is made
             obj.Figure.SizeChangedFcn = @(s, e) obj.onFigureSizeChanged;
@@ -144,6 +134,7 @@ classdef MetadataEditor < handle
         function delete(obj)
             % Save column view settings to project
             obj.saveMetatableColumnSettings()
+            obj.saveTypeQuickSelection()
             
 %             if isempty(app.MetaTable)
 %                 return
@@ -207,7 +198,7 @@ classdef MetadataEditor < handle
 
             toolH = 30;
             logoW = 150;
-            logoH = round( logoW / 1.8784 );
+            logoH = round( logoW / 2 );
 
             obj.UIPanel.Toolbar.Position = [MARGIN,H-MARGIN-toolH,W-MARGIN*2,toolH];
             
@@ -244,6 +235,25 @@ classdef MetadataEditor < handle
             save(filename, 'columnSettings');
         end
 
+        function typeSelections = loadTypeQuickSelection(obj)
+            rootDir = fileparts(mfilename('fullpath'));
+            filename = fullfile(rootDir, 'type_selection.mat');
+            
+            if isfile(filename)
+                S = load(filename, 'typeSelections');
+                typeSelections = S.typeSelections;
+            else
+                typeSelections = "";
+            end
+        end
+
+        function saveTypeQuickSelection(obj)
+            rootDir = fileparts(mfilename('fullpath'));
+            filename = fullfile(rootDir, 'type_selection.mat');
+            
+            typeSelections = obj.UISideBar.Items;
+            save(filename, 'typeSelections');
+        end
     end
 
     methods (Access = private) % Internal utility methods
@@ -305,6 +315,30 @@ classdef MetadataEditor < handle
             end
         end
 
+        function createMainMenu(obj)
+            
+            m = uimenu(obj.Figure, 'Text', 'openMINDS GUIDE');
+            mItem = uimenu(m, 'Text', 'Select project type');
+            L = recursiveDir( fullfile(om.internal.rootpath, 'config', 'template_projects'), 'Type','folder');
+            for i = 1:numel(L)
+                mSubItem = uimenu(mItem, "Text", L(i).name);
+                mSubItem.Callback = @obj.onProjectTypeSelected;
+            end
+
+            % Create a separator
+            m = uimenu(obj.Figure, 'Text', '|', 'Enable', 'off');
+
+            % Todo: Get model version from preferences...
+            modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
+            ignoreList = {'+controlledterms'};
+            
+            omModels = recursiveDir(modelRoot, "Type", "folder", "IgnoreList", ignoreList, ...
+                "RecursionDepth", 1, "OutputType", "FilePath");
+
+            obj.SchemaMenu = om.SchemaMenu(obj, omModels, true);
+            obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
+        end
+
         function createCreateNewButton(obj)
             
             obj.UIButtonCreateNew = uicontrol(obj.UIPanel.CreateNew, 'Style', 'pushbutton');
@@ -312,6 +346,10 @@ classdef MetadataEditor < handle
             obj.UIButtonCreateNew.Callback = @obj.onCreateNewButtonPressed;
             obj.UIButtonCreateNew.Units = 'normalized';
             obj.UIButtonCreateNew.Position = [0,0,1,1];
+            obj.UIButtonCreateNew.FontWeight = 'bold';
+            obj.UIButtonCreateNew.FontSize = 14;
+
+            %obj.UIButtonCreateNew.BackgroundColor = [0,231,102]/255;
             obj.UIPanel.CreateNew.BorderType = 'none';
             obj.UIPanel.CreateNew.BackgroundColor = obj.Figure.Color;
         end
@@ -319,7 +357,7 @@ classdef MetadataEditor < handle
         function createSchemaSelectorSidebar(obj, schemaTypes)
         %createSchemaSelectorSidebar Create a selector widget in side panel
 
-            if nargin < 2
+            if nargin < 2 || (isstring(schemaTypes) && schemaTypes=="")
                 schemaTypes = {'DatasetVersion'};
             end
                         
@@ -463,8 +501,10 @@ classdef MetadataEditor < handle
             % Update column layout.
 
             % Todo: Update column format for individual column
+            
+            % NB: Indices are for the table model
+            propName = obj.UIMetaTableViewer.MetaTable.Properties.VariableNames{evt.Indices(2)};
 
-            propName = src.ColumnName{ evt.Indices(2) };
             propValue = evt.NewValue;
             obj.MetadataCollection.modifyInstance(instanceID, propName, propValue);
         end
@@ -488,6 +528,31 @@ classdef MetadataEditor < handle
 
         function onFigureSizeChanged(app)
             app.updateLayoutPositions()
+        end
+
+        function onProjectTypeSelected(obj, src, evt)
+
+            delete(obj.SchemaMenu)
+
+            config = jsondecode( fileread( fullfile(om.internal.rootpath, 'config', 'template_projects', src.Text, 'project_config.json')) );
+            models = config.properties.models;
+            if strcmp(models, "all")
+                expression = '';
+            else
+                expression = strjoin(models, '|');
+            end
+            ignoreList = {'+controlledterms'};
+
+            modelRoot = fullfile(openminds.internal.rootpath, 'schemas', 'latest', '+openminds');
+            omModels = recursiveDir(modelRoot, "Type", "folder", ...
+                "Expression", expression, ...
+                "IgnoreList", ignoreList, ...
+                "RecursionDepth", 1, "OutputType", "FilePath");
+
+            obj.Figure.CurrentObject = obj.UIButtonCreateNew;
+
+            obj.SchemaMenu = om.SchemaMenu(obj, omModels, true);
+            obj.SchemaMenu.MenuSelectedFcn = @obj.onSchemaMenuItemSelected;
         end
 
         function onSchemaMenuItemSelected(obj, functionName, selectionMode)
