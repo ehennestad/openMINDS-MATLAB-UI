@@ -675,7 +675,8 @@ classdef MetadataEditor < handle
 
                     [items, itemsData] = fcnHandle(thisValue);
                     if ~isempty(itemsData)
-                        instance.(thisColumnName) = [itemsData{:}];
+                        if iscell(itemsData); itemsData = [itemsData{:}]; end
+                        instance.(thisColumnName) = itemsData;
                         newValueStr = strjoin(items, '; ');
                            
                         % TODO: Method of metatable viewer:

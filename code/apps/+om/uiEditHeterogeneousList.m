@@ -9,7 +9,16 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
 
     schemaName = typePathSplit{end-1};
     propertyName = typePathSplit{end};
+    
+    % Sometimes mixed types comes in as "homogeneous" types.
+    metaSchema = openminds.internal.SchemaInspector( openminds.enum.Types(schemaName).ClassName );
+    if metaSchema.isPropertyMixedType(propertyName)
+        className = metaSchema.getMixedTypeForProperty(propertyName);
+        metadataInstances = feval(className, metadataInstances);
+    end
 
+    IS_SCALAR = metaSchema.isPropertyValueScalar(propertyName);
+    
     if nargin < 3
         metadataCollection = openminds.MetadataCollection();
     end
@@ -54,7 +63,8 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
             'Title', title, ...
             'DefaultItem', referenceItems, ...
             "OpenMindsType", class(metadataInstances), ...
-            "MetadataCollection", metadataCollection);
+            "MetadataCollection", metadataCollection, ...
+            "IsScalar", IS_SCALAR);
     else
         propertyName = class(metadataInstances);
         propertyName = openminds.internal.utility.getSchemaShortName(propertyName);
