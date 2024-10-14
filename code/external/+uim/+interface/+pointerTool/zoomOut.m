@@ -1,19 +1,15 @@
 classdef zoomOut < uim.interface.abstractPointer & uim.interface.zoom
     
-    
     properties (Constant)
         exitMode = 'previous';
     end
-    
     
     properties % Implement abstract properties from zoom
         zoomFactor = 0.25
         xLimOrig
         yLimOrig
         runDefault = false;
-
     end
-    
     
     methods
         
@@ -24,11 +20,9 @@ classdef zoomOut < uim.interface.abstractPointer & uim.interface.zoom
             obj.hFigure = ancestor(hAxes, 'figure');
         end
         
-        
         function setPointerSymbol(obj)
             setptr(obj.hFigure, 'glassminus');
         end
-        
         
         function onButtonDown(obj, src, event)
                         
@@ -47,20 +41,13 @@ classdef zoomOut < uim.interface.abstractPointer & uim.interface.zoom
 
                 case 'open'
                     set(obj.hAxes, 'XLim', obj.xLimOrig, 'YLim', obj.yLimOrig)
-                    
             end
-            
         end
-        
         
         function onButtonMotion(obj, ~, ~)
         end
         
-        
         function onButtonUp(obj, ~, ~)
         end
-        
     end
-    
-    
 end

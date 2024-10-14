@@ -1,4 +1,4 @@
-classdef WidgetContainer < uim.abstract.virtualContainer 
+classdef WidgetContainer < uim.abstract.virtualContainer
     
     % Questions:
     %   IS this just the same as container?
@@ -7,16 +7,12 @@ classdef WidgetContainer < uim.abstract.virtualContainer
     %   Should canvasMode and canvasPosition just be properties of
     %   Container class?
     
-    % The Container class extands the Component class providing functionality 
-    % for adding children. For better performance in guis that are resizeable, 
+    % The Container class extands the Component class providing functionality
+    % for adding children. For better performance in guis that are resizeable,
     % the container class can be created in its own canvas.
     
     % Todo: Extend canvas class to create a canvas for individual
     % containers.
-    
-    
-    
-    
     
     properties
         CanvasMode = 'integrated' % vs 'separate' 'common', 'shared', 'main', 'private'
@@ -25,7 +21,6 @@ classdef WidgetContainer < uim.abstract.virtualContainer
     properties (Access=protected, Dependent, Transient)
         CanvasPosition % Position in Canvas
     end
-    
     
     methods
         
@@ -51,7 +46,6 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                     obj.createAxes()
                     obj.Canvas = obj.hAxes;
             end
-            
         end
         
         function createAxes(obj)
@@ -66,14 +60,13 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                 args = {};
             end
             
-            
             % Create an axes which will be the container for this widget.
             obj.hAxes = axes('Parent', obj.Parent, args{:});
             hold(obj.hAxes, 'on');
             
             set(obj.hAxes, 'XTick', [], 'YTick', [])
             obj.hAxes.Visible = 'off';
-            obj.hAxes.Units = 'pixel';         
+            obj.hAxes.Units = 'pixel';
             obj.hAxes.HandleVisibility = 'off';
             obj.hAxes.Tag = 'Widget Container';
             
@@ -103,17 +96,13 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                 case 'separate'
                     pos = [1,1,obj.Position(3:4)];
             end
-
         end
         
 %         function onParentContainerSizeChanged(obj, src, evt)
-%         
-%         
+%
+%
 %         end
-        
-        
     end
-            
         
     methods (Access = protected)
         
@@ -129,11 +118,9 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                 end
                 
                 set(obj.hBackground, 'XData', X, 'YData', Y)
-            
             end
             
             %drawnow limitrate
-            
         end
         
 %         function onSizeChanged(obj, oldPosition, newPosition)
@@ -142,7 +129,6 @@ classdef WidgetContainer < uim.abstract.virtualContainer
 %             evtData = uim.event.SizeChangedData(oldPosition(3:4), newPosition(3:4));
 %             obj.notify('SizeChanged', evtData)
 %         end
-        
         
         function onSizeChanged(obj, oldPosition, newPosition)
             if ~obj.IsConstructed; return; end
@@ -158,8 +144,6 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                     obj.hAxes.YLim = [2, newPosition(4)];
                     obj.resize()
             end
-            
-
         end
         
         function onLocationChanged(obj, oldPosition, newPosition)
@@ -173,14 +157,7 @@ classdef WidgetContainer < uim.abstract.virtualContainer
                 case 'separate'
                     setpixelposition(obj.hAxes, newPosition)
                     %obj.hAxes.Position = newPosition;
-                    
             end
-            
         end
-        
-        
-        
     end
-    
-    
 end

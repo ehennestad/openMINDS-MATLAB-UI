@@ -8,9 +8,9 @@ classdef (Abstract) UserSettings < uim.handle
 %     * Properties:     USE_DEFAULT_SETTINGS, DEFAULT_SETTINGS (Constant, Hidden)
 %     * Methods:        onSettingsChanged(obj, name, value) (protected)
 %
-%   This class gives access to the following methods: 
+%   This class gives access to the following methods:
 %     loadSettings, saveSettings and editSettings.
-%   
+%
 %   The saveSettings and loadSettings will save/load class settings from a
 %   file. These can be user-specific settings/preferences that should not
 %   be subject to the class definition. The file is saved next to the class
@@ -42,9 +42,8 @@ classdef (Abstract) UserSettings < uim.handle
 %           S = getSettings@applify.mixin.UserSettings('subclass_name');
 %       end
 %   Then settings can be loaded without creating a class object first.
-%   
+%
 %   Written by Eivind Hennestad | Vervaeke Lab
-
 
 %   ABSTRACT PROPERTIES:
 %       USE_DEFAULT_SETTINGS (Constant) : Boolean flag for ignoring settings that are saved to file
@@ -54,8 +53,7 @@ classdef (Abstract) UserSettings < uim.handle
 %       onSettingsChanged (Protected)   : Triggered when settings are changed.
 %
 
-
-    % TODO: 
+    % TODO:
     %   [x] Generalize so that there can be multiple settings structs...
     %   [x] Use a recursive function to check loaded settings against
     %       default settings definition
@@ -71,7 +69,6 @@ classdef (Abstract) UserSettings < uim.handle
     %
     %   - How to implement multiple subsettings? Cell Array? Struct with
     %     multiple fields?
-    
     
     properties(Abstract, Constant, Hidden = true)
         USE_DEFAULT_SETTINGS        % Ignore settings file                      Can be used for debugging/dev or if settings should be consistent.
@@ -104,7 +101,6 @@ classdef (Abstract) UserSettings < uim.handle
         settingsSubs cell
     end
     
-    
     methods % Constructor
         
         function obj = UserSettings()
@@ -118,9 +114,7 @@ classdef (Abstract) UserSettings < uim.handle
             if ~isempty(obj.hSettingsEditor) && isvalid(obj.hSettingsEditor)
                 delete(obj.hSettingsEditor)
             end
-            
         end
-        
     end
     
     methods % Public methods
@@ -160,7 +154,7 @@ classdef (Abstract) UserSettings < uim.handle
                                 obj.DEFAULT_SETTINGS.(thisField), S.settings.(thisField));
                         else
                             newSettings.(thisField) = obj.DEFAULT_SETTINGS.(thisField);
-                        end 
+                        end
                     end
                     
                     obj.settings = newSettings;
@@ -169,12 +163,10 @@ classdef (Abstract) UserSettings < uim.handle
                     obj.settings = obj.updateSettings(obj.DEFAULT_SETTINGS, S.settings);
                 end
 
-
             else % Initialize settings file using default settings
                 obj.settings = obj.DEFAULT_SETTINGS;
                 saveSettings(obj)
             end
-                
         end
         
         function saveSettings(obj) % Todo: make protected?
@@ -187,7 +179,6 @@ classdef (Abstract) UserSettings < uim.handle
             
             S.settings = obj.settings;
             save(obj.settingsFilePath, '-struct', 'S');
-                        
         end
         
         function editSettings(obj)
@@ -251,11 +242,9 @@ classdef (Abstract) UserSettings < uim.handle
                                             
                         otherwise
                             rethrow(ME)
-
                     end
                 end
             end
-
         end
         
         function changeSettings(obj, name, value)
@@ -280,7 +269,6 @@ classdef (Abstract) UserSettings < uim.handle
                 obj.hSettingsEditor.waitfor()
             end
         end
-        
     end
     
     methods % Set/get methods
@@ -294,7 +282,7 @@ classdef (Abstract) UserSettings < uim.handle
         end
         
         function set.settings(obj, newSettings)
-        %set.settings Set one or more fields of the settings and trigger 
+        %set.settings Set one or more fields of the settings and trigger
         %   the onSettingsChanged callback for each of the fields that are
         %   changed. Skip callback if the source is onSettingsChanged (to
         %   prevent getting stuck in a recursive feedback loop) or
@@ -311,7 +299,7 @@ classdef (Abstract) UserSettings < uim.handle
             % Basically, if the settings property is changed, this should
             % trigger the onSettingsChanged callback to do necessary
             % updates to the current instance of the class. However, if the
-            % settings are changed internally, this should not happen. 
+            % settings are changed internally, this should not happen.
 
             S = dbstack;
             internalMethods = {'onSettingsChanged'};
@@ -335,7 +323,6 @@ classdef (Abstract) UserSettings < uim.handle
         % Return the value of the settings property.
             S = obj.settings_;
         end
-
     end
     
     methods (Access = protected)
@@ -384,16 +371,14 @@ classdef (Abstract) UserSettings < uim.handle
         %   the reference for calling up the static method.
             
             className = class(obj);
-            pathStr = applify.mixin.UserSettings.createFilePath(className); 
-            
+            pathStr = applify.mixin.UserSettings.createFilePath(className);
         end
-        
     end
     
     methods (Access = private)
         
         function assignSettingNames(obj)
-        %assignSettingNames 
+        %assignSettingNames
         %
         %   Assign settings names using fieldnames recursively, so it
         %   includes fields of all substructs. This function also assigns
@@ -414,7 +399,6 @@ classdef (Abstract) UserSettings < uim.handle
 
             getSubs = @(name) struct('type', {'.'}, 'subs', strsplit(name, '.'));
             obj.settingsSubs = cellfun(@(name) getSubs(name), obj.settingsNames, 'uni', 0);
-            
         end
         
         function onSettingsEditorClosed(obj)
@@ -436,14 +420,12 @@ classdef (Abstract) UserSettings < uim.handle
             
             % Delete hSettingsEditor before assigning settings, because
             % assigning settings might sometimes want to make updates to
-            % the settings editor, while the figure of settings editor is 
+            % the settings editor, while the figure of settings editor is
             % already closed so that would cause errors
             
             obj.settings = updatedSettings;
             obj.saveSettings()
-            
         end
-        
     end
     
     methods (Static, Access = public)
@@ -479,7 +461,6 @@ classdef (Abstract) UserSettings < uim.handle
                 thisField = fieldsToUpdate{i};
                 settings.(thisField) = loadedSettings.(thisField);
             end
-
         end
         
         function TF = isConfigField(listOfFields)
@@ -502,7 +483,6 @@ classdef (Abstract) UserSettings < uim.handle
                     continue
                 end
             end
-
         end
         
     end %methods (Static, private)
@@ -517,7 +497,6 @@ classdef (Abstract) UserSettings < uim.handle
             
             % Call the static load method to load settings for this class.
             S = applify.mixin.UserSettings.staticLoad(className, filePath);
-            
         end
         
         function S = staticLoad(className, filePath)
@@ -530,11 +509,10 @@ classdef (Abstract) UserSettings < uim.handle
                 isProp = strcmp({mc.PropertyList.Name}, 'DEFAULT_SETTINGS');
                 S = mc.PropertyList(isProp).DefaultValue;
             end
-        
         end
         
         function pathStr = createFilePath(className)
-        %createSettingsPath Create filepath for settings of subclass 
+        %createSettingsPath Create filepath for settings of subclass
             
             % Get folder and filename for settings file.
             [classFolderpath, classFilename] = fileparts( which(className) );
@@ -549,8 +527,6 @@ classdef (Abstract) UserSettings < uim.handle
             pathStr = fullfile(settingsFolderPath, settingsFileName);
         end
         
-        
     end %methods (Static)
-    
     
 end %classdef

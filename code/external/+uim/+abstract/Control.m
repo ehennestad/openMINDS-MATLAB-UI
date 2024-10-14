@@ -2,7 +2,6 @@ classdef Control < uim.abstract.Component
     
     % Add showTooltip and hideTooltip should be methods of this class?
     
-    
     properties
         
         Callback = []
@@ -30,7 +29,6 @@ classdef Control < uim.abstract.Component
         LastPointer
     end
     
-    
     methods
         function obj = Control(varargin)
             obj@uim.abstract.Component( varargin{:} )
@@ -47,7 +45,6 @@ classdef Control < uim.abstract.Component
                 delete(obj.MouseReleasedListener)
             end
         end
-        
     end
     
     methods
@@ -58,7 +55,6 @@ classdef Control < uim.abstract.Component
             obj.Tooltip = newValue;
             obj.onTooltipChanged()
         end
-        
     end
     
     methods
@@ -67,7 +63,6 @@ classdef Control < uim.abstract.Component
             relocate@uim.abstract.Component(obj, shift)
             obj.setTooltipPosition()
         end
-        
     end
     
     methods (Hidden, Access = private)
@@ -90,7 +85,6 @@ classdef Control < uim.abstract.Component
         function showTooltip(obj)
             %Todo: Should always be the figures main canvas?
             obj.Canvas.showTooltip(obj.Tooltip, obj.TooltipPosition)
-            
         end
         
         function hideTooltip(obj)
@@ -101,13 +95,11 @@ classdef Control < uim.abstract.Component
                       
             obj.setTooltipPosition()
 
-            if obj.IsMouseOver && ~isempty(obj.Tooltip) 
+            if obj.IsMouseOver && ~isempty(obj.Tooltip)
                 obj.showTooltip()
             end
-            
         end
     end
-        
         
     methods (Hidden, Access = protected)
         
@@ -173,7 +165,6 @@ classdef Control < uim.abstract.Component
             end
             
             obj.changeAppearance()
-            
         end
         
         function onMouseReleased(obj, src, event)
@@ -185,7 +176,6 @@ classdef Control < uim.abstract.Component
             obj.MouseReleasedListener = [];
             
             obj.changeAppearance()
-
         end
         
         function onConstructed(obj)
@@ -196,7 +186,6 @@ classdef Control < uim.abstract.Component
                 obj.setTooltipPosition()
             end
     end
-    
     end
 
 %     methods (Access = protected)

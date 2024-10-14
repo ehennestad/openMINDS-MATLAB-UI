@@ -1,12 +1,10 @@
 classdef UICollection < openminds.Collection
     
-    
     % Questions:
     % What to use for keys in the metadata map
     %    - Short name; i.e Subject
     %    - Class name; i.e openminds.core.Subject
     %    - openMINDS type; i.e https://openminds.ebrains.eu/core/Subject
-    
 
     % TODO:
     %   - [ ] Remove instances
@@ -34,7 +32,6 @@ classdef UICollection < openminds.Collection
         %TableUpdated ???
         %GraphUpdated ???
     end
-
     
     methods % Constructor
         function obj = UICollection()
@@ -44,7 +41,6 @@ classdef UICollection < openminds.Collection
             obj.graph = digraph;
         end
     end
-
 
     % Override Collection methods
     
@@ -178,7 +174,6 @@ classdef UICollection < openminds.Collection
                 isMatchedInstance = strcmp({schemaInstances.id}, schemaId);
                 labels = labels(isMatchedInstance);
             end
-            
         end
 
         function schemaInstance = getInstanceFromLabel(obj, schemaName, label)
@@ -221,7 +216,6 @@ classdef UICollection < openminds.Collection
                 end
             end
         end
-
     end
 
     methods (Access = private)
@@ -281,9 +275,7 @@ classdef UICollection < openminds.Collection
             obj.notify('InstanceModified', evt)
             fprintf('Instance of type %s was changed\n', class(src))
         end
-
     end
-
 
     methods % Methods for getting instances in table representations
         
@@ -304,7 +296,7 @@ classdef UICollection < openminds.Collection
                 % metaTable = Catalog(instanceTable, 'NameField', 'lookupLabel', 'ItemClass', class(schemaInstanceList));
                 % metaTable.ItemRepresentation = 'object';
                 % metaTable.ItemConstructorInputType = 'nvpairs';
-                % 
+                %
                 % metaTable.columnProperties = om.ui.initializeColumnAttributes(metaTable);
             else
                 metaTable = [];
@@ -348,13 +340,11 @@ classdef UICollection < openminds.Collection
             
             metaTable = nansen.metadata.MetaTable(joinedTable, 'MetaTableClass', joinedClassName);
         end
-
     end
 
     methods (Access = protected) % Methods for getting instances in table representations
         
         function [leftKey, rightKey] = getKeyPairsForJoin(obj, schemaNameLinker, schemaNameLinkee)
-            
             
             disp('a')
             leftKey = 'studiedState';
@@ -365,14 +355,14 @@ classdef UICollection < openminds.Collection
             % who is linked... What if many properties can be linked to the
             % same schema??
 
-            % For the linkee : Use property name 
+            % For the linkee : Use property name
             %   Needed. List of linked properties and allowed link types
 
             % For the linked : Get id
         end
         
         function instanceTable = replaceLinkedInstancesWithCategoricals(obj, instanceTable, instanceType)
-        % replaceLinkedInstancesWithCategoricals 
+        % replaceLinkedInstancesWithCategoricals
         %
         %
 
@@ -393,7 +383,7 @@ classdef UICollection < openminds.Collection
                     % Get the value of the first row
                     thisValue = instanceTable{1,i};
                 
-                    % If the table column contains rows where the number of 
+                    % If the table column contains rows where the number of
                     % instances differ, need to extract instances from a cell
                     if iscell(thisValue); thisValue = [thisValue{:}]; end
                 
@@ -405,7 +395,7 @@ classdef UICollection < openminds.Collection
                     elseif isa(thisValue, 'openminds.abstract.Schema')
                             
                         if metaSchema.isPropertyValueScalar(thisColumnName)
-                            className = string( openminds.enum.Types.fromClassName( class(thisValue) ) ); 
+                            className = string( openminds.enum.Types.fromClassName( class(thisValue) ) );
                             options = [sprintf("None (%s)", className),  obj.getSchemaInstanceLabels(className)];
                         else
                             options = [];
@@ -455,27 +445,26 @@ classdef UICollection < openminds.Collection
                 catch ME
                     rethrow(ME)
                 end
-            end            
+            end
         end
     end
 
-    methods 
+    methods
         function exist()
-
         end
     end
 
     methods (Static)
         function shortSchemaName = getSchemaShortName(fullSchemaName)
         %getSchemaShortName Get short schema name from full schema name
-        % 
+        %
         %   shortSchemaName = getSchemaShortName(fullSchemaName)
         %
         %   Example:
         %   fullSchemaName = 'openminds.core.research.Subject';
         %   shortSchemaName = om.MetadataSet.getSchemaShortName(fullSchemaName)
         %   shortSchemaName =
-        % 
+        %
         %     'Subject'
 
             expression = '(?<=\.)\w*$'; % Get every word after a . at the end of a string
@@ -485,5 +474,4 @@ classdef UICollection < openminds.Collection
             end
         end
     end
-
 end

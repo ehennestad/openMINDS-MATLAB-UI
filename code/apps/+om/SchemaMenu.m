@@ -2,11 +2,10 @@ classdef SchemaMenu < MultiModalMenu
 %SchemaMenu The schema menu is used for creating open minds schema instances
 %
 %   The schema menu is created based on a folder structure containing
-%   schema definitions. 
+%   schema definitions.
 %
 %   The schema menu is multimodal, meaning the user can apply modifier keys
 %   to adapt the behavior/mode when selecting items from the menu
-    
     
     properties (Constant, Hidden) % Todo: Abstract
         ValidModes = {'Single', 'Multiple', 'Help', 'Open', 'View'}                 % Available modes
@@ -18,12 +17,10 @@ classdef SchemaMenu < MultiModalMenu
         RootDirectory = '';
         DirectoryIgnore = {'+category', '+linkedcategory'}
     end
-    
 
     properties (Constant, Hidden)
         KEY_TO_MODE_MAP = containers.Map( {'', 'n', 'h', 'o', 'v'}, {'View', 'Multiple', 'Help', 'Open', 'Single'})
     end
-
 
     methods
         function obj = SchemaMenu(hParent, moduleSet, useModuleAsRoot)
@@ -48,8 +45,7 @@ classdef SchemaMenu < MultiModalMenu
     end
 end
 
-
-%% Local functions 
+%% Local functions
 
 function functionName = abspath2funcname(pathStr)
 %abspath2func Get function name for mfile given as pathstr
@@ -62,9 +58,7 @@ function functionName = abspath2funcname(pathStr)
     packageName = om.internal.strutil.pathstr2packagename(folderPath);
     functionName = strcat(packageName, '.', functionName);
     
-    
     % Add package-containing folder to path if it is not...
     
     %fcnHandle = str2func(functionName);
-
 end

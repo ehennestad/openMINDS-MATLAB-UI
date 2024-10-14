@@ -45,7 +45,6 @@ while ~finished
         
         candidates = vertcat(candidates, horzcat(prod1, prod2));
         candidates = unique(candidates, 'rows');
-        
     end
     
     candidates = vertcat(candidates, fliplr(candidates));
@@ -64,7 +63,5 @@ while ~finished
     else
         n = n+1;
     end
-    
-    
 end
         

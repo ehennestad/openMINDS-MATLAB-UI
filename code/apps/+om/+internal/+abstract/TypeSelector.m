@@ -2,7 +2,7 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
 % TypeSelector Provides an abstract class for a component to select openMINDS types
 
 % For subclass implementations:
-%   1) Implement abstract methods: 
+%   1) Implement abstract methods:
 %       - createComponent
 %       - updateSelectedTypeInComponent
 %       - onSelectedTypeChangedInComponent
@@ -15,8 +15,8 @@ classdef TypeSelector < handle & matlab.mixin.SetGet
     end
 
     properties (AbortSet)
-        % SelectedType - The currently selected type 
-        SelectedType (1,1) openminds.enum.Types 
+        % SelectedType - The currently selected type
+        SelectedType (1,1) openminds.enum.Types
     end
 
     properties

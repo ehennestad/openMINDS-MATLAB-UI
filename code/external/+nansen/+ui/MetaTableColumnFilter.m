@@ -1,18 +1,18 @@
 classdef MetaTableColumnFilter < handle
-%MetaTableColumnFilter Provides filtering functionality to the MetaTableViewer    
+%MetaTableColumnFilter Provides filtering functionality to the MetaTableViewer
     
-    % Todo: 
+    % Todo:
     %   [ ] Better method(s) for setting position of filter controls
     
     properties
         AppReference
-        ComponentPanel 
+        ComponentPanel
         
         hColumnFilterPopups
         
         columnFilterType
         isColumnFilterActive
-        isColumnFilterDirty 
+        isColumnFilterDirty
     end
     
     properties (SetAccess = immutable)
@@ -37,7 +37,6 @@ classdef MetaTableColumnFilter < handle
         FilterUpdated
     end
     
-    
     methods % Constructor
         
         function obj = MetaTableColumnFilter(uiTable, appRef)
@@ -59,7 +58,6 @@ classdef MetaTableColumnFilter < handle
                 obj.onMetaTableChanged()
             end
         end
-        
     end
     
     methods
@@ -79,7 +77,7 @@ classdef MetaTableColumnFilter < handle
         end
         
         function onMetaTableUpdated(obj)
-        %onMetaTableUpdated Callback for when metatable is updated    
+        %onMetaTableUpdated Callback for when metatable is updated
             
             % Reset filter controls if number of columns have changed
             numCols = size(obj.MetaTable, 2);
@@ -126,7 +124,6 @@ classdef MetaTableColumnFilter < handle
             obj.columnFilterType = repmat({'N/A'}, numColumns, 1);
             obj.isColumnFilterActive = false(numColumns,1);
             obj.isColumnFilterDirty = false(numColumns,1);
-            
         end
         
         function initializeColumnFilterControl(obj, columnIdx)
@@ -166,7 +163,6 @@ classdef MetaTableColumnFilter < handle
                         
                         h = obj.createAutocompleteWidget(filterChoices, columnIdx);
                         obj.columnFilterType{columnIdx} = 'autocomplete';
-
                     end
                     
                 case {'uint8', 'uint16', 'single', 'double'}
@@ -184,12 +180,10 @@ classdef MetaTableColumnFilter < handle
                     obj.columnFilterType{columnIdx} = 'autocomplete';
                     h.PromptText = 'Search for id...';
 
-
                 case 'datetime'
                     
-                    h = obj.createDateIntervalSelector(columnIdx);            
+                    h = obj.createDateIntervalSelector(columnIdx);
                     obj.columnFilterType{columnIdx} = 'dateIntervalSelector';
-                    
             end
             
             if ~isempty(h)
@@ -208,7 +202,6 @@ classdef MetaTableColumnFilter < handle
             end
             
             %hControl.Position(2) = hControl.Position(2) - hControl.Position(4);
-            
         end
         
         function refreshFilterControls(obj, columnIdx)
@@ -263,7 +256,7 @@ classdef MetaTableColumnFilter < handle
             end
             
             % Get column data for current columns
-            columnData = T(:, columnIdx);            
+            columnData = T(:, columnIdx);
             h = obj.hColumnFilterPopups{columnIdx};
 
             switch obj.columnFilterType{columnIdx}
@@ -282,7 +275,6 @@ classdef MetaTableColumnFilter < handle
                         case 'False'
                             obj.isColumnFilterActive(columnIdx) = true;
                             obj.MetaTableUi.DataFilterMap(:, columnIdx) = ~columnData;
-                            
                     end
                     
                 case 'multiSelection'
@@ -310,7 +302,7 @@ classdef MetaTableColumnFilter < handle
                         columnData = cellfun(@num2str, columnData, 'UniformOutput', false);
                     end
 
-                    if isempty(currentSelection) || all(strcmp(currentSelection, 'Show All')) 
+                    if isempty(currentSelection) || all(strcmp(currentSelection, 'Show All'))
                         obj.isColumnFilterActive(columnIdx) = false;
                         obj.MetaTableUi.DataFilterMap(:, columnIdx) = true;
                     else
@@ -344,7 +336,6 @@ classdef MetaTableColumnFilter < handle
                     else
                         obj.isColumnFilterActive(columnIdx) = false;
                     end
-
             end
             
             obj.MetaTableUi.updateColumnLabelFilterIndicator(obj.isColumnFilterActive)
@@ -358,12 +349,12 @@ classdef MetaTableColumnFilter < handle
         end
         
         function updateColumnFilter(obj)
-        %updateColumnFilter Update the column filter.   
-            [numRows, numColumns] = size(obj.MetaTable); 
+        %updateColumnFilter Update the column filter.
+            [numRows, numColumns] = size(obj.MetaTable);
             obj.MetaTableUi.DataFilterMap = true(numRows, numColumns);
             
             % (mis)use the onColumnFilterValueChanged to update the filters
-            % and add the optional flag for skipping event notification. 
+            % and add the optional flag for skipping event notification.
             for i = 1:numColumns
                 if ~isempty(obj.hColumnFilterPopups{i})
                     obj.onColumnFilterValueChanged([],[],i,true)
@@ -412,9 +403,7 @@ classdef MetaTableColumnFilter < handle
                 end
             end
         end
-        
     end
-    
     
     methods (Access = private) % Methods for creating filtering widgets.
         
@@ -433,7 +422,6 @@ classdef MetaTableColumnFilter < handle
             componentHeight = h.Extent(4);
             pos = [margins, parentPos(4)-margins-componentHeight, ...
                    parentPos(3)-2*margins, componentHeight];
-            
 
             h.Units = 'pixels';
             %h.Position = pos;
@@ -441,11 +429,10 @@ classdef MetaTableColumnFilter < handle
             h.Callback = @(s,e,i) obj.onColumnFilterValueChanged(s,e,columnIdx);
                         
             obj.hColumnFilterPopups{columnIdx} = h;
-            
         end
         
         function h = createMultiSelectionDropdown(obj, items, columnIdx)
-        %createMultiSelectionDropdown    
+        %createMultiSelectionDropdown
             
             hParent = obj.MetaTableUi.Parent;
             position = obj.getDropdownPosition(columnIdx);
@@ -508,7 +495,7 @@ classdef MetaTableColumnFilter < handle
         end
         
         function position = getDropdownPosition(obj, columnIdx)
-        %getDropdownPosition Get position to show dropdown control    
+        %getDropdownPosition Get position to show dropdown control
             
             % Get positions of parent containers.
             hParent = obj.MetaTableUi.Parent;
@@ -547,8 +534,5 @@ classdef MetaTableColumnFilter < handle
                 position(1) = parentPosition(3) - position(3);
             end
         end
-        
     end
-    
-    
 end

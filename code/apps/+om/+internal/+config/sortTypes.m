@@ -1,4 +1,4 @@
-function sortedTypes = sortTypes(schemaName, propertyName, types)   
+function sortedTypes = sortTypes(schemaName, propertyName, types)
     
     propertyName = char(propertyName);
     propertyName(1) = lower(propertyName(1));

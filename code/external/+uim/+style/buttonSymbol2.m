@@ -26,8 +26,5 @@ classdef buttonSymbol2 < uim.style.buttonScheme
             'BackgroundAlpha', 0, ...
             'BorderColor', 'none', ...%[0.3,0.3,0.3], ...
             'BorderWidth', 0.5)
-        
     end
-    
-    
 end

@@ -5,11 +5,10 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
 %   types as options. Note: Types must be set upon creation of the menu
 %
 %   Example usage:
-% 
+%
 %   om.internal.container.InstanceTypeMenu(hFigure,
 %       Types=["Person", "Organization"], ...
 %       SelectedType="Person" )
-
 
     properties (SetAccess = immutable)
         % Types - A list of types to select from (options)
@@ -17,8 +16,8 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
     end
 
     properties (AbortSet)
-        % SelectedType - The currently selected type 
-        SelectedType (1,1) openminds.enum.Types 
+        % SelectedType - The currently selected type
+        SelectedType (1,1) openminds.enum.Types
     end
 
     properties
@@ -79,7 +78,7 @@ classdef InstanceTypeMenu < handle & matlab.mixin.SetGet
         end
     end
     
-    % Component callback methods 
+    % Component callback methods
     methods (Access = private)
         function onContextMenuItemClicked(obj, ~, event)
             obj.SelectedType = openminds.enum.Types(event.Source.Text);

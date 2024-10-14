@@ -2,15 +2,15 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
 % uiCreateNewInstance - Open form dialog window for entering instance information
     
 %   Options (name-value pairs)
-%       UpstreamInstanceType         : Type of upstream instance if the instance 
-%                                      to be created is a linked instance of 
+%       UpstreamInstanceType         : Type of upstream instance if the instance
+%                                      to be created is a linked instance of
 %                                      another instance.
-%       
+%
 %       UpstreamInstancePropertyName : Property name for upstream instance
-%                                      if instance to be created is a linked 
+%                                      if instance to be created is a linked
 %                                      instance
 
-    % Todo: 
+    % Todo:
     % [ ] select structeditor based on matlab version / settings...
     % [ ] create new vs edit
 
@@ -30,7 +30,6 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
     %formCache = dictionary(); % Todo: Remove
 
     instanceName = string.empty;
-
     
     if isa(instanceSpec, 'char') || isa(instanceSpec, 'string')
         
@@ -63,7 +62,6 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
 
     titleStr = sprintf('Create New %s', classNameLabel);
 
-
     % titleStr = om.internal.text.getEditorTitle(...
     %     "InstanceType", className, ...
     %     "UpstreamInstanceType", options.UpstreamInstanceType, ...
@@ -72,7 +70,6 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
 
     promptStr = sprintf('Fill out properties for %s', classNameLabel);
     %[SNew, wasAborted] = tools.editStruct(SNew, [], titleStr, 'Prompt', promptStr, 'Theme', 'light');
-    
 
     if isConfigured(formCache) && isKey(formCache, className) && hasFigure(formCache(className))
         hEditor = formCache(className);
@@ -139,7 +136,6 @@ function [metadataInstance, instanceName] = uiCreateNewInstance(instanceSpec, me
         clear instanceName
     end
 end
-
 
 function tf = isSchemaInstanceUnavailable(value)
     tf = ~isempty(regexp(char(value), 'No \w* available', 'once'));

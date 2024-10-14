@@ -1,6 +1,5 @@
 classdef SchemaTableColumnFormatter < nansen.metadata.abstract.TableVariable & nansen.metadata.abstract.TableColumnFormatter
     
-    
     properties (Constant)
         IS_EDITABLE = false
         DEFAULT_VALUE = ''
@@ -35,16 +34,13 @@ classdef SchemaTableColumnFormatter < nansen.metadata.abstract.TableVariable & n
                 
                 %str = class(obj(1).Value);
                 %str = repmat({str}, numel(obj), 1);
-                
             end
         end
 
         function str = getCellTooltipString(obj)
 
             if isa(obj(1).Value, 'openminds.controlledterms.ControlledTerm')
-            
             end
         end
     end
-
 end

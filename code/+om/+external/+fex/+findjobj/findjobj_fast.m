@@ -43,10 +43,7 @@ function jControl = findjobj_fast(hControl, jContainer)
     try jControl.setToolTipText(oldTooltip); catch, end
     try jControl = jControl.getParent.getView.getParent.getParent; catch, end  % return JScrollPane if exists
 
-
     warning('on', 'MATLAB:ui:javaframe:PropertyToBeRemoved')
-
-
 end
 
 function jControl = findTooltipIn(jContainer, specialTooltipStr)

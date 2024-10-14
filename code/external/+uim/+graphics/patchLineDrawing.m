@@ -1,11 +1,9 @@
 function hP = patchLineDrawing(ax, im, varargin)
 
-
     def = struct('SmoothIter', 2, 'SmoothWindow', 10, 'cropImage', true, ...
         'plotType', 'polygon');
     
     opt = utility.parsenvpairs(def, [], varargin);
-    
     
     % Crop image.
     if opt.cropImage
@@ -33,8 +31,6 @@ function hP = patchLineDrawing(ax, im, varargin)
 
         im = im(cropTop:cropBot, :, :);
     end
-
-    
     
     %% Get coordinates of edges
     BW = mean(im, 3) < 100;
@@ -45,19 +41,15 @@ function hP = patchLineDrawing(ax, im, varargin)
         case 'patch'
             hP = patchObjects(ax, BW, opt);
     end
-    
 end
 
-
-
-
 function hP = patchObjects(ax, BW, opt)
-%patchObjects Plot binary objects using patches.    
+%patchObjects Plot binary objects using patches.
 
     % Get size of image
     imSize = [size(BW, 1), size(BW, 2)];
     
-    [B, ~, N, A] = bwboundaries(BW); 
+    [B, ~, N, A] = bwboundaries(BW);
     
     hP = gobjects(N, 1);
     
@@ -69,10 +61,10 @@ function hP = patchObjects(ax, BW, opt)
         
         xData = xDataOuter; yData = yDataOuter;
         
-        % Boundary k is the parent of a hole if the k-th column 
-        % of the adjacency matrix A contains a non-zero element 
+        % Boundary k is the parent of a hole if the k-th column
+        % of the adjacency matrix A contains a non-zero element
         if (nnz(A(:,k)) > 0)
-            % Loop through the children of boundary k 
+            % Loop through the children of boundary k
             for l = find(A(:,k))'
                 [xDataInner, yDataInner] = getBoundary(B{l}, imSize, opt);
                 if isempty(xDataInner); continue; end
@@ -80,12 +72,12 @@ function hP = patchObjects(ax, BW, opt)
                 % Have to insert to inner boundary so that it starts and
                 % stops where the outer boundary starts and stops.
                 distance = sqrt( (xDataInner(1)-xDataOuter).^2 + ...
-                                 (yDataInner(1)-yDataOuter).^2 );  
+                                 (yDataInner(1)-yDataOuter).^2 );
                 
                 [~, insertPoint] = min(distance);
                 
                 insertInd = find( xData == xDataOuter(insertPoint) );
-                insertInd = insertInd(1);          
+                insertInd = insertInd(1);
                 xData = cat(1, xData(1:insertInd), xDataInner, xData(insertInd:end));
                 yData = cat(1, yData(1:insertInd), yDataInner, yData(insertInd:end));
             end
@@ -98,14 +90,12 @@ function hP = patchObjects(ax, BW, opt)
     hP = hP(keep);
     
     set(hP, 'EdgeColor', 'none')
-
 end
 
-
 function hP = plotObjectsAsPolygons(ax, BW, opt)
-%plotObjectsAsPolygons Plot binary objects as polygons    
+%plotObjectsAsPolygons Plot binary objects as polygons
     % Get size of image
-    [imHeight, imWidth] = size(BW); 
+    [imHeight, imWidth] = size(BW);
 
     % Get boundaries of binary objects
     CC = bwboundaries(BW);
@@ -132,15 +122,12 @@ function hP = plotObjectsAsPolygons(ax, BW, opt)
         else
             pgon = pgon.addboundary(x, y);
         end
-
     end
     
     warning('on', 'MATLAB:polyshape:repairedBySimplify')
 
     hP = plot(ax, pgon, 'FaceColor', 'k', 'FaceAlpha', 1, 'EdgeColor', 'none');
-    
 end
-
 
 function [xData, yData] = getBoundary(B, imSize, opt)
     
@@ -159,5 +146,4 @@ function [xData, yData] = getBoundary(B, imSize, opt)
     
     xData(end+1) = xData(1);
     yData(end+1) = yData(1);
-
 end

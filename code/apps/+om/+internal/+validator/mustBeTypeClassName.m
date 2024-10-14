@@ -1,5 +1,5 @@
 function mustBeTypeClassName(className)
-% mustBeTypeClassName - Validator to check that a value is the class name 
+% mustBeTypeClassName - Validator to check that a value is the class name
 % of an openminds metadata type
 
     arguments

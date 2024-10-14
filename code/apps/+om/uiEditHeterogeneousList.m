@@ -146,7 +146,7 @@ function [itemNames, itemData] = uiEditHeterogeneousList(metadataInstances, type
             end
         end
 
-        % Convert to openminds instances to get labels...    
+        % Convert to openminds instances to get labels...
         itemNames = cellfun(@(c) string(c), instances, 'UniformOutput', true);
 
         if isHeterogeneous

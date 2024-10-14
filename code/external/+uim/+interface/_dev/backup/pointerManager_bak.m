@@ -4,21 +4,18 @@ classdef pointerManager < handle
 %
 %   See also uim.interface.abstractPointer
 
-
 % List of things to implement
 %   Keypress sequences should be read from settings somehow
 %   Also: Migrate other things from a settings file/preferences...
 %   Need to capture the figure's scroll callback.
 %   [ ] use listeners instead of attaching mouse function to figure handle
 
-
-
     properties
         
         hFigure % Axes or figure
         hAxes
         
-        pointers 
+        pointers
         
         supportedTools
         
@@ -28,7 +25,6 @@ classdef pointerManager < handle
         previousPointerTool
         
         wasCursorInAxes = false;
-        
         
         defaultFigureCallbacks;
     end
@@ -45,7 +41,6 @@ classdef pointerManager < handle
         PreviousMouseClickPoint   % Point where mouse was last clicked
     end
     
-    
     methods
 
         function obj = pointerManager(hFigure, hAxes, pointerNames)
@@ -57,7 +52,6 @@ classdef pointerManager < handle
                 'WindowButtonMotionFcn', {hFigure.WindowButtonMotionFcn}, ...
                 'WindowButtonUpFcn', {hFigure.WindowButtonUpFcn});% , ...
                 %'KeyPressFcn', {hFigure.KeyPressFcn} );
-            
             
             % Assign dummy callback if WindowButtonMotionFcn is unassigned
             if isempty( hFigure.WindowButtonMotionFcn )
@@ -80,11 +74,9 @@ classdef pointerManager < handle
                 obj.initializePointers(hAxes, pointerNames)
             end
             
-            
             if ~nargout
                 clear obj
             end
-            
         end
         
         function delete(obj)
@@ -100,8 +92,6 @@ classdef pointerManager < handle
         end
         
         function onFigureChanged(obj)
-            
-            
         end
         
         function initializePointers(obj, hAxes, pointerRef)
@@ -121,7 +111,6 @@ classdef pointerManager < handle
                 end
                 obj.pointers.(thisPointerName) = thisPointerRef(hAxes);
             end
-            
         end
         
         function updatePointerSymbol(obj)
@@ -143,7 +132,6 @@ classdef pointerManager < handle
                     obj.currentPointerTool.onButtonDown(src, event)
                 end
             end
-
         end
         
         function onButtonMotion(obj, src, event)
@@ -157,7 +145,6 @@ classdef pointerManager < handle
             
             tf = obj.isCursorInsideAxes(obj.hAxes);
 
-
             % Change cursor symbol when pointer enters or leaves axes
             if tf && ~obj.wasCursorInAxes % Entered axes
                 if ~isempty(obj.currentPointerTool)
@@ -167,16 +154,12 @@ classdef pointerManager < handle
                 set(obj.hFigure, 'Pointer', 'arrow');
             end
             
-            
             % Create extended eventdata containing mousepoint coordinates?
-
-            
             
             % 2) Call active pointer tool
             if ~isempty(obj.currentPointerTool)% && ~isSuspended(obj.currentPointerTool) Some tools, like zoom, should continue to workeven when cusor moves outside axes...
                 obj.currentPointerTool.onButtonMotion(src, event)
             end
-            
 
             if tf
                 obj.wasCursorInAxes = true;
@@ -185,7 +168,6 @@ classdef pointerManager < handle
             end
             
             %drawnow limitrate
-            
         end
         
         function onButtonRelease(obj, src, event)
@@ -199,14 +181,12 @@ classdef pointerManager < handle
             if ~isempty(obj.currentPointerTool)
                 obj.currentPointerTool.onButtonUp(src, event)
             end
-            
         end
         
         function wasCaptured = onKeyPress(obj, src, event)
             
             % Todo: Make a system for having unique key shortcuts and
             % setting/changing them from on location..
-            
             
             % 1) Call default figure callback
 % %             if ~isempty(obj.defaultFigureCallbacks.KeyPressFcn)
@@ -247,11 +227,10 @@ classdef pointerManager < handle
             if ~isempty(obj.currentPointerTool)
                 wasCaptured = obj.currentPointerTool.onKeyPress(src, event) || wasCaptured;
             end
-            
         end
         
         function togglePointerMode(obj, pointerName)
-            % button press from toolbar or keypress callback.     
+            % button press from toolbar or keypress callback.
             
             % If the pointerName refers to the current pointer tool, it
             % should be turned off.
@@ -281,7 +260,6 @@ classdef pointerManager < handle
                             obj.previousPointerTool = [];
                         end
                         obj.currentPointerTool = obj.pointers.(pointerName);
-                        
                     end
                 
                 case 'previous'
@@ -309,9 +287,7 @@ classdef pointerManager < handle
                         end
                         
                         obj.currentPointerTool = obj.pointers.(pointerName);
-                        
                     end
-                  
             end
             
             if ~isempty(obj.currentPointerTool)
@@ -319,7 +295,6 @@ classdef pointerManager < handle
             else
                 obj.hFigure.Pointer = 'arrow';
             end
-            
         end
         
         function tf = isCursorInsideAxes(obj, hAx)
@@ -333,18 +308,13 @@ classdef pointerManager < handle
 
             % Check if mousepoint is within axes limits.
             tf = ~any(any(diff([axLim(1:2); currentPoint; axLim(3:4)]) < 0));
-            
         end
         
         function tf = pointerEnteredAxes(obj)
-
-            
         end
         
         function tf = pointerExitedAxes(obj)
-        
         end
-        
     end
     
     methods (Access = private)
@@ -354,9 +324,6 @@ classdef pointerManager < handle
             
             % The figure's CurrentPoint property is only updated if a
             % mousemotion callback is assigned.
-            
         end
     end
-    
-    
 end

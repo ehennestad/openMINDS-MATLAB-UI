@@ -6,8 +6,6 @@ classdef SchemaGraph < handle
 % node as character vectors, this class adds the name of node properties
 % and edge information (i.e what properties link two schemas together...)
 
-
-
     properties
         Modules = {'core'}
     end
@@ -15,23 +13,16 @@ classdef SchemaGraph < handle
     properties (Access = private)
         DirectedGraph
     end
-    
 
     methods
 
         function obj = SchemaGraph()
-
-
-
         end
 
         function incomingLinks = getIncomingLinks(obj, schemaName)
-            
         end
 
         function outgoingLinks = getOutgoingLinks(obj, schemaName)
-            
         end
-
     end
 end

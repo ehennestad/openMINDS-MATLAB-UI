@@ -10,7 +10,7 @@ function opt = parsenvpairs(def, vfun, varargin)
 
 if isempty(varargin); opt = def; return; end
 
-% If varargin was directly passed from another function's inputs to this 
+% If varargin was directly passed from another function's inputs to this
 % function's input, the cell array must be unpacked.
 if numel(varargin) == 1 && isa(varargin{1}, 'cell')
     varargin = varargin{1};
@@ -39,16 +39,14 @@ if ~isempty(varargin) && (isa(varargin{1}, 'struct') || isa(varargin{end}, 'stru
     fields = fieldnames(varargin{ind})';
     
     %In this case, only use fields which are also part of def, so that user
-    % is more free in passing the opts even if it does not contain relevant 
+    % is more free in passing the opts even if it does not contain relevant
     % fields.
     fields = intersect(names, fields, 'stable')';
     values = cellfun(@(name) varargin{ind}.(name), fields, 'uni', 0 );
     nvPairs = reshape(vertcat(fields, values), 1, numel(fields)*2);
 
     varargin(ind) = [];
-    
 end
-
 
 % Ignore name, value pairs that are not included in def..
 if ~isempty(varargin) && isa(varargin{1}, 'char')
@@ -63,9 +61,7 @@ if ~isempty(varargin) && isa(varargin{1}, 'char')
         matchInd = reshape(matchInd, 1, []);
         nvPairs = [nvPairs, varargin(matchInd)];
     end
-    
 end
-
 
 if isempty(vfun)
     vfun = cell2struct(cellfun(@(fn) @(x) ~isempty(x), names, 'uni', 0), names);
@@ -73,12 +69,10 @@ elseif isequal(vfun, 1)
     vfun = cell2struct(cellfun(@(fn) @(x) true, names, 'uni', 0), names);
 end
 
-
 % % % % Set a default validation scheme (not empty) for each parameter.
 % % % vfun = cell2struct(cellfun(@(fn) @(x) ~isempty(x), names, 'uni', 0), names);
 % % % vfun.method = @(x) any(validatestring(x, {'rigid', 'nonrigid'}));
 % % % vfun.a = @(x) isnumeric(x) && isscalar(x) && (x > 0);
-
 
 parserObj = inputParser;
 parserObj.FunctionName = 'Input parser for Name, Value pairs';
@@ -94,5 +88,4 @@ end
 parserObj.parse(nvPairs{:});
 opt = parserObj.Results;
 opt = orderfields(opt, names);
-
 end

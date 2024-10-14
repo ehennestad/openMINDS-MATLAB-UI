@@ -2,9 +2,8 @@ classdef StylableTable < uiw.widget.Table
 %StylableTable Extends uiw.widget.Table with methods for increased
 %flexibility in customizing the table appearance and layout.
 
-
     %Todo
-    % [ ] Add property for horizontal and vertical scrollbar valuechanged 
+    % [ ] Add property for horizontal and vertical scrollbar valuechanged
     %     callbacks.
     % [ ] Todo: Add methods for plotting custom scrollbars.
     % [ ] Add methods for changing column properties (names, maybe editable
@@ -32,7 +31,7 @@ classdef StylableTable < uiw.widget.Table
         JTable
     end
     
-    properties (Dependent)    
+    properties (Dependent)
         KeyPressCallback
     end
     
@@ -61,7 +60,6 @@ classdef StylableTable < uiw.widget.Table
         %VerticalScroll
     end
     
-    
     methods
         function obj = StylableTable(varargin)
             
@@ -88,7 +86,6 @@ classdef StylableTable < uiw.widget.Table
             obj.updateColumnHeaderVisibility()
             
             warning('on', 'MATLAB:ui:javacomponent:FunctionToBeRemoved')
-
         end
         
         function delete(obj)
@@ -96,7 +93,6 @@ classdef StylableTable < uiw.widget.Table
             % Explicitly delete handles to Java objects?
             
         end % destructor
-        
     end
     
     methods (Access = protected) % Internal (creation)
@@ -117,7 +113,6 @@ classdef StylableTable < uiw.widget.Table
             % header size does not match the table size.
             set(jTH, 'MouseDraggedCallback', @obj.onMouseDraggedInHeader )
             set(jTH, 'MouseReleasedCallback', @obj.onMouseReleasedFromHeader)
-            
 
             obj.JScrollPane.AncestorAddedCallback = @(s,e) obj.retrieveAncestorContainer();
         end
@@ -137,7 +132,6 @@ classdef StylableTable < uiw.widget.Table
 
             jHeader = handle( obj.JControl.getTableHeader(), 'CallbackProperties' );
             set(jHeader, 'MouseDraggedCallback', @(s,e, str) disp('bb'))
-            
         end
     end
     
@@ -164,7 +158,6 @@ classdef StylableTable < uiw.widget.Table
             clickPosX = tableLocationX + clickPosX; % Add offset for table position.
             clickPosY = tableHeight - clickPosY; % Need to reverse y-position because java-based positions are opposite (i.e upside-down) compared to matlab positions.
             figurePoint = [clickPosX, clickPosY];
-            
         end
         
         function xOffset = getHorizontalScrollOffset(obj)
@@ -204,7 +197,7 @@ classdef StylableTable < uiw.widget.Table
 
             if ~isvalid(obj)
                 columnNames = '';
-                return; 
+                return;
             end
 
             jTableHeader = obj.JTableHeader;
@@ -216,7 +209,6 @@ classdef StylableTable < uiw.widget.Table
             for i = 1:numColumns
                 columnNames{i} = jColumnModel.getColumn(i-1).getHeaderValue;
             end
-            
         end
         
         function selectRowFromMouseEvent(obj, evtData)
@@ -226,7 +218,7 @@ classdef StylableTable < uiw.widget.Table
 
             % Select row where mouse is pressed if it is not already
             % selected
-            if ~ismember(row, obj.SelectedRows) 
+            if ~ismember(row, obj.SelectedRows)
                 if row > 0 && col > 0
                     obj.SelectedRows = row;
                 else
@@ -234,7 +226,6 @@ classdef StylableTable < uiw.widget.Table
                     return
                 end
             end
-                
         end
         
         function position = getTableContextMenuPosition(obj, eventPosition)
@@ -259,7 +250,6 @@ classdef StylableTable < uiw.widget.Table
             positionY = tableHeight - clickPosY + tableLocationY; % +15 because ad hoc... size of table header?
             
             position = [positionX, positionY];
-            
         end
     
         function enableCallbacks(obj)
@@ -272,11 +262,10 @@ classdef StylableTable < uiw.widget.Table
 
             % Note: The uiw.widget.Table onCellSelection is sometimes triggered
             % by a drawnow statement. Added this method in order to
-            % programmatically prevent this from happening by setting the 
+            % programmatically prevent this from happening by setting the
             % CallbacksEnabled property of uiw.abstract.JavaControl
             obj.CallbacksEnabled = false;
         end
-    
     end
     
     methods % Set / get methods
@@ -291,7 +280,7 @@ classdef StylableTable < uiw.widget.Table
         %
         %   I experienced that ColumnPreferredWidth need to be updated in
         %   order for columnwidths to actually change. In addition, I turn
-        %   the flag for IsConstructed off during update to prevent the 
+        %   the flag for IsConstructed off during update to prevent the
         %   onStyldeChanged method of the superclass being invoked. This
         %   causes some ugly flickers because some colors are changed back
         %   to defaults.
@@ -323,13 +312,11 @@ classdef StylableTable < uiw.widget.Table
         end
         
         function set.KeyPressCallback(obj, newValue)
-            
         end
         
         function jTable = get.JTable(obj)
             jTable = obj.JControl;
         end
-        
     end
     
     methods (Access = protected) % Internal (updating)
@@ -340,17 +327,14 @@ classdef StylableTable < uiw.widget.Table
             % Function handle for converting rgb vector to java color
             jRGB = @(rgb) java.awt.Color(rgb(1), rgb(2), rgb(3));
             
-            
             % Do stuff here!
             
 %             % Convert to javacolors.
 %             bgColor2 = obj.rgb2jrgb( S.tableBackgroundColor );
 %             fgColor = obj.rgb2jrgb( S.tableForegroundColor );
-%             jScrollPane = getappdata(obj.hTableView, 'jScrollPane'); 
-
+%             jScrollPane = getappdata(obj.hTableView, 'jScrollPane');
 
             obj.BackgroundColor = obj.Theme.CellColorUnmodified;
-            
             
             % Set background color of table viewport (area available for table)
             jViewPort = obj.JScrollPane.getComponent(0);
@@ -358,7 +342,6 @@ classdef StylableTable < uiw.widget.Table
 
 % %             jViewPort = obj.JScrollPane.getComponent(3);
 % %             set(jViewPort, 'background', jRGB(obj.BackgroundColor));
-            
             
             obj.JTable.GridColor = jRGB( obj.Theme.GridColor );
 
@@ -385,7 +368,6 @@ classdef StylableTable < uiw.widget.Table
             obj.JTable.sortOrderForeground = jRGB(obj.Theme.SortOrderForeground);
             %obj.JTable.MarginBackground = S.bgColor;
             
-            
             %borderColor = java.awt.Color(0.4,0.4,0.4);
             
             % Set table border.
@@ -394,10 +376,8 @@ classdef StylableTable < uiw.widget.Table
             tableBorder = javax.swing.border.LineBorder(borderColor, w, 0);
             obj.JScrollPane.setBorder(tableBorder)
             
-            
 % %             hCellRenderer = obj.JControl.getCellRenderer(0,0);
 % %             hCellRenderer.setForeground(jRGB(obj.Theme.TableForegroundColor))
-
             
             % Set background of container that is slightly bigger than
             % table and therefor appear as a border.
@@ -429,11 +409,10 @@ classdef StylableTable < uiw.widget.Table
                 set(tableHeader, 'PreferredSize', java.awt.Dimension(100, 0))
                 set(tableHeader, 'MaximumSize', java.awt.Dimension(100, 0))
             end
-            
         end
         
         function changeCheckboxRenderer(obj)
-        %changeCheckboxRenderer Test, does any of this change things...?    
+        %changeCheckboxRenderer Test, does any of this change things...?
             h = obj.JTable.getCellRenderer(1,2);
             %set(h, 'BorderPainted', false);
             
@@ -445,8 +424,6 @@ classdef StylableTable < uiw.widget.Table
             set(h, 'Opaque', 0)
             %set(h, 'ContentAreaFilled', 0)
             %set(h, 'FocusPainted', 0)
-            
-            
         end
         
         function updateColumnHeaderWidth(obj)
@@ -498,7 +475,6 @@ classdef StylableTable < uiw.widget.Table
             obj.notify('MouseDraggedInHeader', eventData)
             
             allowInterrupt = true;
-
         end
         
         function onMouseReleasedFromHeader(obj, src, evt)
@@ -513,7 +489,7 @@ classdef StylableTable < uiw.widget.Table
 
                 if ~isequal(obj.ColumnArrangement , currentColumnArrangement) % (1)
                     obj.notify('ColumnsRearranged', event.EventData)
-                    obj.ColumnArrangement = currentColumnArrangement; 
+                    obj.ColumnArrangement = currentColumnArrangement;
 
                 elseif any(obj.ColumnWidth ~= obj.OldColumnWidth)   % (2)
                     obj.updateColumnHeaderWidth()
@@ -529,7 +505,6 @@ classdef StylableTable < uiw.widget.Table
                 end
             end
         end
-
     end
     
     methods (Access = protected) % Override uiw.widget.Table method
@@ -544,7 +519,5 @@ classdef StylableTable < uiw.widget.Table
             obj.ColumnArrangement = obj.getColumnOrder;
             % disp('table model changed')
         end
-        
     end
-    
 end

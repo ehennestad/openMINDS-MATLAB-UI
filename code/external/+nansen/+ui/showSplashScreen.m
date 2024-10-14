@@ -54,7 +54,6 @@ function [jFrame, jLabel, C] = showSplashScreen(imFilePath, titleStr, subTitleSt
     jLabel = javax.swing.JLabel(subTitleStr);
     jLabel.setForeground( java.awt.Color(0.1882, 0.2431, 0.2980) )
     jLabel.setBounds(35, 70, 250, 25);
-
     
     imPath = fullfile( nansen.rootpath, 'code', 'setup', '_icons', 'loading.gif');
     jIcon2 = javax.swing.ImageIcon(imPath);
@@ -64,7 +63,6 @@ function [jFrame, jLabel, C] = showSplashScreen(imFilePath, titleStr, subTitleSt
     jBackgroundLabel.add(jLabelTitle);
     jBackgroundLabel.add(jLabel);
     jBackgroundLabel.add(jLabelLoadGif);
-    
     
     footerText = {'Version 1.0.0 - alpha', 'Created by Eivind Hennestad', 'Vervaeke Lab of Neural Computation', 'University of Oslo'};
     footerText = sprintf( "<html>%s</html>", strjoin(footerText, '<br>'));
@@ -82,8 +80,6 @@ function [jFrame, jLabel, C] = showSplashScreen(imFilePath, titleStr, subTitleSt
     set(jLabelFooter, 'Font', titleFont);
     
     jBackgroundLabel.add(jLabelFooter);
-    
-    
 
     % Set size of frame
     jFrame.setSize(imSize(2),imSize(1));
@@ -98,7 +94,6 @@ function [jFrame, jLabel, C] = showSplashScreen(imFilePath, titleStr, subTitleSt
     jFrame.show;
     
     C = onCleanup(@(jH)closeSplashScreen(jFrame));
-
 end
 
 function closeSplashScreen(jFrame)

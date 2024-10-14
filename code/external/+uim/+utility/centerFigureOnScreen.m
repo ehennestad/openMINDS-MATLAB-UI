@@ -11,5 +11,4 @@ function centerFigureOnScreen(hFig)
             
     % Create the figure window
     setpixelposition(hFig, [figLocation figSize])
-
 end

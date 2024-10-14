@@ -1,7 +1,7 @@
 classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                           & om.internal.control.mixin.InheritableBackgroundColor
 
-    % Todo: 
+    % Todo:
     %   [v] Add enumeration for supplementary action button
     %   [v] Only show download action if remote metadata collection is
     %       assigned
@@ -12,7 +12,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     %   [ ] Test working with homogeneous and heterogeneous instances
     %   [ ] Test editing of items. Does item change? does label change?
     %   [ ] Create filter
-    %   [ ] Flexibly wrap and unwrap comp.Value in mixed type class if 
+    %   [ ] Flexibly wrap and unwrap comp.Value in mixed type class if
     %       MetadataType is a mixed type
     %   [ ] Fill out controlled term instances if controlled term...
     %
@@ -27,7 +27,6 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % Discussion
     %  - How will this be called? What if we need to create it without having
     %  - a value available.
-
 
     % Events with associated public callbacks
     events (HasCallbackProperty, NotifyAccess = private)
@@ -80,7 +79,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     end
 
     properties (AbortSet = true)
-        % MetadataType - The metadata type which is currently active/selected 
+        % MetadataType - The metadata type which is currently active/selected
         % in this component
         ActiveMetadataType (1,1) openminds.enum.Types = "None"
     end
@@ -96,7 +95,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % Properties that corresponds with internal states
     properties (Access = private)
         % HasRemoteInstances - Boolean flag indicating whether dropdown is
-        % populated with remote instances (instances from a remote metadata 
+        % populated with remote instances (instances from a remote metadata
         % collection)
         HasRemoteInstances = false
 
@@ -156,7 +155,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 comp.MetadataType = propValues.MetadataType;
                 propValues = rmfield(propValues, "MetadataType");
             end
-            if isfield(propValues, "ActiveMetadataType") 
+            if isfield(propValues, "ActiveMetadataType")
                 if propValues.ActiveMetadataType ~= "None"
                     comp.ActiveMetadataType = propValues.ActiveMetadataType;
                 end
@@ -286,7 +285,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
     % Property post-set methods
     methods (Access = private)
         function postSetValue(comp)
-            if isempty(comp.Value)                
+            if isempty(comp.Value)
                 assert(isa(comp.Value, comp.MetadataType), ...
                     'Something unexpected happened (dropdown value is not of expected type)')
 
@@ -312,13 +311,13 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                 end
             end
 
-            % Use ValueIndex to set DropDown selection in case some 
+            % Use ValueIndex to set DropDown selection in case some
             % elements of comp.Items are identical
             if ~isempty(valueIndex)
                 comp.DropDown.ValueIndex = valueIndex + numel(comp.Actions);
             else
-                % If value is not part of the ItemsData, add it to the 
-                % Items and ItemsData 
+                % If value is not part of the ItemsData, add it to the
+                % Items and ItemsData
                 comp.Items(end+1) = string(comp.Value);
                 comp.ItemsData{end+1} = comp.Value;
                 comp.DropDown.ValueIndex = numel(comp.DropDown.Items);
@@ -391,7 +390,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
                     end
                     return
 
-                case 'InstanceEditorButton'        
+                case 'InstanceEditorButton'
                     iconFilePath = om.internal.getIconPath('form');
                     callbackFcn = @comp.onEditInstanceButtonPushed;
 
@@ -600,7 +599,7 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
 
         function updateItemsFromCollection(comp)
         % updatItemsFromCollection - Update items from metadata collections
-        % 
+        %
         % Retrieving all instances of active type from metadata collections
         % and update component's Items and ItemsData properties.
             
@@ -701,7 +700,6 @@ classdef InstanceDropDown < matlab.ui.componentcontainer.ComponentContainer ...
             arguments
                 comp
                 mode (1,1) string {mustBeMember(mode, ["create", "modify"])} = "create"
-
             end
 
             if mode == "create"

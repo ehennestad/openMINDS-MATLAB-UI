@@ -1,6 +1,6 @@
 function [itemNames, itemData] = uiEditHomogeneousList(metadataInstances, typeURI, metadataCollection)
 
-    % Assumes we are editing a property of a schema... 
+    % Assumes we are editing a property of a schema...
 
     typePathSplit = strsplit(typeURI, '/');
 
@@ -10,7 +10,6 @@ function [itemNames, itemData] = uiEditHomogeneousList(metadataInstances, typeUR
     if nargin < 3
         metadataCollection = openminds.MetadataCollection();
     end
-    
 
     numInstances = numel( metadataInstances );
     if numInstances >= 1
@@ -59,7 +58,7 @@ function [itemNames, itemData] = uiEditHomogeneousList(metadataInstances, typeUR
             end
         end
 
-        % Convert to openminds instances to get labels...    
+        % Convert to openminds instances to get labels...
         itemNames = cellfun(@(c) char(c), instances, 'UniformOutput', false);
         itemData = num2cell( instances );
     end

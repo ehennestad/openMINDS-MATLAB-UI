@@ -5,7 +5,7 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
 %       - [ ] Make sure labels are not duplicated. Validation of new labels
 %             against the set of labels.
 %       - [ ] Make sure embedded types are not added to set??
-%   
+%
 
 %   Questions: What happens in the kg if you try to assign the same label?
     
@@ -27,7 +27,7 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
     methods
         
 % %         function sObj = saveobj(obj)
-% % 
+% %
 % %             sObj=struct(obj);
 % %         end
 
@@ -52,8 +52,6 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
         end
 
         function remove(obj, schemaInstance)
-            
-            
         end
 
         function labels = getSchemaInstanceLabels(obj, schemaName, schemaId)
@@ -70,7 +68,6 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
                 isMatchedInstance = strcmp({schemaInstances.id}, schemaId);
                 labels = labels(isMatchedInstance);
             end
-            
         end
 
         function schemaInstance = getInstanceFromLabel(obj, schemaName, label)
@@ -111,7 +108,6 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
                 end
             end
         end
-
     end
 
     methods % Methods for getting instances in table representations
@@ -163,13 +159,11 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
             
             metaTable = nansen.metadata.MetaTable(joinedTable, 'MetaTableClass', joinedClassName);
         end
-
     end
 
     methods (Access = protected) % Methods for getting instances in table representations
         
         function [leftKey, rightKey] = getKeyPairsForJoin(obj, schemaNameLinker, schemaNameLinkee)
-            
             
             disp('a')
             leftKey = 'studiedState';
@@ -180,7 +174,7 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
             % who is linked... What if many properties can be linked to the
             % same schema??
 
-            % For the linkee : Use property name 
+            % For the linkee : Use property name
             %   Needed. List of linked properties and allowed link types
 
             % For the linked : Get id
@@ -197,7 +191,6 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
                 % Todo: Check if columnName is an embedded type of
                 % instanceType: In which case we dont want to replace with
                 % categorical...
-
 
                 thisValue =  instanceTable{1,i};
                 if isa(thisValue, 'openminds.abstract.Schema') && ~isa(thisValue, 'openminds.controlledterms.ControlledTerm')
@@ -226,13 +219,11 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
                     end
                     instanceTable.(thisColumnName) = cat(1,rowValues{:});
                 end
-            end            
+            end
         end
-
     end
 
     methods % Methods for getting instances in graph representations
-
     end
 
     methods % Set/get
@@ -252,20 +243,19 @@ classdef MetadataSet < handle & matlab.mixin.CustomDisplay
 % %             % Call superclass saveobj method
 % %             sobj = saveobj@super(obj);
 % %           end
-
     end
 
     methods (Static)
         function shortSchemaName = getSchemaShortName(fullSchemaName)
         %getSchemaShortName Get short schema name from full schema name
-        % 
+        %
         %   shortSchemaName = getSchemaShortName(fullSchemaName)
         %
         %   Example:
         %   fullSchemaName = 'openminds.core.research.Subject';
         %   shortSchemaName = om.MetadataSet.getSchemaShortName(fullSchemaName)
         %   shortSchemaName =
-        % 
+        %
         %     'Subject'
 
             expression = '(?<=\.)\w*$'; % Get every word after a . at the end of a string

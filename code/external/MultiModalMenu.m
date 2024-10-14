@@ -2,7 +2,7 @@ classdef MultiModalMenu < handle
 %MultiModalMenu Create a menu where each item can have multiple modes
 %
 %   These functions are then saved in a package hierarchy, and this
-%   hierarchy will be used here to create a uimenu using the same 
+%   hierarchy will be used here to create a uimenu using the same
 %   hierarchy.
 %
 %   Each menu item corresponding to a session method will be configured to
@@ -11,23 +11,21 @@ classdef MultiModalMenu < handle
 %       'TaskAttributes' : A struct with attributes for a session task
 %       'Mode' : The mode for which the method should be run
 %
-%   The mode is one of the following: 
+%   The mode is one of the following:
 %       - 'Default'
-%       - 'Preview' 
+%       - 'Preview'
 %       - 'TaskQueue'
-%       - 'Edit' 
+%       - 'Edit'
 %
 %   The mode is determined by the value of the Mode property at the time
 %   when the event is triggered. The Mode property has no functionality in
 %   this class, but can be used by external code for configuring different
 %   ways of running methods (see nansen.App for example...)
 
-
-%   Notes on implementation: 
+%   Notes on implementation:
 %       This class is implemented to create the menu structure from a
 %       package folder hierarchy. Maybe that functionality should be
 %       separated out into its own class.
-
 
 % Dependencies:
 %       FileExchange : findjobj
@@ -98,15 +96,14 @@ classdef MultiModalMenu < handle
         MethodSelected % todo: remove
     end
 
-
     methods % Constructor
         
         function obj = MultiModalMenu(hParent, modules, useModuleAsRoot)
-        %MultiModalMenu Create a MultiModalMenu object 
+        %MultiModalMenu Create a MultiModalMenu object
         %
         %   obj = MultiModalMenu(appHandle, modules) creates a
-        %   MultiModalMenu for a given app. appHandle is a handle for the 
-        %   app and modules is a cell array containing folder 
+        %   MultiModalMenu for a given app. appHandle is a handle for the
+        %   app and modules is a cell array containing folder
         %   packages to include when building the menu
         %
 
@@ -148,7 +145,7 @@ classdef MultiModalMenu < handle
             end
             if isdeletable(obj.KeyPressListener)
                 delete(obj.KeyPressListener)
-            end            
+            end
         end
     end
 
@@ -182,7 +179,6 @@ classdef MultiModalMenu < handle
                 for i = 1:numel(keyNames)
                     modeToKeyLabels(allModes{i}) = keyNames{i};
                 end
-
             end
 
             newKeyLabel = modeToKeyLabels(obj.Mode);
@@ -208,7 +204,6 @@ classdef MultiModalMenu < handle
                 end
             end
         end
-        
     end
 
     methods (Access = protected)
@@ -248,14 +243,9 @@ classdef MultiModalMenu < handle
             obj.createMenuCallback(iSubMenu, functionName)
             obj.storeMenuObject(iSubMenu, functionName)
         end
-
-
     end
 
     methods (Access = private) % Methods for changing mode...
-        
-        
-        
     end
 
     methods (Access = private) % Methods for initializing & configuring menu
@@ -282,7 +272,7 @@ classdef MultiModalMenu < handle
         function assignDefaultMethodsPath(obj)
         %assignDefaultMethodsPath Assign the default path(s) for packages
         %
-        %   Get the absolute path of each module containing items and 
+        %   Get the absolute path of each module containing items and
         %   assign it to the property DefaultMethodsPath.
 
             if isempty(obj.PackageModules)
@@ -332,12 +322,12 @@ classdef MultiModalMenu < handle
         function buildMenuFromDirectory(obj, hParent, dirPath)
         %buildMenuFromDirectory Build menu items from a directory tree
         %
-        % Go recursively through a directory tree of matlab packages 
-        % and create a menu item for each matlab function which is found 
+        % Go recursively through a directory tree of matlab packages
+        % and create a menu item for each matlab function which is found
         % inside. The menu item is configured to trigger an event when it
         % is selected.
 
-        % Requires: 
+        % Requires:
         %   om.internal.strutil.varname2label (utility.string.varname2label)
 
             if nargin < 3
@@ -381,7 +371,7 @@ classdef MultiModalMenu < handle
                 else
                     [~, ~, ext] = fileparts(L(i).name);
                     
-                    if ~strcmp(ext, '.m') && ~strcmp(ext, '.mlx')  
+                    if ~strcmp(ext, '.m') && ~strcmp(ext, '.mlx')
                         continue % Skip files that are not .m
                     end
 
@@ -392,7 +382,7 @@ classdef MultiModalMenu < handle
         end
         
         function addSubmenuForPackageFolder(obj, hParent, folderListing)
-        %addSubmenuForPackageFolder Add submenu for a package folder    
+        %addSubmenuForPackageFolder Add submenu for a package folder
         %
         %   addSubmenuForPackageFolder(obj, hParent, folderListing) adds a
         %   submenu under the given parent menu for a package folder.
@@ -523,14 +513,10 @@ classdef MultiModalMenu < handle
                 obj.Mode = obj.DefaultMode;
             end
         end
-    
     end
-    
 end
 
-
 %% Local functions
-
 
 function L = localMultiDir(name)
 %localMultiDir Same as builtin dir, but name can be a cell array
@@ -556,8 +542,8 @@ function label = varname2label(varname, includePackageName)
 %
 %   Example:
 %   label = varname2label('helloWorld')
-%   
-%   label = 
+%
+%   label =
 %       'Hello World'
 
 % Todo:
@@ -571,7 +557,7 @@ end
 if ~ischar(varname); varname = inputname(1); end
 
 % Special case if varname is a package name
-if contains(varname, '.') 
+if contains(varname, '.')
     splitVarname = strsplit(varname, '.');
     if includePackageName
         splitVarname = cellfun(@(c) varname2label(c), splitVarname, 'uni', 0);
@@ -581,7 +567,6 @@ if contains(varname, '.')
         varname = splitVarname{end}; % select last item of package name
     end
 end
-
 
 % Insert spaces
 if issnakecase(varname)
@@ -625,8 +610,6 @@ else
 end
 
 label = strtrim(label);
-
-
 end
 
 function isCamelCase = iscamelcase(varname)
@@ -637,7 +620,6 @@ function isCamelCase = iscamelcase(varname)
     else
         isCamelCase = false;
     end
-    
 end
 
 function isSnakeCase = issnakecase(varname)
@@ -659,11 +641,9 @@ function functionName = abspath2funcname(pathStr)
     packageName = pathstr2packagename(folderPath); % Local function
     functionName = strcat(packageName, '.', functionName);
     
-    
     % Add package-containing folder to path if it is not...
     
     %fcnHandle = str2func(functionName);
-
 end
 
 function mEvt = javaKeyEventToMatlabKeyData(jEvt)
@@ -671,12 +651,11 @@ function mEvt = javaKeyEventToMatlabKeyData(jEvt)
 %
 %   Properties of matlab event Keydata:
 %    - Character  : Case sensitive
-%    - Modifier   : 
+%    - Modifier   :
 %    - Key        : Lower version of a letter
     
     % Todo: What about keys that are not letters
     %       What about windows?
-    
     
     %% Get the character
     mEvt.Character = get(jEvt, 'KeyChar');
@@ -686,10 +665,8 @@ function mEvt = javaKeyEventToMatlabKeyData(jEvt)
         mEvt.Character = '';
     end
     
-    
     %% Get the modifier(s)
     mEvt.Modifier = getModifiers(jEvt);
-
     
     %% Get the key name
     mEvt.Key = lower( get(jEvt, 'KeyChar') );
@@ -699,35 +676,31 @@ function mEvt = javaKeyEventToMatlabKeyData(jEvt)
         mEvt.Key = getSpecialKey(jEvt);
     end
     
-    
     %% For debugging
     if false
         get(jEvt)
     end
-    
 end
-
 
 function cellOfModifiers = getModifiers(jEvt)
 
     cellOfModifiers = cell(0,1);
     
     if get(jEvt, 'ShiftDown') == 1
-        cellOfModifiers{end+1} = 'shift'; 
+        cellOfModifiers{end+1} = 'shift';
     end
     
     if get(jEvt, 'ControlDown') == 1
-        cellOfModifiers{end+1} = 'control'; 
+        cellOfModifiers{end+1} = 'control';
     end
         
     if get(jEvt, 'AltDown') == 1
-        cellOfModifiers{end+1} = 'alt'; 
+        cellOfModifiers{end+1} = 'alt';
     end
     
     if get(jEvt, 'MetaDown') == 1
         cellOfModifiers{end+1} = 'command';
     end
-    
 end
 
 function keyName = getSpecialKey(jEvt)
@@ -749,9 +722,7 @@ function keyName = getSpecialKey(jEvt)
         otherwise
             keyName = '';
     end
-    
 end
-
 
 function packageName = pathstr2packagename(pathStr)
 %pathstr2packagename Convert a path string to a string with name of package
@@ -759,7 +730,7 @@ function packageName = pathstr2packagename(pathStr)
 %       packageName = pathstr2packagename(pathStr)
 %
 %   EXAMPLE:
-% 
+%
 %    pathStr =
 %       '/Users/eivinhen/PhD/Programmering/MATLAB/VervaekeLab_Github/NANSEN/code/+nansen/+session/+methods/+data/+open'
 %
@@ -767,7 +738,6 @@ function packageName = pathstr2packagename(pathStr)
 %
 %    packageName =
 %       'nansen.session.methods.data.open'
-
 
     assert(isfolder(pathStr), 'Path must point to a folder.')
        
@@ -782,5 +752,4 @@ function packageName = pathstr2packagename(pathStr)
     packageFolderNames = strrep(packageFolderNames, '+', '');
     
     packageName = strjoin(packageFolderNames, '.');
-
 end

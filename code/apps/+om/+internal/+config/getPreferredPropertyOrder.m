@@ -25,5 +25,4 @@ function prefs = loadPreferences()
     rootPath = om.internal.rootpath();
     filepath = fullfile(rootPath, 'config', 'preferredPropertyOrder.json');
     prefs = jsondecode( fileread( filepath ) );
-    
 end

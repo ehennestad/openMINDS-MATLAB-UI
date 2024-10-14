@@ -1,6 +1,5 @@
 classdef GraphNodeTransporter < applify.gobjectTransporter
 
-
     properties
         CurrentNodeIndex = []
     end
@@ -39,7 +38,7 @@ classdef GraphNodeTransporter < applify.gobjectTransporter
         end
 
         function moveObject(obj)
-        %moveObject Execute when mouse is dragging a selected object    
+        %moveObject Execute when mouse is dragging a selected object
 
             % Get current coordinates
             newMousePointAx = obj.hAxes.CurrentPoint(1, 1:2);
@@ -52,14 +51,11 @@ classdef GraphNodeTransporter < applify.gobjectTransporter
             h.YData(i) = h.YData(i) + shift(2);
 
             obj.previousMousePointAxes = newMousePointAx;
-
         end
 
         function stopDrag(obj)
             obj.isMouseDown = false;
             obj.resetInteractiveFigureListeners()
         end
-
     end
-
 end

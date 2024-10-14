@@ -1,5 +1,5 @@
 classdef MetadataEditor < handle
-%     
+%
 %   TODO:
 %       [x] Save figure size to app settings
 %       [x] Save metadata set
@@ -18,14 +18,13 @@ classdef MetadataEditor < handle
 %       [ ] Dynamic listbox on left side panel
 %
 %       [ ] Treat embedded types and linked types differently. Embedded
-%           types are not added to the set, but only added to schema 
+%           types are not added to the set, but only added to schema
 %           instances. Should embedded types be value classes.
 %
 %       [ ] Linked types are just links...
 
-
 % ABBREVIATIONS:
-%       
+%
 %       OM : openMinds
 %
 
@@ -78,7 +77,7 @@ classdef MetadataEditor < handle
 
         function obj = MetadataEditor(metadataCollection)
 
-            if nargin < 1            
+            if nargin < 1
                 obj.loadMetadataCollection()
             else
                 obj.MetadataCollection = metadataCollection;
@@ -162,10 +161,9 @@ classdef MetadataEditor < handle
 
             delete(obj)
         end
-
     end
 
-    methods %Set / get 
+    methods %Set / get
         function saveFolder = get.SaveFolder(~)
             % Todo: Get from preferences
             saveFolder = fullfile(userpath, 'openMINDS-MATLAB-UI', 'userdata');
@@ -391,7 +389,7 @@ classdef MetadataEditor < handle
         end
 
         function plotOpenMindsLogo(obj)
-        %plotLogo Plot openMINDS logo in the logo panel   
+        %plotLogo Plot openMINDS logo in the logo panel
             
             % Load the logo from file
             logoFilename = 'light_openMINDS-logo.png';
@@ -428,9 +426,7 @@ classdef MetadataEditor < handle
             %[~, hJ] = evalc('findjobj(obj.Figure)');
             %hJ(2).KeyPressedCallback = @obj.onKeyPressed;
             %hJ(2).KeyReleasedCallback = @obj.onKeyReleased;
-            
         end
-
     end
 
     methods (Access = private) % Metadata Collection configuration methods
@@ -439,7 +435,6 @@ classdef MetadataEditor < handle
 
             addlistener(obj.MetadataCollection, 'CollectionChanged', @obj.onMetadataCollectionChanged);
             addlistener(obj.MetadataCollection, 'InstanceModified', @obj.onMetadataInstanceModified);
-
         end
 
         function filepath = getMetadataCollectionFilepath(obj)
@@ -452,7 +447,7 @@ classdef MetadataEditor < handle
             % Todo: Serialize
             %S = struct;
 
-            MetadataCollection = obj.MetadataCollection; %#ok<PROP> 
+            MetadataCollection = obj.MetadataCollection; %#ok<PROP>
             save(metadataFilepath, 'MetadataCollection')
             % Todo: Are listeners saved???
         end
@@ -467,17 +462,14 @@ classdef MetadataEditor < handle
                 obj.MetadataCollection = om.ui.UICollection();
             end
 
-
 % % %             % Reattach listeners
 % % %             addlistener(obj.MetadataCollection, 'CollectionChanged', ...
 % % %                 @obj.onMetadataCollectionChanged)
-
         end
 
         function saveGraphCoordinates(obj)
             % Todo.
         end
-
     end
 
     methods (Access = private) % Internal callback methods
@@ -488,7 +480,6 @@ classdef MetadataEditor < handle
                 case 'x'
                     obj.exportToWorkspace()
             end
-
         end
 
         function onMetaTableDataChanged(obj, src, evt)
@@ -640,7 +631,6 @@ classdef MetadataEditor < handle
             obj.CurrentTableInstanceIds = ids;
             %app.MetaTable.removeEntries(selectedEntries)
             %app.UiMetaTableViewer.refreshTable(app.MetaTable)
-
         end
     
         function onMouseDoubleClickedInTable(obj, src, evt)
@@ -659,7 +649,7 @@ classdef MetadataEditor < handle
             % Get name of column which was clicked
             thisColumnName = obj.UIMetaTableViewer.getColumnNames(thisCol);
 
-            % Use table variable attributes to check if a double click 
+            % Use table variable attributes to check if a double click
             % callback function exists for the current table column
             TVA = obj.UIMetaTableViewer.MetaTableVariableAttributes([obj.UIMetaTableViewer.MetaTableVariableAttributes.HasDoubleClickFunction]);
             
@@ -695,7 +685,6 @@ classdef MetadataEditor < handle
                 evt.HitObject.JTable.editCellAt(thisRow-1, thisCol-1);
             end
         end
-    
     end
 
     methods (Access = private) % Internal updating
@@ -729,11 +718,9 @@ classdef MetadataEditor < handle
                 [S(1:numVars).IsEditable] = deal( false );
 
                 openMindsType = openminds.enum.Types(metaTableType);
-                instance = feval(openMindsType.ClassName);  
-                    
+                instance = feval(openMindsType.ClassName);
 
                 metaSchema = openminds.internal.SchemaInspector( instance );
-
 
                 for i = 1:numel(varNames)
                     if openminds.utility.isInstance( instance.(varNames{i}) ) && ...

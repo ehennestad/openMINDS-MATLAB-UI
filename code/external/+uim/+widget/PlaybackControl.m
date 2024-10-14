@@ -10,25 +10,21 @@ classdef PlaybackControl < uim.mixin.assignProperties
 %     It should be parented in a figure, panel or tab and it will
 %     internally create two axes for drawing of the components. The axes
 %     are hidden, and for a reason, so don't mess with them:)
-
-
     
     % Notes:
-    % 1) Playback buttons are placed within one axes where units are in 
-    %    pixels. This axes should always keep its original size to prevent 
+    % 1) Playback buttons are placed within one axes where units are in
+    %    pixels. This axes should always keep its original size to prevent
     %    buttons from stretch effects during figure resize.
     
-    % 2) 
-    
+    % 2)
     
 % - - - - - - - - - - - TODO - - - - - - - - - - - -
 %  [ ] Make property for function when playback button state changes
 %  [x] Better input handling.... Should be able to set props on
 %      construction
 %  [x] patch bars using uim.shape.rectangle...
-
     
-% - - - - - - - - - - PROPERTIES - - - - - - - - - - 
+% - - - - - - - - - - PROPERTIES - - - - - - - - - -
     
     properties (Dependent)
         Position (1,4) double
@@ -47,7 +43,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
         RangeSelectorEnabled matlab.lang.OnOffSwitchState = 'off'
         ActiveRange = [1, 1]            % For virtual vs memory stacks.
         ActiveRangeChangedFcn = []      % Callback for when active range changes.
-        
     end
     
     properties % Appearance
@@ -90,7 +85,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
         tincr
         
         h % Struct for keeping all handles which visibility should be turned on and off
-        
     end
     
     properties (Access = private) % Widget states and internals
@@ -105,7 +99,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
         FrameChangedListener
     end
 
-% - - - - - - - - - - - METHODS - - - - - - - - - - 
+% - - - - - - - - - - - METHODS - - - - - - - - - -
 
     methods % Structors
         
@@ -129,7 +123,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             if ~nargout
                 clear obj
             end
-            
         end
         
         function delete(obj)
@@ -140,7 +133,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             delete(obj.SliderAxes)
             delete(obj.ButtonAxes)
         end
-        
     end
     
     methods (Access = public)
@@ -228,7 +220,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
         function set.ActiveRange(obj, newValue)
             obj.ActiveRange = newValue;
             obj.drawActiveRangeBar()
-            obj.drawRangeButtons() 
+            obj.drawRangeButtons()
         end
         
         function set.BackgroundColor(obj, newValue)
@@ -282,7 +274,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             obj.NumChannels = newValue;
             obj.onNumChannelsChanged()
-            
         end
         
         function set.NumPlanes(obj, newValue)
@@ -334,7 +325,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
 
                 obj.ButtonAxes = hAxes(1);
                 obj.SliderAxes = hAxes(2);
-                
             end
             
             hold(obj.SliderAxes, 'on')
@@ -354,7 +344,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
 
             obj.SliderAxes.Tag = 'Playback Widget (Slider Axes)';
             obj.ButtonAxes.Tag = 'Playback Widget (Button Axes)';
-            
         end
         
         function createWidgetComponents(obj)
@@ -381,7 +370,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             if obj.NumPlanes > 1
                 obj.onNumPlanesChanged()
             end
-            
         end
         
     % % % Methods for drawing the components
@@ -463,7 +451,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             setPointerBehavior(obj, obj.play)
             setPointerBehavior(obj, obj.incr)
             setPointerBehavior(obj, obj.decr)
-            
         end
         
         function drawSliderButton(obj)
@@ -504,12 +491,11 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             obj.knob.LineWidth = 1;
             obj.knob.ButtonDownFcn = @obj.knobPressed;
-            obj.knob.Clipping = 'off';     
+            obj.knob.Clipping = 'off';
             obj.knob.Tag = 'Button';
             
             setPointerBehavior(obj, obj.knob)
             obj.h.SliderButton = obj.knob;
-
         end
         
         function drawSliderBar(obj)
@@ -531,8 +517,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
             obj.h.scrollBar1.EdgeColor = 'none';
             obj.h.scrollBar1.Tag = 'Scrollbar';
             obj.h.scrollBar1.ButtonDownFcn = @obj.onPlaybackButtonPressed;
-            obj.h.scrollBar1.Clipping = 'off';     
-
+            obj.h.scrollBar1.Clipping = 'off';
         end
         
         function drawIndicatorBar(obj)
@@ -552,7 +537,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             obj.h.scrollBar2.FaceAlpha = 0.5;
             obj.h.scrollBar2.EdgeColor = 'none';
-            obj.h.scrollBar2.Clipping = 'off';     
+            obj.h.scrollBar2.Clipping = 'off';
             obj.h.scrollBar2.HitTest = 'off';
             obj.h.scrollBar2.PickableParts = 'none';
         end
@@ -573,7 +558,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
             obj.hActiveRangeBar.FaceAlpha = 0.5;
             obj.hActiveRangeBar.EdgeColor = 'none';
             obj.hActiveRangeBar.HitTest = 'off';
-            obj.hActiveRangeBar.PickableParts = 'none';            
+            obj.hActiveRangeBar.PickableParts = 'none';
             
             obj.h.ActiveRangeBar = obj.hActiveRangeBar;
         end
@@ -594,11 +579,8 @@ classdef PlaybackControl < uim.mixin.assignProperties
 
                     obj.hRangeButtons(i) = hBtn;
                 end
-
             end
-            
         end
-        
         
     % % % Methods for getting coordinates of components
         
@@ -630,7 +612,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             [X, Y] = uim.shape.rectangle([l, w], w/2);
             X = X + dx;
             Y = Y - w/2;
-            
         end
        
         function x = getSliderXposition(obj, sliderValue)
@@ -645,7 +626,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             % Offset x coordinates according to padding value of slider
             % within axes.
             x = x + obj.BarPadding;
-
         end
         
         function val = getSliderValue(obj, xPosition)
@@ -659,13 +639,10 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             val = xPosition / sliderLengthPix .* sliderLengthVal;
             val = val + obj.Minimum;
-
         end
-        
     end
     
     methods (Access = private) % User interaction callbacks
-        
         
     % % % Callbacks for playback buttons
 
@@ -725,8 +702,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
                     if newValue > obj.Maximum; newValue = obj.Maximum; end
                     
                     obj.ParentApp.changeFrame(struct('String', newValue), [], 'jumptoframe');
-            end 
-           
+            end
         end
         
     % % % Callbacks for mouseover effects
@@ -740,7 +716,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             iptSetPointerBehavior(h, pointerBehavior);
             iptPointerManager(ancestor(h, 'figure'));
-
         end
         
         function onMouseEntered(obj, h, varargin)
@@ -771,7 +746,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             if ~obj.knobDown
                 obj.hFigure.Pointer = 'arrow';
             end
-            
         end
         
     % % % Callbacks for mouseover effects on active range slider
@@ -785,7 +759,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             iptSetPointerBehavior(h, pointerBehavior);
             iptPointerManager(ancestor(h, 'figure'));
-
         end
 
         function onMouseEnteredRangeButton(obj, h, varargin)
@@ -813,7 +786,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             obj.WindowMouseReleaseListener = el;
             
             obj.knobDown = true;
-            
         end
         
         function knobMoving(obj, src, event)
@@ -831,9 +803,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
                 % is it better with event notification?
                 
                 obj.ParentApp.changeFrame(struct('Value', newValue), [], 'slider');
-                
             end
-            
         end
         
         function knobReleased(obj, src, event)
@@ -863,7 +833,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             obj.WindowMouseReleaseListener = el;
             
             obj.knobDown = true;
-            
         end
         
         function rangeButtonMoving(obj, hBtn)
@@ -882,9 +851,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
                 
                 set(hBtn, 'XData', xPoint)
                 obj.drawActiveRangeBar()
-                    
             end
-
         end
         
         function rangeButtonReleased(obj)
@@ -918,9 +885,7 @@ classdef PlaybackControl < uim.mixin.assignProperties
                 delete(obj.WindowMouseReleaseListener)
                 obj.WindowMouseReleaseListener = [];
             end
-            
         end
-        
     end
     
     methods (Access = private) % Property set callbacks
@@ -977,12 +942,11 @@ classdef PlaybackControl < uim.mixin.assignProperties
                 offset = offsetPx/axWidthPx;
             else
                 offset = offsetPx;
-            end   
+            end
 
             obj.SliderAxes.Position = newPos;
             
             obj.Position = newPos;
-            
         end
         
         function onLocationChanged(obj)
@@ -1000,7 +964,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             obj.ButtonAxes.Position(1:2) = obj.Position_(1:2);
             obj.SliderAxes.Position(1:2) = obj.Position_(1:2) + [dx, 0];
-
         end
         
         function onSizeChanged(obj)
@@ -1049,7 +1012,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             % Update component coordinates
             obj.redrawSliderComponents()
             obj.drawPlaybackButtons()
-            
         end
         
         function onNumChannelsChanged(obj)
@@ -1089,7 +1051,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             % Resize axes...
             obj.onSizeChanged()
-            
         end
         
         function onNumPlanesChanged(obj)
@@ -1125,9 +1086,6 @@ classdef PlaybackControl < uim.mixin.assignProperties
             
             % Resize axes...
             obj.onSizeChanged()
-            
         end
-        
     end
-
 end

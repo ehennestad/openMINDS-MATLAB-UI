@@ -5,15 +5,12 @@ function [pos, siz] = subdividePosition(posInit, lengthInit, sizeSpecs, spacing,
 
     if nargin < 5; alignment = 'left'; end  % 'left', 'center', 'right'
     if nargin < 4; spacing = 10; end
-    
-    
 
     % Count number of panels
     numDivisions = numel(sizeSpecs);
 
     % Remove panel spacing from the available length
     availableLength = lengthInit - spacing*(numDivisions-1);
-
 
     if isempty(sizeSpecs)
         lengthPix = ones(1, numDivisions) .* availableLength ./ numDivisions;
@@ -35,10 +32,9 @@ function [pos, siz] = subdividePosition(posInit, lengthInit, sizeSpecs, spacing,
         lengthPix(~isPixelSize) = sizeSpecs(~isPixelSize) .* remainingLength;
     end
 
-
-    % Get lengths for each panel and correct for rounding errors 
-    % by adding 1 pixel to each panel starting at first panel 
-    % and ending at the nth panel as needed to make sure panels 
+    % Get lengths for each panel and correct for rounding errors
+    % by adding 1 pixel to each panel starting at first panel
+    % and ending at the nth panel as needed to make sure panels
     % correctly fill the available length.
 
     lengthPix = floor( lengthPix ); % Round down
@@ -47,7 +43,7 @@ function [pos, siz] = subdividePosition(posInit, lengthInit, sizeSpecs, spacing,
     % Only add these corrections if components "almost" fill entire length
     if rem < numDivisions && any(~isPixelSize)
 
-        extra = zeros(1, numDivisions); 
+        extra = zeros(1, numDivisions);
         extra(1:rem) = 1; % Distribute remainders
 
         siz = lengthPix + extra; % Add remainders to lengths
@@ -77,5 +73,4 @@ function [pos, siz] = subdividePosition(posInit, lengthInit, sizeSpecs, spacing,
     if nargout == 1
         clear siz
     end
-    
 end

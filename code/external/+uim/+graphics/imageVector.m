@@ -6,7 +6,6 @@ classdef imageVector < handle
     % NB: setting position and alignment of image has some bugs. setting
     % alignment first and then position works, but not always the other
     % way around?
-
     
     properties
         
@@ -23,7 +22,6 @@ classdef imageVector < handle
         HitTest = 'on'
     end
     
-    
     properties (Dependent)
         Position
         Angle
@@ -31,24 +29,19 @@ classdef imageVector < handle
         Height
         Clipping
         Visible
-
     end
-    
     
     properties (SetAccess = private)
         boundingBox
     end
     
-    
-    properties (Access = private) 
+    properties (Access = private)
         numShapes
         hPolygon
         
         currentAngle = 0
         currentPosition = [0, 0]
     end
-    
-    
     
     methods
         
@@ -58,14 +51,12 @@ classdef imageVector < handle
             isa(hParent, 'matlab.graphics.primitive.Group'), ...
             'Invalid parent handle for imageVector');
 
-
             if isa(pathStr, 'char')
                 S = load(pathStr);
                 V = S.imageVector;
             elseif isa(pathStr, 'struct')
                 V = pathStr;
             end
-            
             
             numShapes = numel(V);
             
@@ -94,8 +85,6 @@ classdef imageVector < handle
             else
                 hParent.UserData.Handles = obj;
             end
-            
-          
         end
         
         function delete(obj)
@@ -105,9 +94,7 @@ classdef imageVector < handle
             end
             
             delete(obj)
-            
         end
-        
         
         function V = getVectorStruct(obj)
             polyShape = arrayfun(@(h) h.Shape, obj.hPolygon, 'uni', 0);
@@ -121,7 +108,6 @@ classdef imageVector < handle
             
             V = struct('Shape', polyShape, 'Color', colors); %#ok<NASGU>
         end
-        
         
         function rotate(obj, angle)
             
@@ -137,20 +123,16 @@ classdef imageVector < handle
                
             obj.currentAngle = obj.currentAngle + angle;
             obj.translate(offset);
-
         end
-       
         
         function fliplr(obj)
             
             warning('off', 'MATLAB:polyshape:repairedBySimplify')
             
-            
             origBBox = obj.boundingBox;
             
             dx = -origBBox(1);
             obj.translate([-dx, 0]);
-            
             
             for i = 1:obj.numShapes
                 obj.hPolygon(i).Shape.Vertices = [-1, 1] .* obj.hPolygon(i).Shape.Vertices;
@@ -162,9 +144,7 @@ classdef imageVector < handle
             obj.translate([dx, 0]);
            
             warning('on', 'MATLAB:polyshape:repairedBySimplify')
-            
         end
-        
         
         function flipud(obj)
             
@@ -178,7 +158,6 @@ classdef imageVector < handle
             
             obj.translate([0, -dy]);
             
-            
             for i = 1:obj.numShapes
                 obj.hPolygon(i).Shape.Vertices = [1, -1] .* obj.hPolygon(i).Shape.Vertices;
             end
@@ -191,9 +170,7 @@ classdef imageVector < handle
             warning('on', 'MATLAB:polyshape:repairedBySimplify')
             
             obj.currentPosition = currentPositionKeep;
-
         end
-           
         
         function translate(obj, shift)
 
@@ -202,7 +179,7 @@ classdef imageVector < handle
             % if strcmp(mVer(1:5), '9.4.0')
                 for i = 1:obj.numShapes
                     obj.hPolygon(i).Shape.Vertices = obj.hPolygon(i).Shape.Vertices + shift;
-                end            
+                end
 %             else
 %                 for i = 1:obj.numShapes
 %                     obj.hPolygon(i).Shape = translate(obj.hPolygon(i).Shape, shift);
@@ -210,9 +187,7 @@ classdef imageVector < handle
 %             end
             
             obj.currentPosition =  obj.currentPosition + shift;
-            
         end
-        
         
         function scale(obj, scaleFactor)
             
@@ -223,16 +198,10 @@ classdef imageVector < handle
             for i = 1:obj.numShapes
                 obj.hPolygon(i).Shape = scale(obj.hPolygon(i).Shape, scaleFactor);
             end
-            
         end
-       
        
         function place(obj, position, varargin)
-           
-           
-           
         end
-        
         
         function reposition(obj, newAlignment)
             
@@ -256,10 +225,8 @@ classdef imageVector < handle
             end
             
             obj.translate([dx, dy]);
-            
         end
     end
-    
     
     methods (Access = private) % Callbacks for property changes
         
@@ -274,9 +241,7 @@ classdef imageVector < handle
                 obj.hPolygon(i).FaceAlpha = value;
             end
         end
-        
     end
-    
     
     methods % set/get
         
@@ -285,7 +250,6 @@ classdef imageVector < handle
             for i = 1:numel(obj.hPolygon)
                 obj.hPolygon(i).Clipping = newValue;
             end
-            
         end
         
         function set.Visible(obj, newValue)
@@ -293,9 +257,7 @@ classdef imageVector < handle
             for i = 1:numel(obj.hPolygon)
                 obj.hPolygon(i).Visible = newValue;
             end
-                        
         end
-        
         
         function set.HorizontalAlignment(obj, value)
             % Todo validatestring ('left', 'center', 'right');
@@ -305,10 +267,8 @@ classdef imageVector < handle
             if ~strcmp(oldValue, value)
                 obj.reposition(value)
                 obj.HorizontalAlignment = value;
-
             end
         end
-        
         
         function set.VerticalAlignment(obj, value)
             % Todo validatestring ('top', 'middle', 'bottom');
@@ -321,7 +281,6 @@ classdef imageVector < handle
                 obj.VerticalAlignment = value;
             end
         end
-        
         
         function set.Width(obj, width)
             
@@ -337,9 +296,7 @@ classdef imageVector < handle
             scaleFactor = [scaleFactorX, scaleFactorY];
            
             obj.scale(scaleFactor)
-           
         end
-        
         
         function width = get.Width(obj)
             bbox = obj.boundingBox;
@@ -348,9 +305,7 @@ classdef imageVector < handle
 %             shapes = cat(1, [obj.hPolygon.Shape] );
 %             coords = cat(1, shapes.Vertices);
 %             width = range(coords(:, 1));
-            
         end
-       
         
         function set.Height(obj, height)
            
@@ -365,9 +320,7 @@ classdef imageVector < handle
             
             scaleFactor = [scaleFactorX, scaleFactorY];
             obj.scale(scaleFactor)
-           
         end
-
         
         function height = get.Height(obj)
             bbox = obj.boundingBox;
@@ -376,9 +329,7 @@ classdef imageVector < handle
 %             shapes = cat(1, [obj.hPolygon.Shape] );
 %             coords = cat(1, shapes.Vertices);
 %             height = range(coords(:, 2));
-            
         end
-        
         
         function set.Position(obj, value)
             
@@ -404,31 +355,25 @@ classdef imageVector < handle
                     currentPosition(1) = bbox(1)+bbox(3)/2;
             end
             
-            
             shift = value - currentPosition;
             obj.translate(shift);
             
             obj.currentPosition = obj.boundingBox(1:2) + obj.boundingBox(3:4)/2;
-            
         end
-
         
         function position = get.Position(obj)
             position = obj.currentPosition;
         end
-        
         
         function set.Color(obj, newValue)
             obj.onColorChanged(newValue)
             obj.Color = newValue;
         end
         
-        
         function set.Angle(obj, value)
             
             deltaAngle = value - obj.currentAngle;
             obj.rotate(deltaAngle)
-            
         end
         
         function set.Alpha(obj, newValue)
@@ -436,12 +381,10 @@ classdef imageVector < handle
             obj.Alpha = newValue;
         end
         
-        
         function set.PickableParts(obj, newValue)
             set(obj.hPolygon, 'PickableParts', newValue)
             obj.PickableParts = newValue;
         end
-        
         
         function set.HitTest(obj, newValue)
             set(obj.hPolygon, 'HitTest', newValue)
@@ -456,12 +399,6 @@ classdef imageVector < handle
             coordinateRange = max(coords) - min(coords);
             
             bbox = [min(coords), coordinateRange];
-
         end
-
-        
     end
-    
-    
-    
 end

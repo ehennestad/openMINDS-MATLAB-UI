@@ -1,6 +1,5 @@
 classdef IntroPage < wizard.abstract.Page
 
-
     properties (Constant)
         Name = "Intro"
         Title = "Welcome"
@@ -10,7 +9,6 @@ classdef IntroPage < wizard.abstract.Page
             "  1. Select research product\n" + ...
             "  2. Initialize metadata collection\n" + ...
             "  3. Add metadata" ]
-
     end
 
     properties (Access = private) % App components
@@ -56,13 +54,10 @@ classdef IntroPage < wizard.abstract.Page
             obj.StartButton.FontColor = "white";
             obj.StartButton.FontSize = 16;
             obj.StartButton.Text = "Get Started";
-
         end
 
         function changePage(obj)
             obj.ParentApp.changeWizardPage([], 2)
         end
     end
-
-
 end

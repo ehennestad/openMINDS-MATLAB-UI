@@ -17,7 +17,5 @@ classdef tableLightNansen < uim.style.tableTheme
         BorderWidth = 0
         SortArrowForeground = [240,171,15] ./ 255
         SortOrderForeground = [240,171,15] ./ 255
-        
     end
-
 end

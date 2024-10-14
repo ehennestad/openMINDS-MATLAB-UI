@@ -18,5 +18,4 @@ function pixelCoordinates = du2px(ax, dataUnits, recursive)
     
     pixelCoordinates = axPos(1:2) + ...
         (dataUnits - axLim(1, 1:2)) .* axPos(3:4) ./ axRange;
-
 end

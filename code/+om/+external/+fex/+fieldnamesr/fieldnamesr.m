@@ -63,7 +63,6 @@ else
     end
 end
 
-
 %Return fieldnames of input structure, prefix these with "S.".
 NAMES = cellfun(@(x) strcat('S.',x),fieldnames(S),'UniformOutput',false) ;
 
@@ -91,7 +90,7 @@ while k ~= 0
     for i = 1:length(NAMES)
         %If the current fieldname is a structure, find its child
         %fieldnames, add to NAMES if not at specified depth (g = 0). Add to
-        %fndstruct (list of structures). 
+        %fndstruct (list of structures).
         if isstruct(eval(NAMES{i})) == 1
             if g ~= 1
                 fndtemp2 = fieldnames(eval(NAMES{i})) ;
@@ -158,7 +157,7 @@ if struct == 1
         for i = 1:length(fndstruct)
             if isempty(cell2mat(strfind(fndstruct,strcat(fndstruct{i},'.')))) == 1
                 fndstruct2(end+1,1) = fndstruct(i) ;
-            end 
+            end
         end
         fndstruct = fndstruct2 ;
     end

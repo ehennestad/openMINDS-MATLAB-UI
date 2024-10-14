@@ -2849,7 +2849,7 @@ function [handles,levels,parentIdx,listing] = findjobj(container,varargin) %#ok<
                             end
 
                             % ...and now run it...
-                            %pause(0.1); 
+                            %pause(0.1);
                             drawnow;
                             dummy = which('uiinspect');  %#ok used only to load into memory
                             uiinspect(object);

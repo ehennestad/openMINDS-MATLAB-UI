@@ -1,7 +1,7 @@
 function iconFilePath = getIconPath(name)
 %getLogoPath - Get filepath for an icon resource
     arguments
-        name (1,1) string 
+        name (1,1) string
     end
     rootPath = fullfile(om.internal.rootpath, 'apps');
     iconFolderPath = fullfile(rootPath, 'resources', 'icons');

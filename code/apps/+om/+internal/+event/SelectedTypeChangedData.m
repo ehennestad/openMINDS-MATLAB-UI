@@ -14,4 +14,3 @@ classdef SelectedTypeChangedData < event.EventData
         end
     end
 end
-

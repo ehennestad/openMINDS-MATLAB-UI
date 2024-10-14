@@ -4,7 +4,6 @@ classdef ToolTip < uim.handle
     % TODO:
     %   [ ] Add style configuration...
     
-    
     properties
         BackgroundColor
         ForegroundColor
@@ -16,7 +15,6 @@ classdef ToolTip < uim.handle
         Style
     end
     
-    
     properties (Access = private)
         Axes
         TooltipHandle
@@ -26,7 +24,6 @@ classdef ToolTip < uim.handle
         SiblingCreatedListener % Listener for creation of new objects in the parent axes.
         ParentDestroyedListener
     end
-    
     
     methods
         
@@ -42,15 +39,11 @@ classdef ToolTip < uim.handle
             deleteFunc = @(src,evt) delete(obj);
             el = addlistener(obj.Axes, 'ObjectBeingDestroyed', deleteFunc);
             obj.ParentDestroyedListener = el;
-            
         end
         
         function delete(obj)
-            
         end
-        
     end
-    
     
     methods
         
@@ -82,7 +75,6 @@ classdef ToolTip < uim.handle
                 obj.TooltipHandle.Visible = 'off';
             end
         end
-        
     end
     
     methods (Access = private)
@@ -103,21 +95,18 @@ classdef ToolTip < uim.handle
             obj.TooltipHandle.Visible = 'off';
             obj.TooltipHandle.HitTest = 'off';
             obj.TooltipHandle.PickableParts = 'none';
-            
         end
         
         function ensureAlwaysOnTop(obj)
         %ensureAlwaysOnTop Create event callback to always keep tooltip on top
         
-            onChildAddedFunc = @(s,e) obj.bringTooltipToFront; 
+            onChildAddedFunc = @(s,e) obj.bringTooltipToFront;
             el = addlistener(obj.Axes, 'ChildAdded', onChildAddedFunc);
             obj.SiblingCreatedListener = el;
-            
         end
         
         function bringTooltipToFront(obj)
             uistack(obj.TooltipHandle, 'top')
         end
     end
-    
 end

@@ -8,7 +8,6 @@ classdef MetadataWizard < wizard.WizardApp
 % necessary for a dataset. It has subfields that represents specific
 % models, and these models are assigned to pages.
 
-
     properties (SetAccess = private)
         AppData = struct % Todo
         Preferences  % Todo
@@ -52,7 +51,7 @@ classdef MetadataWizard < wizard.WizardApp
             end
             
             if exist('wt.FileSelector', 'class') ~= 8 % Install Widgets Toolbox
-                om.internal.setup.installFexPackage("78895307-cc36-4970-8b66-0697da8f9352", "") 
+                om.internal.setup.installFexPackage("78895307-cc36-4970-8b66-0697da8f9352", "")
             end
 
             if ~ismissing(datasetFolder)
@@ -146,7 +145,7 @@ classdef MetadataWizard < wizard.WizardApp
         end
     end
 
-    methods (Access = private) 
+    methods (Access = private)
         function promptSaveCurrentChanges(app)
             % Todo: Check if there are changes...
             return
@@ -191,5 +190,4 @@ classdef MetadataWizard < wizard.WizardApp
             app.Preferences.save(class(app), fullfile('ndi', 'dataset_wizard'));
         end %savePreferences
     end
-
 end

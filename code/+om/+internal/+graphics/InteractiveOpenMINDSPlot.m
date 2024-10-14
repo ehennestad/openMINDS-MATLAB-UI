@@ -24,7 +24,7 @@ classdef InteractiveOpenMINDSPlot < handle
         PointerManager
     end
 
-    methods 
+    methods
         function obj = InteractiveOpenMINDSPlot(graphObj, hAxes, e)
             
             obj.DirectedGraph = graphObj;
@@ -49,12 +49,12 @@ classdef InteractiveOpenMINDSPlot < handle
             addlistener(hFigure, 'WindowKeyPress', @obj.keyPress);
             
             %obj.Axes.YDir = 'reverse';
-        end 
+        end
         
         function updateGraph(obj, graphObj)
             obj.DirectedGraph = graphObj;
 
-            delete( obj.GraphPlot )        
+            delete( obj.GraphPlot )
             hold(obj.Axes, 'off')
 
             %obj.GraphPlot = plot(obj.Axes, graphObj, 'Layout', 'force');
@@ -80,14 +80,10 @@ classdef InteractiveOpenMINDSPlot < handle
             
             obj.NodeTransporter = GraphNodeTransporter(obj.Axes);
             obj.GraphPlot.ButtonDownFcn = @(s,e) obj.NodeTransporter.startDrag(s,e);
-
         end
 
         function keyPress(obj, src, event)
             wasCaptured = obj.PointerManager.onKeyPress([], event);
         end
-
-
     end
-
 end

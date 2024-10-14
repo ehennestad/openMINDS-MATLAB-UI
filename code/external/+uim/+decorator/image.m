@@ -1,5 +1,4 @@
 classdef image < uim.abstract.Component
-
     
     properties (Constant)
         Type = 'image'
@@ -9,7 +8,7 @@ classdef image < uim.abstract.Component
         Image = []
         Alpha = []
         
-        LockAspectRatio = true; 
+        LockAspectRatio = true;
         
         ColorMap = []
     end
@@ -21,7 +20,6 @@ classdef image < uim.abstract.Component
     properties (Transient, Dependent)
         AspectRatio
     end
-
     
     methods
         function obj = image(hParent, varargin)
@@ -37,8 +35,6 @@ classdef image < uim.abstract.Component
             obj.IsConstructed = true;
             
             obj.plotImage()
-            
-        
         end
         
         function delete(obj)
@@ -46,9 +42,7 @@ classdef image < uim.abstract.Component
                 delete(obj.hImage)
             end
         end
-        
     end
-    
     
     methods % Set/get
         function set.Image(obj, newValue)
@@ -70,7 +64,6 @@ classdef image < uim.abstract.Component
             obj.onAlphaSet()
         end
         
-        
         function ar = get.AspectRatio(obj)
             imSize = size(obj.Image);
             ar = imSize(1) / imSize(2);
@@ -89,9 +82,7 @@ classdef image < uim.abstract.Component
             obj.hImage.XData = obj.hImage.XData + shift(1);
             obj.hImage.YData = obj.hImage.YData + shift(2);
         end
-        
     end
-    
     
     methods (Hidden, Access = protected)
 
@@ -108,7 +99,6 @@ classdef image < uim.abstract.Component
             if isempty(obj.hImage); return; end
 
             obj.hImage.AlphaData = obj.Alpha;
-            
         end
     end
     
@@ -129,7 +119,6 @@ classdef image < uim.abstract.Component
             obj.hImage.PickableParts = 'none';
             
             obj.setImagePosition()
-
         end
         
         function setImagePosition(obj)
@@ -149,11 +138,6 @@ classdef image < uim.abstract.Component
             
             obj.hImage.XData = xPos;
             obj.hImage.YData = yPos;
-            
         end
-        
-        
-        
     end
-    
 end

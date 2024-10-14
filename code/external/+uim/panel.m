@@ -1,6 +1,6 @@
 classdef panel < uim.abstract.virtualContainer & uim.mixin.assignProperties
     
-    properties 
+    properties
         hPanel = []
     end
     
@@ -16,7 +16,6 @@ classdef panel < uim.abstract.virtualContainer & uim.mixin.assignProperties
             
             obj.Parent = hParent;
             obj.Canvas = hParent;
-
             
             obj.parseInputs(varargin{:})
 
@@ -25,7 +24,6 @@ classdef panel < uim.abstract.virtualContainer & uim.mixin.assignProperties
             obj.hPanel.Units = 'pixel';
             
             obj.IsConstructed = true;
-            
 
             % Todo: This is not perfect. Sometimes size depends on
             % location...
@@ -39,13 +37,10 @@ classdef panel < uim.abstract.virtualContainer & uim.mixin.assignProperties
             obj.updateLocation('auto')
             
             obj.onStyleChanged()
-
         end
         
         function delete(obj)
-            
         end
-        
     end
     
     methods
@@ -80,5 +75,4 @@ classdef panel < uim.abstract.virtualContainer & uim.mixin.assignProperties
             hContainer = obj.hPanel;
         end
     end
-    
 end

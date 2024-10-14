@@ -12,7 +12,6 @@ function varargout = getIcon(iconName, outputFormat)
         case 'Pause'
             xData = [0, 2/3;  1/3, 1; 1/3, 1;  0, 2/3];
             yData = [1,1; 1,1; -1,-1; -1,-1] .* 0.7;
-                       
     end
 
     switch outputFormat
@@ -32,5 +31,4 @@ function varargout = getIcon(iconName, outputFormat)
             
             varargout = {S};
     end
-    
 end

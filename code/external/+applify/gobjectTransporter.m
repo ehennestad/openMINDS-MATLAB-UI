@@ -1,6 +1,6 @@
 classdef gobjectTransporter < uim.handle
     
-    % TODO: 
+    % TODO:
     %
     % [ ] Rename to InteractiveGraphObject 
     % [ ] Work on style changes. Keep original style in objects userdata
@@ -42,7 +42,6 @@ classdef gobjectTransporter < uim.handle
             end
             
             delete(obj)
-            
         end
 
         function startDrag(obj, src, event)
@@ -64,14 +63,13 @@ classdef gobjectTransporter < uim.handle
             obj.previousMousePointAxes = [x, y];
             
             obj.currentHandle.FaceAlpha = 0.6;
-
         end
 
         function moveObject(obj)
-        %moveObject Execute when mouse is dragging a selected object    
+        %moveObject Execute when mouse is dragging a selected object
 
             % Get current coordinates
-            newMousePointAx = obj.hAxes.CurrentPoint(1, 1:2);            
+            newMousePointAx = obj.hAxes.CurrentPoint(1, 1:2);
             shift = newMousePointAx - obj.previousMousePointAxes;
 
             h = obj.currentHandle;
@@ -92,11 +90,9 @@ classdef gobjectTransporter < uim.handle
                         h.XData = h.XData + shift(1);
                         h.YData = h.YData + shift(2);
                 end
-
             end
 
             obj.previousMousePointAxes = newMousePointAx;
-
         end
 
         function stopDrag(obj)
@@ -104,7 +100,6 @@ classdef gobjectTransporter < uim.handle
 
             obj.isMouseDown = false;
             obj.resetInteractiveFigureListeners()
-            
             
             if ~any(ismember(obj.mouseOnHandle, obj.currentHandle))
                 obj.currentHandle.LineWidth = 1;
@@ -122,7 +117,6 @@ classdef gobjectTransporter < uim.handle
             delete(obj.WindowMouseReleaseListener)
             obj.WindowMouseMotionListener = [];
             obj.WindowMouseReleaseListener = [];
-
         end
 
         function setPointerBehavior(obj, h)
@@ -167,12 +161,7 @@ classdef gobjectTransporter < uim.handle
             
             throw = ismember(obj.mouseOnHandle, hSource);
             obj.mouseOnHandle(throw) = [];
-
-            
         end
-        
-        
     end
-    
 end
         

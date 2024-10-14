@@ -77,4 +77,3 @@ classdef ProductPage < wizard.abstract.Page
         end
     end
 end
-

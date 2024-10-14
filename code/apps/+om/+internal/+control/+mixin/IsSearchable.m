@@ -11,11 +11,6 @@ classdef IsSearchable < handle
     methods (Access = protected)
 
         function filterDropdown(comp, searchString)
-
-
         end
-
     end
-    
-    
 end

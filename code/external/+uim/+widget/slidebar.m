@@ -41,15 +41,12 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
         
         Style = 'slidebar'
         Tag = ''
-        
     end
-    
     
     properties (Dependent = true)
         Step
         FontSize
     end
-    
     
     properties (Access = private)
         hAxes
@@ -65,7 +62,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
         WindowMouseMotionListener
         IsConstructed = false
     end
-    
     
     methods % Structor
         
@@ -89,7 +85,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 delete(obj.hTicks)
             end
         end
-        
     end
     
     methods (Access = private) % Initialization
@@ -109,7 +104,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             for i = 1:numel(propNames)
                 obj.(propNames{i}) = props.(propNames{i});
             end
-            
         end
         
         function createSlider(obj)
@@ -123,7 +117,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             else
                 obj.hAxes = obj.Parent;
             end
-
             
             % Slider and especially the slider track is thin, and its easy
             % to miss when pressing it. Patch background so that
@@ -133,8 +126,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             obj.hBackground.FaceAlpha = 0; % Makes it hittable
             obj.hBackground.EdgeColor = 'none';
             obj.hBackground.PickableParts = 'all';
-            
-
             
             % Start plotting ticks, so that they are behind everything else
             if obj.TickLength ~= 0
@@ -176,7 +167,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             obj.hText.FontSize = obj.FontSize;
             obj.updateValuetipString()
             
-            
             % Set visibility of subcomponents.
             obj.hBar.Visible = obj.Visible;
             obj.hSlider.Visible = obj.Visible;
@@ -188,7 +178,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 addlistener(obj.hAxes, 'Position', 'PostSet', ...
                     @(s,e) obj.onPositionChanged);
             end
-            
         end
         
         function createAxes(obj)
@@ -226,9 +215,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             yCoords = mat2cell(yCoords', ones(numTicks, 1));
             set(obj.hTicks, {'XData'}, xCoords, {'YData'}, yCoords)
         end
-        
     end
-    
     
     methods (Access = private) % Internal updating
         
@@ -254,7 +241,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 axPosition = getpixelposition(obj.hAxes);
 
                 xrangepx = axPosition(3);
-                yrangepx = axPosition(4);            
+                yrangepx = axPosition(4);
 
                 % Get axes size in data units.
                 xrangedu = range(obj.hAxes.XLim);
@@ -288,14 +275,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 xCoords = xCoords + obj.Position(1) + obj.Padding(1) + ...
                     (obj.Position(3)-sum(obj.Padding([1,3]))) .* (obj.Value - obj.Min) ./ (obj.Max - obj.Min);
                 yCoords = yCoords + obj.Position(2) + obj.Position(4)/2;
-                
             end
-
-
-
-
-            
-            
         end
         
         function [xCoords, yCoords] = getBarCoordinates(obj)
@@ -311,8 +291,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 coords = uim.utility.px2du(obj.hAxes, [edgeX', edgeY']);
                 xCoords = coords(:,1)';
                 yCoords = coords(:,2)';
-                
-                
                 
             else
                 xCoords = [obj.Position(1)+obj.Padding(1); sum(obj.Position([1,3]))-obj.Padding(3)];
@@ -388,7 +366,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             end
             
             obj.hText.String = tooltipStr;
-            
         end
         
         function onPositionChanged(obj)
@@ -448,9 +425,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                 obj.hBar.FaceColor = newColor;
             end
         end
-        
     end
-    
     
     methods % Set/Get
     
@@ -462,9 +437,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             end
             
             obj.onPositionChanged();
-            
         end
-
         
         function set.Value(obj, newValue)
             
@@ -478,28 +451,24 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                     obj.updateValuetipString()
                     %newValue
                 end
-            
             end
         end
-        
         
         function tf = isValueInRange(obj, newValue)
             
             tf = newValue >= obj.Min & newValue <= obj.Max;
-            
         end
-        
         
 %         function set.Range(obj, newRange)
 %             assert(newRange(1) < newRange(2), 'Slider lower limit must be smaller than slider upper limit')
 %             obj.Min = newRange(1);
 %             obj.Max = newRange(2);
 %         end
-%         
+%
 %         function range = get.Range(obj)
 %             range = [obj.Min, obj.Max];
 %         end
-%         
+%
         
         function set.Min(obj, newMin)
             assert(newMin < obj.Max, 'Slider lower limit must be smaller than slider upper limit')
@@ -508,9 +477,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             if ~isempty(obj.hAxes) && obj.hasAxes
                 obj.onPositionChanged();
             end
-            
         end
-        
 
         function set.Max(obj, newMax)
             assert(newMax > obj.Min, 'Slider upper limit must be larger than slider lower limit')
@@ -519,14 +486,11 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             if ~isempty(obj.hAxes) && obj.hasAxes
                 obj.onPositionChanged();
             end
-            
         end
-        
         
 %         function set.Step(obj, newValue)
 %             obj.Step = newValue;
 %         end
-        
 
         function stepSize = get.Step(obj)
             stepSize = (obj.Max-obj.Min) / obj.nTicks;
@@ -537,7 +501,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             assert(isa(newValue, 'numeric') || isa(newValue, 'char'))
             obj.TextColor = newValue;
             obj.onStyleChanged()
-
         end
         
         function set.Visible(obj, newValue)
@@ -566,14 +529,12 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
 % %                 visible = obj.hBar.Visible;
 % %             end
 % %         end
-        
 
         function set.KnobEdgeColorInactive(obj, newColor)
             if ~isempty(obj.hSlider)
                 obj.hSlider.EdgeColor = newColor;
             end
         end
-        
         
         function set.KnobFaceColorInactive(obj, newColor)
             if ~isempty(obj.hSlider)
@@ -591,7 +552,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             obj.TickLength = newValue;
             obj.onTickLengthSet()
         end
-        
     end
     
     methods % Slider Interaction Callbaks
@@ -611,14 +571,12 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             if obj.ShowLabel
                 obj.hText.Visible = 'on';
             end
-            
         end
-        
         
         function moveSlider(obj, ~, ~)
             
             % NOTE: The CurrentPoint property only updates on mouse
-            % motion if the figure has a value assigned to its 
+            % motion if the figure has a value assigned to its
             % WindowButtonMotionFcn property. This is super weird! And
             % pontially really fucking confusing if the sliderbar is
             % created in a figure without a WindowButtonMotionFcn
@@ -637,9 +595,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             if ~isequal(newValue, obj.Value)
                 obj.valueChangedCallback(newValue)
             end
-            
         end
-        
         
         function deactivateSlider(obj)
 
@@ -654,9 +610,7 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
             if obj.ShowLabel
                 obj.hText.Visible = 'off';
             end
-            
         end
-           
         
         function valueChangedCallback(obj, newValue)
             
@@ -671,7 +625,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                     obj.Callback(obj, newValue)
                 end
             end
-            
         end
         
         function onValueChanging(obj, newValue)
@@ -685,9 +638,6 @@ classdef slidebar < handle % & uiw.mixin.AssignPVPairs
                     obj.Callback(obj, newValue)
                 end
             end
-            
         end
-        
     end
-
 end

@@ -5,12 +5,11 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
 %   to update when being resized because the code is using axes and
 %   graphical objects for the components.
 
-    properties 
+    properties
         TabLocation = 'top' % Not priority.
         SelectedTab = []
         SelectionChangedFcn = []
     end
-    
     
     properties (Access = private, Hidden, Transient)
         % BackgroundDecoration
@@ -22,13 +21,11 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
     end
     
     properties
-        
     end
     
     events
         SelectionChanged
     end
-    
     
     methods %structor
         
@@ -58,12 +55,8 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             obj.onStyleChanged()
             
             obj.createComponents()
-            
-            
         end
-        
     end
-    
     
     methods (Access = private) % Component creation
         
@@ -73,8 +66,6 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             
             % Create toolbar / tabbar
             obj.createTabButtonBar()
-
-            
         end
         
         function createTabButtonBar(obj)
@@ -104,7 +95,6 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             hToolbar.CornerRadius = 4;
             
             obj.TabToolBar = hToolbar;
-            
         end
         
         function createTabButton(obj, hTab)
@@ -116,7 +106,7 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
                 'Padding', [5, 0, 5, 0], ...
                 'HorizontalTextAlignment', 'center', ...
                 'AutoWrapText', true, ...
-                'ButtonDownFcn', @obj.onTabButtonPressed }; 
+                'ButtonDownFcn', @obj.onTabButtonPressed };
 
             numButtons = numel(obj.Children);
             iButton = numButtons + 1; % number for this button
@@ -129,7 +119,7 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
                 
                 % Separators should be invisible when right next to a
                 % selected tab button
-                if iButton == 2 
+                if iButton == 2
                     hSep.Visible = 'off';
                 end
             end
@@ -145,11 +135,8 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
                 obj.SelectedTab = 1;
                 obj.TabButtonGroup(1).Value = true;
             end
-
         end
-        
     end
-    
     
     methods (Hidden)
         
@@ -169,7 +156,6 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             else
                 obj.Children = hTab;
             end
-            
         end
         
         function updateTabTitle(obj, hTab)
@@ -177,12 +163,10 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             
             hBtn = obj.TabButtonGroup(tabNum);
             hBtn.String = hTab.Title;
-
         end
         
         % Tab selected
         function onTabSelected(obj, src, evt)
-            
         end
     end
     
@@ -218,7 +202,6 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
                 
                 delete(obj.main.tmpPanel)
             end
-
         end
         
         function onTabButtonPressed(obj, src, evt)
@@ -240,9 +223,9 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
 
             % Set panel visibility todo: make a separate method.
             if ~isequal(nextTab, obj.SelectedTab)
-                obj.Children(nextTab).Panel.Visible = 'on'; 
-                %obj.TabPanels(nextTab).Visible = 'on'; 
-                obj.Children(obj.SelectedTab).Panel.Visible = 'off'; 
+                obj.Children(nextTab).Panel.Visible = 'on';
+                %obj.TabPanels(nextTab).Visible = 'on';
+                obj.Children(obj.SelectedTab).Panel.Visible = 'off';
                 %obj.TabPanels(obj.SelectedTab).Visible = 'off';
                 
                 % Update separator visibility
@@ -259,16 +242,12 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
                     evtData = uim.event.TabSelectionChangedEvent(args{:});
                     obj.SelectionChangedFcn(obj, evtData)
                 end
-                
             end
             
             % Update currently selectedTab property
             obj.SelectedTab = nextTab;
-            
         end
-        
     end
-    
     
     methods (Static, Access = protected)
             
@@ -282,7 +261,7 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
 
 % %             S.HorizontalAlignment = 'left';
 % %             S.VerticalAlignment = 'bottom';
-% % 
+% %
 % %             S.Padding = [10, 3, 10, 3];
 
             S.MinimumSize = [100, 100];
@@ -292,12 +271,6 @@ classdef tabgroup < uim.abstract.virtualContainer & uim.mixin.assignProperties
             S.CornerRadius = 10;
             S.BackgroundColor = [0.3922    0.4000    0.4078];
             S.BackgroundAlpha = 1;
-            
         end
     end
-    
-    
-    
-    
-    
 end

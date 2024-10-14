@@ -2,7 +2,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
 %StructAdapter Facility for converting objects to struct
 %
 %   Inherit from this class to provide your class with methods for
-%   converting an object to and from a struct. The options properties of 
+%   converting an object to and from a struct. The options properties of
 %   this class can be used to determine what properties to include based on
 %   the property attributes.
 %
@@ -87,7 +87,6 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             S = table2struct(T);
             obj.fromStruct(S)
         end
-
     end
     
     % Set/get methods
@@ -106,7 +105,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
         function set.IncludeDependent(obj, newValue)
             obj.IncludeDependent = newValue;
             obj.updatePropertyNames()
-        end       
+        end
 
         function set.IncludePrivate(obj, newValue)
             obj.IncludePrivate = newValue;
@@ -120,14 +119,13 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
                 propertyNames = obj.PropertyNames_;
             end
         end
-
     end
     
     % Methods for updating list of property names
     methods (Access = private)
         
         function propertyNames = assignPropertyNames(obj)
-        %assignPropertyNames Assign (initialize) the list of property names    
+        %assignPropertyNames Assign (initialize) the list of property names
             obj.PropertyNames_ = cell({''}); % Set to non-empty
             obj.updatePropertyNames()
             
@@ -137,7 +135,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
         end
 
         function updatePropertyNames(obj)
-        %updatePropertyNames Update the list of cached property names    
+        %updatePropertyNames Update the list of cached property names
             if isempty(obj.PropertyNames_); return; end
             
             mc = metaclass(obj);
@@ -146,7 +144,7 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             % Get all property names
             propertyNames = {classPropertyList.Name};
 
-            % Exclude all properties that are members of the StructAdapter 
+            % Exclude all properties that are members of the StructAdapter
             % class.
             [propertyNames, keep] = setdiff(propertyNames, obj.PROPERTY_NAMES_SELF);
             classPropertyList = classPropertyList(keep);
@@ -164,25 +162,23 @@ classdef StructAdapter < handle & matlab.mixin.SetGet
             keep = true(1, numel(propertyNames));
 
             if ~obj.IncludeHidden
-                keep(isHidden) = false; 
+                keep(isHidden) = false;
             end
 
             if ~obj.IncludeTransient
-                keep(isTransient) = false; 
+                keep(isTransient) = false;
             end
 
             if ~obj.IncludeDependent
-                keep(isDependent) = false; 
+                keep(isDependent) = false;
             end
 
             if ~obj.IncludePrivate
-                keep(isPrivate) = false; 
+                keep(isPrivate) = false;
             end
 
             obj.PropertyNames_ = propertyNames(keep);
-
         end
-
     end
     
     methods (Static, Access = private)

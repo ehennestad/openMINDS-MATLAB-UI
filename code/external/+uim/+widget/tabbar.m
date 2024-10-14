@@ -1,9 +1,7 @@
 classdef tabbar < uim.widget.toolbar
-   
     
     % Todo: Create customized versions for addButton and addSeparator
     % methods
-    
     
     % Automatically fit button size to extent of text.
     
@@ -11,12 +9,9 @@ classdef tabbar < uim.widget.toolbar
         
         function obj = tabbar(hParent, varargin)
             obj@uim.widget.toolbar(hParent, varargin{:})
-
         end
         
-        
         function addSeparator(obj)
-            
             
             separatorPosition = obj.NextButtonPosition;
             % todo: switch orientation...
@@ -27,7 +22,7 @@ classdef tabbar < uim.widget.toolbar
 
             varargin = {'Position', separatorPosition, ...
                         'Size', separatorPosition(3:4), ...
-                        'Color', ones(1,3)*0.9, ... 
+                        'Color', ones(1,3)*0.9, ...
                         'LineWidth', 0.5};
                     
             hSep = uim.control.toolbarSeparator(obj, varargin{:});
@@ -46,15 +41,6 @@ classdef tabbar < uim.widget.toolbar
             
             obj.adjustButtonPositions()
             obj.setNextButtonPosition()
-            
         end
-        
-        
-        
     end
-    
-    
-    
-    
-    
 end

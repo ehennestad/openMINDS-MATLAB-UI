@@ -38,7 +38,6 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
         ButtonSizeChangedListener event.listener
     end
     
-    
     methods % Structors
                     
         function obj = wtoolbar(hParent, varargin)
@@ -48,18 +47,16 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
 %             el = listener(hParent, 'SizeChanged', ...
 %                 @obj.onParentContainerSizeChanged);
 %             obj.ParentContainerSizeChangedListener = el;
-%             
+%
 %             obj.Parent = hParent;
 %             obj.Canvas = hParent;
 %             obj.hAxes = obj.Canvas.Axes;
-            
             
             obj.parseInputs(varargin{:})
 
             obj.createBackground()
 
             obj.IsConstructed = true;
-
             
             % Todo: This is not perfect. Sometimes size depends on
             % location...
@@ -74,9 +71,7 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             
             obj.onStyleChanged()
             
-            
             obj.setNextButtonPosition()
-            
         end
 
         function delete(obj)
@@ -84,14 +79,11 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             delete(obj.hButtons)
             delete(obj.ButtonSizeChangedListener)
         end
-        
-
     end
     
     methods % Methods to add toolbar objects
                 
         function hSep = addSeparator(obj, varargin)
-            
             
             separatorPosition = obj.NextButtonPosition;
             % todo: switch orientation...
@@ -117,12 +109,10 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             obj.adjustButtonPositions()
             obj.setNextButtonPosition()
             
-            if ~nargout 
+            if ~nargout
                 clear hSep
             end
-            
         end
-        
         
         function hButton = addButton(obj, varargin)
 
@@ -149,33 +139,27 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             obj.setNextButtonPosition()
             
             if ~nargout
-                clear hButton 
+                clear hButton
             end
-            
         end
-        
         
         function h = getHandle(obj, tagValue)
             
             tags = {obj.hButtons.Tag};
             ind = contains(tags, tagValue);
             h = obj.hButtons(ind);
-            
         end
-        
         
         function relocate(obj, shift)
             relocate@uim.abstract.virtualContainer(obj, shift)
             obj.shiftChildren(shift)
         end
         
-        
         function onButtonSizeChanged(obj, src, evt)
             
             isButton = ismember(obj.hButtons, src);
             obj.AllButtonPosition(isButton, :) = src.Position;
             obj.repositionButtons()
-            
         end
         
         function updateLocation(obj, mode)
@@ -196,9 +180,7 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                 obj.hButtons(i).Visible = newValue;
             end
         end
-        
     end
-    
     
     methods (Access = protected)
                
@@ -216,7 +198,7 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             C = C(:)';
             
             parseInputs@uim.mixin.assignProperties(obj, C{:})
-        end 
+        end
     end
     
     methods (Access = protected)
@@ -284,11 +266,8 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                 offset = targetPosition-minPosition;
             end
             
-            
             shift(obj.DimL_) = offset;
             shift(obj.DimS_) = obj.CanvasPosition(obj.DimS_) - obj.AllButtonPosition(1, obj.DimS_) + obj.Padding(obj.DimS_);
-            
-            
             
             switch obj.CanvasMode
                 case 'integrated'
@@ -300,17 +279,16 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                     
                     obj.setNextButtonPosition()
 
-                case 'separate' 
+                case 'separate'
                 
                     axPosition = getpixelposition(obj.Canvas);
                     axPosition(1:2) = axPosition(1:2) + shift;
                     setpixelposition(obj.Canvas, axPosition);
             end
-            
         end
         
         function repositionButtons(obj)
-        % Use when one or more button sizes change               
+        % Use when one or more button sizes change
             if ~obj.IsConstructed; return; end
             if obj.NumButtons == 0; return; end
             
@@ -339,7 +317,6 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             end
             
             setNextButtonPosition(obj)
-            
         end
         
         function changeSpacing(obj, deltaSpacing)
@@ -357,7 +334,6 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             if strcmp(obj.BackgroundMode, 'wrap')
                 obj.updateBackground()
             end
-            
         end
         
         function shiftChildren(obj, shift)
@@ -395,16 +371,12 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                         X = X + minPos(1);
                         Y = Y + minPos(2);
                     otherwise
-                        
                 end
                 
                 set(obj.hBackground, 'XData', X, 'YData', Y)
-
-                
             end
             
             %drawnow limitrate
-            
         end
         
         function updateButtonStyle(obj)
@@ -423,7 +395,6 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                     obj.hButtons(i).Style = style;
                 end
             end
-            
         end
         
         function updateBackgroundAppearance(obj)
@@ -467,7 +438,6 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
                 obj.changeSpacing(deltaSpacing);
                 obj.Spacing = newValue;
             end
-            
         end
         
         function set.ComponentAlignment(obj, newValue)
@@ -536,13 +506,11 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             longDim = obj.DimL_;
             if longDim == 1 % x
                 value = 'horizontal';
-            elseif longDim == 2 % y 
+            elseif longDim == 2 % y
                 value = 'vertical';
             end
         end
-        
     end
-    
     
     methods (Static)
         function S = getToolbarDefaults()
@@ -565,6 +533,4 @@ classdef wtoolbar < uim.abstract.WidgetContainer & uim.mixin.assignProperties
             S.BackgroundAlpha = 0.2;
         end
     end
-    
-    
 end

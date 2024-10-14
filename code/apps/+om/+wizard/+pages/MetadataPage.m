@@ -23,7 +23,6 @@ classdef MetadataPage < wizard.abstract.Page
         GridLayout
         DatasetWidgets om.wizard.pages.component.Metadata
     end
-
     
     methods % Constructor
         function obj = DatasetPage()
@@ -119,4 +118,3 @@ classdef MetadataPage < wizard.abstract.Page
         end
     end
 end
-

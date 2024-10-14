@@ -20,7 +20,6 @@ classdef DetailedMetadataPage < wizard.abstract.Page
         GridLayout
         DatasetWidgets
     end
-
     
     methods % Constructor
         function obj = DetailedMetadataPage()
@@ -77,6 +76,4 @@ classdef DetailedMetadataPage < wizard.abstract.Page
             obj.DatasetWidgets = structeditor.UIControlContainer(obj.GridLayout, SNew);
         end
     end
-
 end
-

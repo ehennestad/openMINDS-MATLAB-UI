@@ -4,7 +4,7 @@ classdef ListBox < handle
     % Todo:
     %   [ ] Add facility for adding/removing items or replacing full list of items 
 
-    properties 
+    properties
         % Whether single or multiple items in the list can be selected
         SelectionMode char {mustBeMember(SelectionMode, {'single', 'multiple'})} = 'multiple'
     end
@@ -79,7 +79,6 @@ classdef ListBox < handle
                 thisName = obj.Name{i};
                 thisIcon = obj.Icon{i};
 
-
 %                 if any(strcmpi(obj.ICONS.iconNames, obj.Name{i}) )
 %                     icon = obj.ICONS.(lower(obj.Name{i}));
 %                 else
@@ -97,7 +96,6 @@ classdef ListBox < handle
             
             obj.ButtonCollection = hToolbar;
             hToolbar.Location = 'northwest';
-
         end
 
         function delete(obj)
@@ -110,14 +108,12 @@ classdef ListBox < handle
             % Check selection mode, i.e single, multiple
 
             obj.updateSelectedItems(newValue)
-            
         end
 
         function selectedItems = get.SelectedItems(obj)
             selectedItems = {obj.SelectedButtons.Text};
         end
     end
-
 
     methods (Access = private)
 
@@ -163,7 +159,6 @@ classdef ListBox < handle
                         src.Value = true;
                         triggerCallback = true;
                     end
-                
             end
 
             newSelection = {obj.SelectedButtons.Tag};
@@ -217,7 +212,6 @@ classdef ListBox < handle
                 end
             end
 
-
             % Call the SelectionChangedFcn if preset...
             if ~isempty(obj.SelectionChangedFcn)
                 %evt = event.EventData();
@@ -225,6 +219,5 @@ classdef ListBox < handle
                 obj.SelectionChangedFcn(obj, evt)
             end
         end
-
     end
 end

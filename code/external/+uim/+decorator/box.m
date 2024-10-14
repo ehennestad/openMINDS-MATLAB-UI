@@ -1,6 +1,5 @@
 classdef box < uim.abstract.virtualContainer & uim.mixin.assignProperties
     
-    
     methods % Structors
                     
         function obj = box(hParent, varargin)
@@ -15,13 +14,11 @@ classdef box < uim.abstract.virtualContainer & uim.mixin.assignProperties
             obj.Canvas = hParent;
             obj.hAxes = obj.Canvas.Axes;
             
-            
             obj.parseInputs(varargin{:})
 
             obj.createBackground()
 
             obj.IsConstructed = true;
-
             
             % Todo: This is not perfect. Sometimes size depends on
             % location...
@@ -35,7 +32,6 @@ classdef box < uim.abstract.virtualContainer & uim.mixin.assignProperties
             obj.updateLocation('auto')
             
             obj.onStyleChanged()
-
         end
         
         function updateSize(obj, mode)
@@ -43,7 +39,5 @@ classdef box < uim.abstract.virtualContainer & uim.mixin.assignProperties
             updateSize@uim.abstract.virtualContainer(obj, mode)
             obj.resize()
         end
-    
     end
-    
 end

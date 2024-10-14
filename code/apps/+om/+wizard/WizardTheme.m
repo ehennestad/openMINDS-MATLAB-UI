@@ -14,4 +14,3 @@ classdef WizardTheme < wizard.abstract.Theme & om.internal.palette.MaterialPalet
         ControlPanelsBgColor = [1,1,1];
     end
 end
-
