@@ -1,4 +1,7 @@
-function codespell()
+function codespell(options)
+    arguments
+        options.DoAutomaticFix (1,1) logical = false
+    end
 
     projectDirectory = omuitools.projectdir();
 
@@ -13,5 +16,6 @@ function codespell()
     matbox.tasks.codespellToolbox(projectDirectory, ...
         "RequireCodespellPassing", false, ...
         "Skip", ["*.prj", "*/code/+om/+external/**/*.m", "*/code/external/*"],  ...
+        "DoAutomaticFix", options.DoAutomaticFix, ...
         nvOptions{:})
 end
