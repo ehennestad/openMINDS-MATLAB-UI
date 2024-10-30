@@ -3,7 +3,16 @@ function packageToolbox(releaseType, versionString)
         releaseType {mustBeTextScalar,mustBeMember(releaseType,["build","major","minor","patch","specific"])} = "build"
         versionString {mustBeTextScalar} = "";
     end
-    installMatBox()
+
+    ommtools.installMatBox("commit")
     projectRootDirectory = omuitools.projectdir();
-    matbox.tasks.packageToolbox(projectRootDirectory, releaseType, versionString)
+
+    toolboxPathFolders = [...
+        fullfile(projectRootDirectory, "code"), ...
+        fullfile(projectRootDirectory, "code", "apps") ...
+    ];
+
+    matbox.tasks.packageToolbox(projectRootDirectory, releaseType, versionString, ...
+        "ToolboxShortName", "openMINDS_MATLAB_UI", ...
+        "PathFolders", toolboxPathFolders)
 end
