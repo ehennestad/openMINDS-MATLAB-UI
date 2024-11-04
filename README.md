@@ -12,7 +12,7 @@ MATLAB 2023a or later
 ## Getting started
 This is a very minimal example on how to try out this toolbox. More examples and interactive workflows will be added later.
 ```
-% Create a filepath to a file fro saving metadata
+% Create a filepath to a file for saving metadata
 filePath = fullfile(userpath, "openMINDS_MATLAB", "demo", "datasetversion_gui.jsonld");
 
 if ~isfile(filePath)
