@@ -17,7 +17,7 @@ classdef InteractiveOpenMINDSPlot < handle
         DirectedGraph
     end
    
-    properties (Access = protected) % grahical
+    properties (Access = protected) % graphical
         Axes
         GraphPlot
         NodeTransporter

@@ -5,7 +5,7 @@
         "ToolboxName": "openMINDS GUIDE",
         "AuthorName": "Eivind Hennestad",
         "AuthorEmail": "eivihe@uio.no",
-        "AuthorCompany": "",
+        "AuthorCompany": "openMetadataInitiative",
         "Summary": "A MATLAB toolbox to interactively create metadata instances using the openMINDS metadata models",
         "Description": "MATLAB GUI package for the openMINDS metadata models.",
         "MinimumMatlabRelease": "R2022b",
