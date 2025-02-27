@@ -52,7 +52,7 @@ classdef MetadataWizard < wizard.WizardApp
             end
             
             if exist('wt.FileSelector', 'class') ~= 8 % Install Widgets Toolbox
-                om.internal.setup.installFexPackage("78895307-cc36-4970-8b66-0697da8f9352", "") 
+                matbox.setup.internal.installFexPackage("78895307-cc36-4970-8b66-0697da8f9352", "") 
             end
 
             if ~ismissing(datasetFolder)
