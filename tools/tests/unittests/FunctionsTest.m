@@ -11,7 +11,8 @@ classdef FunctionsTest < matlab.unittest.TestCase
     methods(Test)
 
         function testpathstr2packagename(testCase)
-            pathStr = '/Users/Eivind/Code/MATLAB/Neuroscience/Repositories/ehennestad/openMINDS-MATLAB-UI/code/+om/+internal/+strutil';
+            projectDirectory = omuitools.projectdir;
+            pathStr = fullfile(projectDirectory, 'code', '+om', '+internal', '+strutil');
             packageName = om.internal.strutil.pathstr2packagename(pathStr);
             testCase.verifyEqual(string(packageName),"om.internal.strutil")
         end
