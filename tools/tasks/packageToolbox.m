@@ -4,7 +4,9 @@ function packageToolbox(releaseType, versionString)
         versionString {mustBeTextScalar} = "";
     end
 
-    ommtools.installMatBox("commit")
+    if ~(exist('matbox', 'dir') == 7)
+        omuitools.installMatBox("commit")
+    end
     projectRootDirectory = omuitools.projectdir();
 
     toolboxPathFolders = [...
